@@ -18,7 +18,7 @@ class ActionRequestHandler: NSObject, NSExtensionRequestHandling {
         self.extensionContext = context
         
         guard let items = context.inputItems as? [NSExtensionItem] else {
-            completeWithError("Invalid input items")
+            complete(withError: "Invalid input items")
             return
         }
         
@@ -33,19 +33,18 @@ class ActionRequestHandler: NSObject, NSExtensionRequestHandling {
             }
         }
         
-        print("No PDF found in action extension")
-        done()
+        complete(withError: "No PDF found in action extension")
     }
     
     private func handlePDF(itemProvider: NSItemProvider) {
         itemProvider.loadItem(forTypeIdentifier: UTType.pdf.identifier, options: nil) { [weak self] (item, error) in
             guard let self = self else { return }
             if let error = error {
-                self.completeWithError("Error loading item: \(error.localizedDescription)")
+                self.complete(withError: "Error loading item: \(error.localizedDescription)")
                 return
             }
             guard let fileURL = item as? NSURL, let absoluteString = fileURL.absoluteString else {
-                self.completeWithError("Invalid file URL")
+                self.complete(withError: "Invalid file URL")
                 return
             }
             self.openMainApp(with: absoluteString)
@@ -55,21 +54,26 @@ class ActionRequestHandler: NSObject, NSExtensionRequestHandling {
     private func openMainApp(with fileURL: String) {
         guard let encodedFileURL = fileURL.addingPercentEncoding(withAllowedCharacters: .urlHostAllowed),  //todo-p5:.urlHostAllowed
               let url = URL(string: "lsreadingnoteapp:import-file?path=\(encodedFileURL)") else {
-            completeWithError("Invalid URL encoding")
+            complete(withError: "Invalid URL encoding")
             return
         }
         
         extensionContext?.open(url, completionHandler: { success in
             if success {
-                print("Successfully opened main app")
+                self.complete()
             } else {
-                self.completeWithError("Failed to open main app")
+                self.complete(withError: "Failed to open main app")
             }
         })
     }
     
-    private func completeWithError(_ message: String) {
+    private func complete(withError message: String) {
         print(message)
+        done()
+    }
+    
+    private func complete() {
+        print("Successfully opened main app")
         done()
     }
     
