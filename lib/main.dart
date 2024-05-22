@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:app_links/app_links.dart';
-import 'package:reading_note/util/deepLink.dart';
+import 'package:reading_note/util/deep_link.dart';
 import 'package:reading_note/util/log.dart';
 
 void main() {
@@ -82,15 +82,9 @@ class _MyHomePageState extends State<MyHomePage> {
 
     _linkSubscription = _appLinks.uriLinkStream.listen((uri) async {
       logInfo("waiting...");
-      var fileUri = parseImportedFileUri(uri);
-      if (fileUri == null) {
-        return;
-      }
-
-      logInfo("${copySharedFileToLocal(fileUri)}");
+      logInfo("${await importFile(uri)}");
       logInfo("done");
 
-      // todo: parse url, resave file
       // todo: page jump / global state change
     });
   }

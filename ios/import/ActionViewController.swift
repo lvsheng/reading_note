@@ -32,23 +32,49 @@ class ActionViewController: UIViewController {
                 self.complete(withError: "Error loading item: \(error.localizedDescription)")
                 return
             }
-            guard let fileURL = item as? NSURL, let absoluteString = fileURL.absoluteString else {
+            guard let fileURL = item as? URL else {
                 self.complete(withError: "Invalid file URL")
                 return
             }
-            self.openMainApp(with: absoluteString)
+            guard let destinationURL = copyPDF(with: fileURL) else {
+                self.complete(withError: "Error Copying file")
+                return
+            }
+            openMainApp(with: destinationURL.path)
         }
     }
 
-// todo
-//    private func copyPDF(with fileURL: String) {
-//        
-//    }
+    private func copyPDF(with url: URL)->URL? {
+        let fileManager = FileManager.default
+        if let containerURL = fileManager.containerURL(forSecurityApplicationGroupIdentifier: "group.com.lvsheng.readingNote") {
+           let containerURL = containerURL.appendingPathComponent("importing")
+           let destinationURL = containerURL.appendingPathComponent("\(url.lastPathComponent)_\(Int(Date().timeIntervalSince1970 * 1000))")
+
+           do {
+               if !fileManager.fileExists(atPath: containerURL.path) {
+                   try fileManager.createDirectory(atPath: containerURL.path, withIntermediateDirectories: true)
+               }
+
+               if !url.startAccessingSecurityScopedResource() {
+                   print("startAccessingSecurityScopedResource fail")
+               }
+
+               try fileManager.copyItem(at: url, to: destinationURL)
+
+               url.stopAccessingSecurityScopedResource()
+               return destinationURL
+           } catch {
+               url.stopAccessingSecurityScopedResource()
+               print("Error copying file: \(error)")
+           }
+       }
+       return nil
+    }
     
     private func openMainApp(with fileURL: String) {
         let scheme = "lsreadingnoteapp://"
         guard let encodedFileURL = fileURL.addingPercentEncoding(withAllowedCharacters: .urlHostAllowed),  //todo-p5:.urlHostAllowed
-              let url = URL(string: "\(scheme)/import-file?url=\(encodedFileURL)") else {
+              let url = URL(string: "\(scheme)/import-file?path=\(encodedFileURL)") else {
             complete(withError: "Invalid URL encoding")
             return
         }

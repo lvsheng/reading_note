@@ -1,11 +1,11 @@
 logError(String msg) {
   print("[error] $msg");
-  logStackTrace();
+  printStackTrace();
 }
 
 logWarn(String msg) {
   print("[warn] $msg");
-  logStackTrace();
+  printStackTrace();
 }
 
 logInfo(String msg) {
@@ -13,9 +13,12 @@ logInfo(String msg) {
 }
 
 logDebug(String msg) {
-  print("[debug] $msg");
+  assert((() {
+    print("[debug] $msg");
+    return true;
+  })());
 }
 
-logStackTrace() {
+printStackTrace() {
   print(StackTrace.current);
 }
