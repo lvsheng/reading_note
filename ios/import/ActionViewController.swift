@@ -39,6 +39,11 @@ class ActionViewController: UIViewController {
             self.openMainApp(with: absoluteString)
         }
     }
+
+// todo
+//    private func copyPDF(with fileURL: String) {
+//        
+//    }
     
     private func openMainApp(with fileURL: String) {
         let scheme = "lsreadingnoteapp://"
