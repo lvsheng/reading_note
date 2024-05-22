@@ -17,38 +17,64 @@ class ActionRequestHandler: NSObject, NSExtensionRequestHandling {
         // Do not call super in an Action extension with no user interface
         self.extensionContext = context
         
-        var found = false
+        guard let items = context.inputItems as? [NSExtensionItem] else {
+            completeWithError("Invalid input items")
+            return
+        }
         
-        outer:
-            for item in context.inputItems as! [NSExtensionItem] {
-                if let attachments = item.attachments {
-                    for itemProvider in attachments {
-                        if itemProvider.hasItemConformingToTypeIdentifier(UTType.pdf.identifier) {
-                            itemProvider.loadItem(forTypeIdentifier: UTType.pdf.identifier, options: nil, completionHandler: { (item, error) in
-                                if let fileURL = item as? NSURL {
-                                    var fileURL = fileURL.absoluteString?.addingPercentEncoding(withAllowedCharacters: .urlHostAllowed) //todo-p5:.urlHostAllowed
-                                    if fileURL != nil {
-                                        context.open(URL(string: "lsreadingnoteapp:import-file?path=".appending(fileURL!))!) { done in
-                                            print(done)
-                                        }
-                                    }
-                                }
-                            })
-                            found = true
-                            break outer
-                        }
+        for item in items {
+            if let attachments = item.attachments {
+                for itemProvider in attachments {
+                    if itemProvider.hasItemConformingToTypeIdentifier(UTType.pdf.identifier) {
+                        handlePDF(itemProvider: itemProvider)
+                        return
                     }
                 }
+            }
         }
         
-        if (!found) {
-            print("!found in action extension")
-        }
-        self.done()
+        print("No PDF found in action extension")
+        done()
     }
     
-    func done() {
-        self.extensionContext!.completeRequest(returningItems: [], completionHandler: nil)
-        self.extensionContext = nil
+    private func handlePDF(itemProvider: NSItemProvider) {
+        itemProvider.loadItem(forTypeIdentifier: UTType.pdf.identifier, options: nil) { [weak self] (item, error) in
+            guard let self = self else { return }
+            if let error = error {
+                self.completeWithError("Error loading item: \(error.localizedDescription)")
+                return
+            }
+            guard let fileURL = item as? NSURL, let absoluteString = fileURL.absoluteString else {
+                self.completeWithError("Invalid file URL")
+                return
+            }
+            self.openMainApp(with: absoluteString)
+        }
+    }
+    
+    private func openMainApp(with fileURL: String) {
+        guard let encodedFileURL = fileURL.addingPercentEncoding(withAllowedCharacters: .urlHostAllowed),  //todo-p5:.urlHostAllowed
+              let url = URL(string: "lsreadingnoteapp:import-file?path=\(encodedFileURL)") else {
+            completeWithError("Invalid URL encoding")
+            return
+        }
+        
+        extensionContext?.open(url, completionHandler: { success in
+            if success {
+                print("Successfully opened main app")
+            } else {
+                self.completeWithError("Failed to open main app")
+            }
+        })
+    }
+    
+    private func completeWithError(_ message: String) {
+        print(message)
+        done()
+    }
+    
+    private func done() {
+        extensionContext?.completeRequest(returningItems: nil, completionHandler: nil)
+        extensionContext = nil
     }
 }
