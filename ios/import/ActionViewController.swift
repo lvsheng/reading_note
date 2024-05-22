@@ -1,5 +1,5 @@
 //
-//  ActionRequestHandler.swift
+//  ActionViewController.swift
 //  import
 //
 //  Created by lvsheng on 2024/5/22.
@@ -9,30 +9,19 @@ import UIKit
 import MobileCoreServices
 import UniformTypeIdentifiers
 
-class ActionRequestHandler: NSObject, NSExtensionRequestHandling {
+class ActionViewController: UIViewController {
 
-    var extensionContext: NSExtensionContext?
+    override func viewDidLoad() {
+        super.viewDidLoad()
     
-    func beginRequest(with context: NSExtensionContext) {
-        // Do not call super in an Action extension with no user interface
-        self.extensionContext = context
-        
-        guard let items = context.inputItems as? [NSExtensionItem] else {
-            complete(withError: "Invalid input items")
-            return
-        }
-        
-        for item in items {
-            if let attachments = item.attachments {
-                for itemProvider in attachments {
-                    if itemProvider.hasItemConformingToTypeIdentifier(UTType.pdf.identifier) {
-                        handlePDF(itemProvider: itemProvider)
-                        return
-                    }
+        for item in self.extensionContext!.inputItems as! [NSExtensionItem] {
+            for provider in item.attachments! {
+                if provider.hasItemConformingToTypeIdentifier(UTType.pdf.identifier) {
+                    handlePDF(itemProvider: provider)
+                    return
                 }
             }
         }
-        
         complete(withError: "No PDF found in action extension")
     }
     
@@ -52,19 +41,23 @@ class ActionRequestHandler: NSObject, NSExtensionRequestHandling {
     }
     
     private func openMainApp(with fileURL: String) {
+        let scheme = "lsreadingnoteapp://"
         guard let encodedFileURL = fileURL.addingPercentEncoding(withAllowedCharacters: .urlHostAllowed),  //todo-p5:.urlHostAllowed
-              let url = URL(string: "lsreadingnoteapp:import-file?path=\(encodedFileURL)") else {
+              let url = URL(string: "\(scheme)import-file?url=\(encodedFileURL)") else {
             complete(withError: "Invalid URL encoding")
             return
         }
-        
-        extensionContext?.open(url, completionHandler: { success in
-            if success {
+        var responder = self as UIResponder?
+        let selectorOpenURL = sel_registerName("openURL:")
+        while responder != nil {
+            if responder!.responds(to: selectorOpenURL) {
+                responder!.perform(selectorOpenURL, with: url)
                 self.complete()
-            } else {
-                self.complete(withError: "Failed to open main app")
+                return
             }
-        })
+            responder = responder?.next
+        }
+        self.complete(withError: "Failed to open main app")
     }
     
     private func complete(withError message: String) {
@@ -76,9 +69,10 @@ class ActionRequestHandler: NSObject, NSExtensionRequestHandling {
         print("Successfully opened main app")
         done()
     }
-    
-    private func done() {
-        extensionContext?.completeRequest(returningItems: nil, completionHandler: nil)
-        extensionContext = nil
+
+    @IBAction func done() {
+        // Return any edited content to the host app.
+        // This template doesn't do anything, so we just echo the passed in items.
+        self.extensionContext!.completeRequest(returningItems: self.extensionContext!.inputItems, completionHandler: nil)
     }
 }
