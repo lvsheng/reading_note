@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:app_links/app_links.dart';
 
 void main() {
   runApp(const MyApp());
@@ -56,6 +59,33 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   int _counter = 0;
+  late AppLinks _appLinks;
+  StreamSubscription<Uri>? _linkSubscription;
+
+  @override
+  void initState() {
+    super.initState();
+
+    initDeepLinks();
+  }
+
+  @override
+  void dispose() {
+    _linkSubscription?.cancel();
+    super.dispose();
+  }
+
+  Future<void> initDeepLinks() async {
+    _appLinks = AppLinks();
+
+    _linkSubscription = _appLinks.uriLinkStream.listen((uri) {
+      print(uri);
+      // lsreadingnoteapp:///import-file?url=file%3A%2F%2F%2Fprivate%2Fvar%2Fmobile%2FContainers%2FData%2FApplication%2FD83FFAD1-31A4-44C0-8E28-49E1EF4B4120%2Ftmp%2F%25E9%2592%25A2%25E9%2593%2581%25E3%2580%2581%25E8%2592%25B8%25E6%25B1%25BD%25E4%25B8%258E%25E8%25B5%2584%25E6%259C%25AC%2520%2520%25E5%25B7%25A5%25E4%25B8%259A%25E9%259D%25A9%25E5%2591%25BD%25E7%259A%2584%25E8%25B5%25B7%25E6%25BA%2590_13952539.pdf
+      // todo: parse url, resave file
+      // todo: page jump / global state change
+    });
+  }
+
 
   void _incrementCounter() {
     setState(() {

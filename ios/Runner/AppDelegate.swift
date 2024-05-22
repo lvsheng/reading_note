@@ -11,8 +11,9 @@ import UIKit
         return super.application(application, didFinishLaunchingWithOptions: launchOptions)
     }
     
+    /*
     override func application(_ application: UIApplication,
-                     open url: URL,
+                              open url: URL,
                               options: [UIApplication.OpenURLOptionsKey : Any] = [:] ) -> Bool {
         
         let sendingAppID = options[.sourceApplication]
@@ -30,17 +31,18 @@ import UIKit
             return false
         }
         
-        if path != "import-file" {
+        if path != "/import-file" {
             print("Invalid Path")
             return false
         }
 
-        if let fileUrl = params.first(where: { $0.name == "url" })?.value {
-            print("url = \(url)")
+        if let fileUrl = params.first(where: { $0.name == "url" })?.value?.removingPercentEncoding {
+            print("url = \(fileUrl)")
             return true
         } else {
             print("file url missing")
             return false
         }
     }
+    */
 }

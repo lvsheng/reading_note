@@ -43,7 +43,7 @@ class ActionViewController: UIViewController {
     private func openMainApp(with fileURL: String) {
         let scheme = "lsreadingnoteapp://"
         guard let encodedFileURL = fileURL.addingPercentEncoding(withAllowedCharacters: .urlHostAllowed),  //todo-p5:.urlHostAllowed
-              let url = URL(string: "\(scheme)import-file?url=\(encodedFileURL)") else {
+              let url = URL(string: "\(scheme)/import-file?url=\(encodedFileURL)") else {
             complete(withError: "Invalid URL encoding")
             return
         }
