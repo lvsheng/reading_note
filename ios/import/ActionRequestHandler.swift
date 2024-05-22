@@ -26,7 +26,12 @@ class ActionRequestHandler: NSObject, NSExtensionRequestHandling {
                         if itemProvider.hasItemConformingToTypeIdentifier(UTType.pdf.identifier) {
                             itemProvider.loadItem(forTypeIdentifier: UTType.pdf.identifier, options: nil, completionHandler: { (item, error) in
                                 if let fileURL = item as? NSURL {
-                                    print(fileURL.absoluteString)
+                                    var fileURL = fileURL.absoluteString?.addingPercentEncoding(withAllowedCharacters: .urlHostAllowed) //todo-p5:.urlHostAllowed
+                                    if fileURL != nil {
+                                        context.open(URL(string: "lsreadingnoteapp:import-file?path=".appending(fileURL!))!) { done in
+                                            print(done)
+                                        }
+                                    }
                                 }
                             })
                             found = true
@@ -36,6 +41,9 @@ class ActionRequestHandler: NSObject, NSExtensionRequestHandling {
                 }
         }
         
+        if (!found) {
+            print("!found in action extension")
+        }
         self.done()
     }
     
