@@ -70,5 +70,17 @@
 	<array>
 		<dict/>
 	</array>
+    <key>NSUbiquitousContainers</key>
+    <dict>
+        <key>iCloud.com.lvsheng.readingNote</key>
+        <dict>
+            <key>NSUbiquitousContainerIsDocumentScopePublic</key>
+            <true/>
+            <key>NSUbiquitousContainerName</key>
+            <string>Reading Note</string>
+            <key>NSUbiquitousContainerSupportedFolderLevels</key>
+            <string>ANY</string>
+        </dict>
+    </dict>
 </dict>
 </plist>

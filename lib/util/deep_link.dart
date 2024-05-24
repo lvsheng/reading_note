@@ -1,8 +1,7 @@
 import 'dart:io';
 
-import 'package:path_provider/path_provider.dart';
+import 'package:reading_note/document_proxy.dart';
 import 'package:reading_note/util/log.dart';
-import 'package:crypto/crypto.dart';
 
 /// [originUri]: e.g: lsreadingnoteapp:///import-file?path=%2Fprivate...952539.pdf
 String? _parseUri(Uri uri) {
@@ -44,8 +43,9 @@ Future<File> importFile(Uri deepLinkUri) async {
     destFileName = "${pre}.$post";
   }
 
-  final destFile = File("${(await getApplicationDocumentsDirectory()).path}/books/$destFileName");
+  final destFile = File("${(await DocumentProxy.sharedInstance.rootDirUri).path}/books/$destFileName");
   if (!await destFile.exists()) {
+    // todo: 由DocumentProxy通知platform后再进行创建写入等操作
     await destFile.create(recursive: true);
     await destFile.writeAsBytes(fileContent, flush: true);
     logDebug("write done to $destFile (size:${fileContent.length})");

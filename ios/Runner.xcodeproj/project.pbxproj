@@ -12,6 +12,7 @@
 		3B3967161E833CAA004F5970 /* AppFrameworkInfo.plist in Resources */ = {isa = PBXBuildFile; fileRef = 3B3967151E833CAA004F5970 /* AppFrameworkInfo.plist */; };
 		6248AE7307F5BD162B1C46DD /* Pods_Runner.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 62FA1FC9AF4BED4C8B22452A /* Pods_Runner.framework */; };
 		74858FAF1ED2DC5600515810 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74858FAE1ED2DC5600515810 /* AppDelegate.swift */; };
+		84B0722A2C0035DC00A08445 /* FlutterDocumentProxy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84B072292C0035DC00A08445 /* FlutterDocumentProxy.swift */; };
 		84EFEF2C2BFDE8F30018654F /* UniformTypeIdentifiers.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 84EFEEFF2BFD9B120018654F /* UniformTypeIdentifiers.framework */; };
 		84EFEF2F2BFDE8F30018654F /* Media.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 84EFEF2E2BFDE8F30018654F /* Media.xcassets */; };
 		84EFEF312BFDE8F30018654F /* ActionViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84EFEF302BFDE8F30018654F /* ActionViewController.swift */; };
@@ -78,6 +79,7 @@
 		7AFA3C8E1D35360C0083082E /* Release.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = Release.xcconfig; path = Flutter/Release.xcconfig; sourceTree = "<group>"; };
 		8440B3A92BFE279200689F2E /* Runner.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Runner.entitlements; sourceTree = "<group>"; };
 		8440B3AA2BFE280200689F2E /* import.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = import.entitlements; sourceTree = "<group>"; };
+		84B072292C0035DC00A08445 /* FlutterDocumentProxy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlutterDocumentProxy.swift; sourceTree = "<group>"; };
 		84EFEEFF2BFD9B120018654F /* UniformTypeIdentifiers.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UniformTypeIdentifiers.framework; path = System/Library/Frameworks/UniformTypeIdentifiers.framework; sourceTree = SDKROOT; };
 		84EFEF2B2BFDE8F30018654F /* import.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = import.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		84EFEF2E2BFDE8F30018654F /* Media.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Media.xcassets; sourceTree = "<group>"; };
@@ -215,6 +217,7 @@
 				1498D2331E8E89220040F4C2 /* GeneratedPluginRegistrant.m */,
 				74858FAE1ED2DC5600515810 /* AppDelegate.swift */,
 				74858FAD1ED2DC5600515810 /* Runner-Bridging-Header.h */,
+				84B072292C0035DC00A08445 /* FlutterDocumentProxy.swift */,
 			);
 			path = Runner;
 			sourceTree = "<group>";
@@ -472,6 +475,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				84B0722A2C0035DC00A08445 /* FlutterDocumentProxy.swift in Sources */,
 				74858FAF1ED2DC5600515810 /* AppDelegate.swift in Sources */,
 				1498D2341E8E89220040F4C2 /* GeneratedPluginRegistrant.m in Sources */,
 			);

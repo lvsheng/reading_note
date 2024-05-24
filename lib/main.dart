@@ -1,7 +1,9 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:app_links/app_links.dart';
+import 'package:reading_note/document_proxy.dart';
 import 'package:reading_note/util/deep_link.dart';
 import 'package:reading_note/util/log.dart';
 
@@ -63,12 +65,20 @@ class _MyHomePageState extends State<MyHomePage> {
   int _counter = 0;
   late AppLinks _appLinks;
   StreamSubscription<Uri>? _linkSubscription;
+  Directory? _t;
 
   @override
   void initState() {
     super.initState();
 
     initDeepLinks();
+
+    DocumentProxy.sharedInstance.rootDirUri.then((v) {
+      if (!mounted) return;
+      setState(() {
+        _t = v;
+      });
+    });
   }
 
   @override
@@ -81,9 +91,9 @@ class _MyHomePageState extends State<MyHomePage> {
     _appLinks = AppLinks();
 
     _linkSubscription = _appLinks.uriLinkStream.listen((uri) async {
-      logInfo("waiting...");
+      logInfo("receive importing file");
       logInfo("${await importFile(uri)}");
-      logInfo("done");
+      logInfo("imported done");
 
       // todo: page jump / global state change
     });
@@ -137,8 +147,8 @@ class _MyHomePageState extends State<MyHomePage> {
           // wireframe for each widget.
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            const Text(
-              'You have pushed the button this many times:',
+            Text(
+              '${_t} You have pushed the button this many times:',
             ),
             Text(
               '$_counter',
