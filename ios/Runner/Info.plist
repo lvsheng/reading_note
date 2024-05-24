@@ -77,7 +77,7 @@
             <key>NSUbiquitousContainerIsDocumentScopePublic</key>
             <true/>
             <key>NSUbiquitousContainerName</key>
-            <string>Reading Note</string>
+            <string>ReadingNote</string>
             <key>NSUbiquitousContainerSupportedFolderLevels</key>
             <string>ANY</string>
         </dict>

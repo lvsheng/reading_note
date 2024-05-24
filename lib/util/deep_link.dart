@@ -43,7 +43,7 @@ Future<File> importFile(Uri deepLinkUri) async {
     destFileName = "${pre}.$post";
   }
 
-  final destFile = File("${(await DocumentProxy.sharedInstance.rootDirUri).path}/books/$destFileName");
+  final destFile = File("${(await DocumentProxy.sharedInstance.rootDirUri).path}$destFileName");
   if (!await destFile.exists()) {
     // todo: 由DocumentProxy通知platform后再进行创建写入等操作
     await destFile.create(recursive: true);

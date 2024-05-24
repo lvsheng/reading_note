@@ -5,7 +5,6 @@ logError(String msg) {
 
 logWarn(String msg) {
   print("[warn] $msg");
-  printStackTrace();
 }
 
 logInfo(String msg) {

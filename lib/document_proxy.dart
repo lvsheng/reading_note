@@ -17,6 +17,7 @@ class DocumentProxy {
   Future<Directory> get _rootDirUri async {
     String? result;
     try {
+      logDebug("begin invoke channel getRootDirUri");
       result = await _channel.invokeMethod('getRootDirUri');
     } catch (e) {
       logError("getRootDirUri fail: $e");
@@ -24,7 +25,13 @@ class DocumentProxy {
 
     if (result != null) {
       try {
-        return Directory(Uri.parse(result).path);
+        final directory = Directory.fromUri(Uri.parse(result));
+        if (await directory.exists()) {
+          logInfo("Got iCloud directory as root dir: $directory");
+          return directory;
+        } else {
+          logError("iCloud directory not exist: $directory");
+        }
       } catch (e) {
         logError("$e");
       }
