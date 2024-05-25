@@ -24,10 +24,11 @@ class DocumentProxy {
 
   Future<File?> get firstFile async {
     await rootDirectoryReady;
-    // return (await rootDirectory!.list(recursive: true).firstWhere(support)) as File?;
-    return (await rootDirectory!.list(recursive: true).firstWhere((file) {
+    final notFound = File("./");
+    final result = (await rootDirectory!.list(recursive: true).firstWhere((file) {
       return support(file);
-    }, orElse: null)) as File?;
+    }, orElse: () => notFound)) as File;
+    return result.hashCode == notFound.hashCode ? null : result;
   }
 
   Future<Directory> _fetchRootDirUri() async {
@@ -36,7 +37,7 @@ class DocumentProxy {
       logDebug("begin invoke channel getRootDirUri");
       result = await _channel.invokeMethod('getRootDirUri');
     } catch (e) {
-      logError("getRootDirUri fail: $e");
+      logError("getRootDirUri fail: $e", false);
     }
 
     if (result != null) {

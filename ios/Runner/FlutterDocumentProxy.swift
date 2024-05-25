@@ -32,7 +32,7 @@ public class FlutterDocumentProxy: NSObject, FlutterPlugin {
             rootDirectorySubject.dropFirst().sink(receiveCompletion: { completion in
                 switch completion {
                 case .failure(let error):
-                    result(FlutterError(code: "Fail", message: error.userInfo.description, details: error))
+                    result(FlutterError(code: "Fail", message: error.userInfo.description, details: error.localizedFailureReason))
                     break
                 case .finished:
                     break

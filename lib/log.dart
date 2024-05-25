@@ -1,7 +1,7 @@
-logError(String msg) {
+logError(String msg, [bool withAssert = true]) {
   print("[error] $msg");
   printStackTrace();
-  assert(false);
+  if (withAssert) assert(false);
 }
 
 logWarn(String msg) {
