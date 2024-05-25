@@ -1,6 +1,7 @@
 logError(String msg) {
   print("[error] $msg");
   printStackTrace();
+  assert(false);
 }
 
 logWarn(String msg) {

@@ -2,19 +2,34 @@ import 'dart:async';
 import 'dart:io';
 import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:reading_note/util/log.dart';
+import 'package:reading_note/log.dart';
+import 'package:path/path.dart' as path;
 
 class DocumentProxy {
-  static const MethodChannel _channel = MethodChannel('document_proxy');
   static final DocumentProxy sharedInstance = DocumentProxy();
+  static const MethodChannel _channel = MethodChannel('document_proxy');
 
-  late Future<Directory> rootDirUri;
+  static const supportedFileTypes = {".pdf"};
+  static bool support(FileSystemEntity file) => file is File &&
+      supportedFileTypes.contains(path.extension(file.path));
+
+  late Future<Directory> rootDirectoryReady;
+  Directory? rootDirectory;
 
   DocumentProxy() {
-    rootDirUri = _rootDirUri;
+    rootDirectoryReady =
+        _fetchRootDirUri().then((value) => rootDirectory = value);
   }
 
-  Future<Directory> get _rootDirUri async {
+  Future<File?> get firstFile async {
+    await rootDirectoryReady;
+    // return (await rootDirectory!.list(recursive: true).firstWhere(support)) as File?;
+    return (await rootDirectory!.list(recursive: true).firstWhere((file) {
+      return support(file);
+    }, orElse: null)) as File?;
+  }
+
+  Future<Directory> _fetchRootDirUri() async {
     String? result;
     try {
       logDebug("begin invoke channel getRootDirUri");
@@ -37,7 +52,8 @@ class DocumentProxy {
       }
     }
 
-    logWarn("Could not get iCloud document directory, using ApplicationDocumentDirectory as fallback.");
+    logWarn(
+        "Could not get iCloud document directory, using ApplicationDocumentDirectory as fallback.");
     return getApplicationDocumentsDirectory();
   }
 }

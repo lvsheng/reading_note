@@ -4,8 +4,9 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:app_links/app_links.dart';
 import 'package:reading_note/document_proxy.dart';
-import 'package:reading_note/util/deep_link.dart';
-import 'package:reading_note/util/log.dart';
+import 'package:reading_note/deep_link.dart';
+import 'package:reading_note/log.dart';
+import 'package:reading_note/user_preferences.dart';
 
 void main() {
   runApp(const MyApp());
@@ -65,19 +66,27 @@ class _MyHomePageState extends State<MyHomePage> {
   int _counter = 0;
   late AppLinks _appLinks;
   StreamSubscription<Uri>? _linkSubscription;
-  Directory? _t;
+  Directory? _rootDirectory;
+  File? _openedFile;
 
   @override
   void initState() {
     super.initState();
 
     initDeepLinks();
+    fetchData();
+  }
 
-    DocumentProxy.sharedInstance.rootDirUri.then((v) {
-      if (!mounted) return;
-      setState(() {
-        _t = v;
-      });
+  void fetchData() async {
+    final rootDirectory = await DocumentProxy.sharedInstance.rootDirectoryReady;
+    setState(() {
+      _rootDirectory = rootDirectory;
+    });
+
+    var openedFile = await UserPreferences.sharedInstance.lastOpenedFile;
+    openedFile ??= await DocumentProxy.sharedInstance.firstFile;
+    setState(() {
+      _openedFile = openedFile;
     });
   }
 
@@ -148,7 +157,9 @@ class _MyHomePageState extends State<MyHomePage> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
             Text(
-              '${_t} You have pushed the button this many times:',
+              '$_rootDirectory\n'
+              '$_openedFile\n'
+                  'You have pushed the button this many times:',
             ),
             Text(
               '$_counter',
