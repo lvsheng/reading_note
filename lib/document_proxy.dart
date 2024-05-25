@@ -5,8 +5,9 @@ import 'package:path_provider/path_provider.dart';
 import 'package:reading_note/log.dart';
 import 'package:path/path.dart' as path;
 
+final DocumentProxy documentProxy = DocumentProxy._();
+
 class DocumentProxy {
-  static final DocumentProxy sharedInstance = DocumentProxy();
   static const MethodChannel _channel = MethodChannel('document_proxy');
 
   static const supportedFileTypes = {".pdf"};
@@ -16,7 +17,7 @@ class DocumentProxy {
   late Future<Directory> rootDirectoryReady;
   Directory? rootDirectory;
 
-  DocumentProxy() {
+  DocumentProxy._() {
     rootDirectoryReady =
         _fetchRootDirUri().then((value) => rootDirectory = value);
   }
