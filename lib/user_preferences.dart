@@ -11,7 +11,8 @@ class UserPreferences {
   late Future<Null> ready;
   SharedPreferences? _sharedPreferences;
 
-  static const _key_lastOpenedFilePath = "lastOpenedFilePath";
+  static const _keyLastOpenedFilePath = "lastOpenedFilePath";
+  static const _keyPrefixLastPage = "lastPageOf";
 
   UserPreferences._() {
     ready = SharedPreferences.getInstance().then((value) {
@@ -25,7 +26,7 @@ class UserPreferences {
       documentProxy.rootDirectoryReady,
     ]);
 
-    final path = _sharedPreferences!.getString(_key_lastOpenedFilePath);
+    final path = _sharedPreferences!.getString(_keyLastOpenedFilePath);
     if (path == null) {
       logWarn("no lastOpenedFilePath");
       return null;
@@ -39,20 +40,56 @@ class UserPreferences {
     return file;
   }
 
-  setLastOpenedFile(File? value) async {
+  setLastOpenedFile(File? file) async {
     await Future.wait([ready, documentProxy.rootDirectoryReady]);
-    if (value == null) {
-      if (_sharedPreferences!.containsKey(_key_lastOpenedFilePath)) {
-        _sharedPreferences!.remove(_key_lastOpenedFilePath);
-      }
-      return;
+    if (file == null) {
+      return _removeIfNeeded(_keyLastOpenedFilePath);
     }
 
-    final path = p.relative(value.path, from: documentProxy.rootDirectory!.path);
-    logInfo("[userPreferences]: $_key_lastOpenedFilePath: $path");
-    if (path == _sharedPreferences!.getString(_key_lastOpenedFilePath)) {
+    final path = p.relative(file.path, from: documentProxy.rootDirectory!.path);
+    logInfo("[userPreferences]: $_keyLastOpenedFilePath: $path");
+    if (path == _sharedPreferences!.getString(_keyLastOpenedFilePath)) {
       return;
     }
-    _sharedPreferences!.setString(_key_lastOpenedFilePath, path);
+    _sharedPreferences!.setString(_keyLastOpenedFilePath, path);
+  }
+
+  int? lastPageOf(File file) {
+    if (!_allReady) return null;
+    return _sharedPreferences!.getInt(_keyOfLastPage(file));
+  }
+
+  setLastPage(File file, int? page) {
+    if (!_allReady) return null;
+    final key = _keyOfLastPage(file);
+    if (page == null) {
+      return _removeIfNeeded(key);
+    }
+    logInfo("[userPreferences]: $key: $page");
+    _sharedPreferences!.setInt(key, page);
+  }
+
+  bool get _allReady {
+    if (_sharedPreferences == null) {
+      logError("sharedPreference load slowly!");
+      return false;
+    }
+    if (documentProxy.rootDirectory == null) {
+      logError("documentProxy load slowly!");
+      return false;
+    }
+    return true;
+  }
+
+  /// must [_allReady] to use this
+  String _keyOfLastPage(File file) {
+    return "$_keyPrefixLastPage:${p.relative(file.path, from: documentProxy.rootDirectory!.path)}";
+  }
+
+  /// must [ready] to use this
+  _removeIfNeeded(String key) {
+    if (_sharedPreferences!.containsKey(key)) {
+      _sharedPreferences!.remove(key);
+    }
   }
 }

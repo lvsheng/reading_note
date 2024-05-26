@@ -7,9 +7,12 @@ import 'package:app_links/app_links.dart';
 import 'package:reading_note/custom_painter.dart';
 import 'package:reading_note/document_proxy.dart';
 import 'package:reading_note/deep_link.dart';
+import 'package:reading_note/drawing_data.dart';
 import 'package:reading_note/log.dart';
+import 'package:reading_note/stylus_gesture_detector.dart';
 import 'package:reading_note/user_preferences.dart';
 import 'package:pdfrx/pdfrx.dart';
+import 'package:tuple/tuple.dart';
 
 void main() {
   runApp(const MyApp());
@@ -41,9 +44,17 @@ class _MyHomePageState extends State<MyHomePage> {
   late AppLinks _appLinks;
   StreamSubscription<Uri>? _linkSubscription;
   Directory? _rootDirectory;
+
   File? _reading;
+  int _initialPageNumber = 1;
+  int _pageNumber = 1;
+  Map<int, Tuple2<DrawingData, GlobalKey>>? _drawingMap;
+  PdfDocument? _document;
+  PdfViewerController? _controller;
+  Matrix4? _transformation;
+
   String? _errorTip;
-  bool _debugShowIndicator = true;
+  bool _debugShowIndicator = false;
 
   @override
   void initState() {
@@ -95,7 +106,17 @@ class _MyHomePageState extends State<MyHomePage> {
     userPreferences.setLastOpenedFile(file);
     setState(() {
       _reading = file;
-      // todo: page jump / global state change
+      _initialPageNumber = userPreferences.lastPageOf(_reading!) ?? 1;
+      _pageNumber = _initialPageNumber;
+      _drawingMap = {}; // todo: load from file, pre-load possible pages
+      _document = null;
+      _controller = PdfViewerController()..addListener(() {
+        setState(() {
+          if (!mounted) return;
+          _transformation = _controller!.value;
+        });
+      });
+      _transformation = null;
     });
   }
 
@@ -110,21 +131,60 @@ class _MyHomePageState extends State<MyHomePage> {
               Positioned.fill(child: PdfViewer.file(
                 _reading!.path,
                 key: Key(_reading!.path),
+                controller: _controller,
+                initialPageNumber: _initialPageNumber,
                 params: PdfViewerParams(
-                    pagePaintCallbacks: [
-                      if (_debugShowIndicator) paintPageIndicator,
-                    ],
+                    onDocumentChanged: (document) {
+                      if (!mounted) return;
+                      setState(() => _document = document);
+                    },
+                    onPageChanged: (int? pageNumber) {
+                      if (!mounted || pageNumber == null) return;
+                      setState(() => _pageNumber = pageNumber);
+                      userPreferences.setLastPage(_reading!, pageNumber);
+                    },
+                    pagePaintCallbacks: [if (_debugShowIndicator) paintPageIndicator],
                     pageOverlaysBuilder: (context, pageRect, page) {
+                      Tuple2<DrawingData, GlobalKey>? drawing = _drawingMap![page.pageNumber];
+                      if (drawing == null) {
+                        _drawingMap![page.pageNumber] = drawing =
+                            Tuple2(DrawingData(page.size), GlobalKey()); // todo: load async
+                      }
+                      final drawingData = drawing.item1;
+                      triggerRepaint() => setState(() => (_drawingMap![page.pageNumber] = drawing = Tuple2(drawingData, GlobalKey())));
+
                       return [
-                        ConstrainedBox(
+                        if (drawing != null) ConstrainedBox(
                             constraints: const BoxConstraints.expand(),
                             child: IgnorePointer(
-                                child: CustomPaint(
-                                    painter:
-                                        PDFOverlayPainter(pageRect, page)))),
+                                child: RepaintBoundary(
+                                  child: CustomPaint(
+                                      painter:
+                                          PDFOverlayPainter(pageRect, page, drawingData, drawing!.item2),
+                                      isComplex: drawingData.pathList.length > 5 ? true : false,
+                                  ),
+                                ))),
                         GestureDetector(
                             onDoubleTap: () => setState(() =>
                                 _debugShowIndicator = !_debugShowIndicator)),
+                        PencilGestureDetector(
+                          onDown: (details) {
+                            drawingData.startDraw();
+                            triggerRepaint();
+                          },
+                          onMove: (details) {
+                            drawingData.addPoint(DrawingData.canvasPositionToPagePosition(details.localPosition, pageRect, page.size));
+                            triggerRepaint();
+                          },
+                          onUp: (details) {
+                            drawingData.addPoint(DrawingData.canvasPositionToPagePosition(details.localPosition, pageRect, page.size));
+                            drawingData.endDraw();
+                            triggerRepaint();
+                          },
+                          onCancel: (detail) {
+                            drawingData.endDraw();
+                          },
+                        ),
                       ];
                     }),
               )),
@@ -135,7 +195,13 @@ class _MyHomePageState extends State<MyHomePage> {
             Padding(
               padding: const EdgeInsets.only(top: 20, left: 10),
               child: Text('root: $_rootDirectory\n'
-                  'reading: $_reading\n', style: TextStyle(color: Colors.blue.shade50),),
+                  'reading: $_reading\n'
+                  'pdf               : ${_document?.sourceName}\n'
+                  'pages: ${_document?.pages.length}\n'
+                  'curPage: $_pageNumber\n'
+                  'curPageSize: ${_document?.pages[_pageNumber].size}\n'
+                  'controller:\n$_transformation\n'
+                , style: const TextStyle(color: Colors.black),),
             ),
           ],
         ),
