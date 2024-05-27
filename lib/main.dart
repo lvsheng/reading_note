@@ -7,7 +7,7 @@ import 'package:app_links/app_links.dart';
 import 'package:reading_note/custom_painter.dart';
 import 'package:reading_note/document_proxy.dart';
 import 'package:reading_note/deep_link.dart';
-import 'package:reading_note/drawing_data.dart';
+import 'package:reading_note/note_page.dart';
 import 'package:reading_note/log.dart';
 import 'package:reading_note/stylus_gesture_detector.dart';
 import 'package:reading_note/user_preferences.dart';
@@ -48,13 +48,14 @@ class _MyHomePageState extends State<MyHomePage> {
   File? _reading;
   int _initialPageNumber = 1;
   int _pageNumber = 1;
-  Map<int, Tuple2<DrawingData, GlobalKey>>? _drawingMap;
+  Map<int, Tuple2<BookMarkNotePage?, bool /*begin load*/ >>? _pageMarkNoteMap; // todo: 考虑清理不在用的文件？
   PdfDocument? _document;
   PdfViewerController? _controller;
   Matrix4? _transformation;
 
   String? _errorTip;
   bool _debugShowIndicator = false;
+  late Timer _timer;
 
   @override
   void initState() {
@@ -62,6 +63,22 @@ class _MyHomePageState extends State<MyHomePage> {
 
     initDeepLinks();
     fetchData();
+
+    _timer = Timer.periodic(const Duration(seconds: 3), (timer) {
+      if (!mounted) return;
+      saveIfNeeded();
+    });
+  }
+
+  saveIfNeeded() {
+    if (_pageMarkNoteMap == null) return;
+    logDebug("begin saveIfNeeded: ${_pageMarkNoteMap!.values.length}");
+    for (final tuple in _pageMarkNoteMap!.values) {
+      final note = tuple.item1;
+      if (note == null) return;
+      note.saveIfNeeded();
+    }
+    logDebug("end saveIfNeeded");
   }
 
   void fetchData() async {
@@ -87,6 +104,8 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   void dispose() {
     _linkSubscription?.cancel();
+    _timer.cancel();
+    saveIfNeeded();
     super.dispose();
   }
 
@@ -108,7 +127,7 @@ class _MyHomePageState extends State<MyHomePage> {
       _reading = file;
       _initialPageNumber = userPreferences.lastPageOf(_reading!) ?? 1;
       _pageNumber = _initialPageNumber;
-      _drawingMap = {}; // todo: load from file, pre-load possible pages
+      _pageMarkNoteMap = {};
       _document = null;
       _controller = PdfViewerController()..addListener(() {
         setState(() {
@@ -143,46 +162,52 @@ class _MyHomePageState extends State<MyHomePage> {
                       setState(() => _pageNumber = pageNumber);
                       userPreferences.setLastPage(_reading!, pageNumber);
                     },
-                    pagePaintCallbacks: [if (_debugShowIndicator) paintPageIndicator],
+                    pagePaintCallbacks: _debugShowIndicator ? [paintPageIndicator] : const [],
+
+                    // page mark note
                     pageOverlaysBuilder: (context, pageRect, page) {
-                      Tuple2<DrawingData, GlobalKey>? drawing = _drawingMap![page.pageNumber];
-                      if (drawing == null) {
-                        _drawingMap![page.pageNumber] = drawing =
-                            Tuple2(DrawingData(page.size), GlobalKey()); // todo: load async
+                      var noteTuple = _pageMarkNoteMap![page.pageNumber];
+
+                      // note not ready
+                      if (noteTuple?.item1 == null) {
+                        // if not loading, load it first
+                        if (noteTuple == null) {
+                          BookMarkNotePage.open(_reading!, page.pageNumber, page.size).then((note) {
+                            if (!mounted) return;
+                            setState(() => _pageMarkNoteMap![page.pageNumber] = Tuple2(note, true));
+                          });
+                        }
+
+                        return const [];
                       }
-                      final drawingData = drawing.item1;
-                      triggerRepaint() => setState(() => (_drawingMap![page.pageNumber] = drawing = Tuple2(drawingData, GlobalKey())));
+
+                      final note = noteTuple!.item1!;
 
                       return [
-                        if (drawing != null) ConstrainedBox(
+                        ConstrainedBox(
                             constraints: const BoxConstraints.expand(),
                             child: IgnorePointer(
                                 child: RepaintBoundary(
-                                  child: CustomPaint(
-                                      painter:
-                                          PDFOverlayPainter(pageRect, page, drawingData, drawing!.item2),
-                                      isComplex: drawingData.pathList.length > 5 ? true : false,
-                                  ),
-                                ))),
-                        GestureDetector(
-                            onDoubleTap: () => setState(() =>
-                                _debugShowIndicator = !_debugShowIndicator)),
+                              child: CustomPaint(
+                                painter: PDFOverlayPainter(pageRect, page, note),
+                                isComplex: true, // fixme
+                              ),
+                            ))),
+                        GestureDetector(onDoubleTap: () => setState(() => _debugShowIndicator = !_debugShowIndicator)),
                         PencilGestureDetector(
                           onDown: (details) {
-                            drawingData.startDraw();
-                            triggerRepaint();
+                            note.startDraw();
+                            note.addPoint(BookMarkNotePage.canvasPositionToPagePosition(details.localPosition, pageRect, page.size));
                           },
-                          onMove: (details) {
-                            drawingData.addPoint(DrawingData.canvasPositionToPagePosition(details.localPosition, pageRect, page.size));
-                            triggerRepaint();
+                          onMove: (localPosition) {
+                            note.addPoint(BookMarkNotePage.canvasPositionToPagePosition(localPosition, pageRect, page.size));
                           },
                           onUp: (details) {
-                            drawingData.addPoint(DrawingData.canvasPositionToPagePosition(details.localPosition, pageRect, page.size));
-                            drawingData.endDraw();
-                            triggerRepaint();
+                            note.addPoint(BookMarkNotePage.canvasPositionToPagePosition(details.localPosition, pageRect, page.size));
+                            note.endDraw();
                           },
                           onCancel: (detail) {
-                            drawingData.endDraw();
+                            note.endDraw();
                           },
                         ),
                       ];
@@ -192,16 +217,20 @@ class _MyHomePageState extends State<MyHomePage> {
               Center(
                   child: Text(_errorTip!,
                       style: const TextStyle(color: Colors.red, fontSize: 20))),
-            Padding(
-              padding: const EdgeInsets.only(top: 20, left: 10),
-              child: Text('root: $_rootDirectory\n'
+            IgnorePointer(
+              child: Padding(
+                padding: const EdgeInsets.only(top: 20, left: 10),
+                child: Text(
+                  'root: $_rootDirectory\n'
                   'reading: $_reading\n'
                   'pdf               : ${_document?.sourceName}\n'
                   'pages: ${_document?.pages.length}\n'
                   'curPage: $_pageNumber\n'
                   'curPageSize: ${_document?.pages[_pageNumber].size}\n'
-                  'controller:\n$_transformation\n'
-                , style: const TextStyle(color: Colors.black),),
+                  'controller:\n$_transformation\n',
+                  style: const TextStyle(color: Colors.black),
+                ),
+              ),
             ),
           ],
         ),

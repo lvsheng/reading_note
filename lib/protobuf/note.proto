@@ -1,0 +1,109 @@
+syntax = "proto3";
+
+message NoteBookMeta {
+    oneof content {
+        IndependentNoteBookMeta independentNoteBookMeta = 1; // 对应一本书的独立笔记本
+        BookMarkNoteBookMeta bookMarkNoteBookMeta = 2; // 对应一本书的“每页标记”
+    }
+}
+
+message IndependentNoteBookMeta {
+    uint32 lastPageId = 1; // pageId直接作为该page数据文件的文件名
+    repeated uint32 pages = 2; // 每个int值即对应page的pageId
+}
+
+message BookMarkNoteBookMeta {
+    uint32 lastPageId = 1;
+    map<uint32/*book pageNumber*/, uint32/*pageId*/> pages = 2;
+}
+
+message NotePage {
+    double width = 1;
+    double height = 2;
+    repeated NotePageItem items = 3;
+    map<uint32, MattingResult> mattingResultPool = 4; // 独立笔记中使用，内容来自book上的MattingMark。
+    map<uint32, MattingMark> mattingMarkPool = 5; // book标记笔记中使用
+    map<uint32, Pen> penPool = 6;
+}
+
+message NotePageItem {
+    oneof content {
+        Path path = 1;
+        uint32 mattingMarkId = 2;
+        uint32 mattingResultId = 3;
+    }
+}
+
+message Path {
+    uint32 penId = 1;
+    repeated Point points = 2;
+}
+
+message Pen {
+    PenType penType = 1;
+    uint32 color = 2;
+    float strokeWidth = 3;
+}
+
+enum PenType {
+    PT_BALL_POINT_PEN = 0;
+}
+
+message Point {
+    double x = 1;
+    double y = 2;
+}
+
+enum ImageType {
+    IT_PNG = 0;
+}
+
+message MattingResult {
+    uint32 bookPageNumber = 1;
+    uint32 bookPageMattingMarkId = 2;
+    ImageType imageType = 3;
+    bytes imageData = 4;
+}
+
+message MattingMark {
+    optional uint32 color = 1;
+    oneof content {
+        MattingMarkHorizontal horizontal = 2;
+        MattingMarkVertical vertical = 3;
+        MattingMarkLine line = 4;
+        MattingMarkRectangle rectangle = 5;
+    }
+}
+
+message MattingMarkHorizontal {
+    double startX = 1;
+    double endX = 2;
+    float height = 3;
+}
+
+message MattingMarkVertical {
+    double startY = 1;
+    double endY = 2;
+    float width = 3;
+}
+
+message MattingMarkLine {
+    double startX = 1;
+    double endX = 2;
+    double startY = 3;
+    double endY = 4;
+    float width = 5;
+}
+
+message MattingMarkRectangle {
+    double leftTopX = 1;
+    double leftTopY = 2;
+    double rightBottomX = 3;
+    double rightBottomY = 4;
+}
+
+/*
+message MattingMarkFreeArea {
+    repeated Point points = 1;
+}
+*/

@@ -38,7 +38,7 @@ class PencilGestureDetector extends StatelessWidget {
 }
 
 typedef GesturePencilDrawDownCallback = void Function(PointerDownEvent details);
-typedef GesturePencilDrawMoveCallback = void Function(PointerMoveEvent details);
+typedef GesturePencilDrawMoveCallback = void Function(Offset localPosition);
 typedef GesturePencilDrawUpCallback = void Function(PointerUpEvent details);
 typedef GesturePencilDrawCancelCallback = void Function(PointerCancelEvent details);
 
@@ -49,6 +49,7 @@ class StylusGestureRecognizer extends OneSequenceGestureRecognizer {
   GesturePencilDrawUpCallback? onUp;
   GesturePencilDrawCancelCallback? onCancel;
   int? trackingStylusPointer;
+  Offset? lastReportedOffset;
 
   @override
   String get debugDescription => "PencilDrawGestureRecognizer";
@@ -68,14 +69,24 @@ class StylusGestureRecognizer extends OneSequenceGestureRecognizer {
     }
     if (event is PointerDownEvent && onDown != null) {
       onDown!(event);
+      lastReportedOffset = event.localPosition;
     } else if (event is PointerMoveEvent && onMove != null) {
-      onMove!(event);
+      assert(lastReportedOffset != null);
+      final distanceFromLast = (event.localPosition - lastReportedOffset!).distance;
+      if (distanceFromLast > 0.1) { // iPad Air 5上试验：典型为0.0
+        onMove!(event.localPosition);
+        lastReportedOffset = event.localPosition;
+      } else {
+        logDebug("eat move event: $distanceFromLast $event");
+      }
     } else if (event is PointerUpEvent && onUp != null) {
       onUp!(event);
       trackingStylusPointer = null;
+      lastReportedOffset = null;
     } else if (event is PointerCancelEvent && onCancel != null) {
       onCancel!(event);
       trackingStylusPointer = null;
+      lastReportedOffset = null;
     }
   }
 
