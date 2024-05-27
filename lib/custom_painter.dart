@@ -40,7 +40,7 @@ class PDFOverlayPainter extends CustomPainter {
           .toList(growable: false);
       countPoints += points.length;
 
-      canvas.drawPoints(PointMode.polygon, points, paint); // fixme: 在impeller下raster性能极差，卡顿明显。暂用skia
+      canvas.drawPoints(PointMode.polygon, points, paint); // fixme: 在impeller下raster性能极差，卡顿明显。暂禁用impeller: FLTEnableImpeller
 
       // for debug
       // final oldColor = paint.color;

@@ -82,5 +82,7 @@
             <string>ANY</string>
         </dict>
     </dict>
+    <key>FLTEnableImpeller</key>
+    <false />
 </dict>
 </plist>
