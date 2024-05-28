@@ -64,7 +64,8 @@ class StylusGestureRecognizer extends OneSequenceGestureRecognizer {
   @override
   void handleEvent(PointerEvent event) {
     if (event.pointer != trackingStylusPointer) {
-      logDebug("[StylusGesture] non-tracking pointer event, ignore: $event");
+      logDebug(
+          "[StylusGesture] non-tracking pointer event, ignore: $event event.pointer:${event.pointer} trackingStylusPointer:$trackingStylusPointer");
       return;
     }
     if (event is PointerDownEvent && onDown != null) {

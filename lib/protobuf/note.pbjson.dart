@@ -41,47 +41,14 @@ final $typed_data.Uint8List imageTypeDescriptor = $convert.base64Decode(
 const NoteBookMeta$json = {
   '1': 'NoteBookMeta',
   '2': [
-    {'1': 'independentNoteBookMeta', '3': 1, '4': 1, '5': 11, '6': '.IndependentNoteBookMeta', '9': 0, '10': 'independentNoteBookMeta'},
-    {'1': 'bookMarkNoteBookMeta', '3': 2, '4': 1, '5': 11, '6': '.BookMarkNoteBookMeta', '9': 0, '10': 'bookMarkNoteBookMeta'},
-  ],
-  '8': [
-    {'1': 'content'},
-  ],
-};
-
-/// Descriptor for `NoteBookMeta`. Decode as a `google.protobuf.DescriptorProto`.
-final $typed_data.Uint8List noteBookMetaDescriptor = $convert.base64Decode(
-    'CgxOb3RlQm9va01ldGESVAoXaW5kZXBlbmRlbnROb3RlQm9va01ldGEYASABKAsyGC5JbmRlcG'
-    'VuZGVudE5vdGVCb29rTWV0YUgAUhdpbmRlcGVuZGVudE5vdGVCb29rTWV0YRJLChRib29rTWFy'
-    'a05vdGVCb29rTWV0YRgCIAEoCzIVLkJvb2tNYXJrTm90ZUJvb2tNZXRhSABSFGJvb2tNYXJrTm'
-    '90ZUJvb2tNZXRhQgkKB2NvbnRlbnQ=');
-
-@$core.Deprecated('Use independentNoteBookMetaDescriptor instead')
-const IndependentNoteBookMeta$json = {
-  '1': 'IndependentNoteBookMeta',
-  '2': [
     {'1': 'lastPageId', '3': 1, '4': 1, '5': 13, '10': 'lastPageId'},
-    {'1': 'pages', '3': 2, '4': 3, '5': 13, '10': 'pages'},
+    {'1': 'pages', '3': 2, '4': 3, '5': 11, '6': '.NoteBookMeta.PagesEntry', '10': 'pages'},
   ],
+  '3': [NoteBookMeta_PagesEntry$json],
 };
 
-/// Descriptor for `IndependentNoteBookMeta`. Decode as a `google.protobuf.DescriptorProto`.
-final $typed_data.Uint8List independentNoteBookMetaDescriptor = $convert.base64Decode(
-    'ChdJbmRlcGVuZGVudE5vdGVCb29rTWV0YRIeCgpsYXN0UGFnZUlkGAEgASgNUgpsYXN0UGFnZU'
-    'lkEhQKBXBhZ2VzGAIgAygNUgVwYWdlcw==');
-
-@$core.Deprecated('Use bookMarkNoteBookMetaDescriptor instead')
-const BookMarkNoteBookMeta$json = {
-  '1': 'BookMarkNoteBookMeta',
-  '2': [
-    {'1': 'lastPageId', '3': 1, '4': 1, '5': 13, '10': 'lastPageId'},
-    {'1': 'pages', '3': 2, '4': 3, '5': 11, '6': '.BookMarkNoteBookMeta.PagesEntry', '10': 'pages'},
-  ],
-  '3': [BookMarkNoteBookMeta_PagesEntry$json],
-};
-
-@$core.Deprecated('Use bookMarkNoteBookMetaDescriptor instead')
-const BookMarkNoteBookMeta_PagesEntry$json = {
+@$core.Deprecated('Use noteBookMetaDescriptor instead')
+const NoteBookMeta_PagesEntry$json = {
   '1': 'PagesEntry',
   '2': [
     {'1': 'key', '3': 1, '4': 1, '5': 13, '10': 'key'},
@@ -90,45 +57,27 @@ const BookMarkNoteBookMeta_PagesEntry$json = {
   '7': {'7': true},
 };
 
-/// Descriptor for `BookMarkNoteBookMeta`. Decode as a `google.protobuf.DescriptorProto`.
-final $typed_data.Uint8List bookMarkNoteBookMetaDescriptor = $convert.base64Decode(
-    'ChRCb29rTWFya05vdGVCb29rTWV0YRIeCgpsYXN0UGFnZUlkGAEgASgNUgpsYXN0UGFnZUlkEj'
-    'YKBXBhZ2VzGAIgAygLMiAuQm9va01hcmtOb3RlQm9va01ldGEuUGFnZXNFbnRyeVIFcGFnZXMa'
-    'OAoKUGFnZXNFbnRyeRIQCgNrZXkYASABKA1SA2tleRIUCgV2YWx1ZRgCIAEoDVIFdmFsdWU6Aj'
-    'gB');
+/// Descriptor for `NoteBookMeta`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List noteBookMetaDescriptor = $convert.base64Decode(
+    'CgxOb3RlQm9va01ldGESHgoKbGFzdFBhZ2VJZBgBIAEoDVIKbGFzdFBhZ2VJZBIuCgVwYWdlcx'
+    'gCIAMoCzIYLk5vdGVCb29rTWV0YS5QYWdlc0VudHJ5UgVwYWdlcxo4CgpQYWdlc0VudHJ5EhAK'
+    'A2tleRgBIAEoDVIDa2V5EhQKBXZhbHVlGAIgASgNUgV2YWx1ZToCOAE=');
 
 @$core.Deprecated('Use notePageDescriptor instead')
 const NotePage$json = {
   '1': 'NotePage',
   '2': [
-    {'1': 'width', '3': 1, '4': 1, '5': 1, '10': 'width'},
-    {'1': 'height', '3': 2, '4': 1, '5': 1, '10': 'height'},
+    {'1': 'width', '3': 1, '4': 1, '5': 2, '10': 'width'},
+    {'1': 'height', '3': 2, '4': 1, '5': 2, '10': 'height'},
     {'1': 'items', '3': 3, '4': 3, '5': 11, '6': '.NotePageItem', '10': 'items'},
-    {'1': 'mattingResultPool', '3': 4, '4': 3, '5': 11, '6': '.NotePage.MattingResultPoolEntry', '10': 'mattingResultPool'},
-    {'1': 'mattingMarkPool', '3': 5, '4': 3, '5': 11, '6': '.NotePage.MattingMarkPoolEntry', '10': 'mattingMarkPool'},
+    {'1': 'independentNoteData', '3': 4, '4': 1, '5': 11, '6': '.IndependentNotePageData', '9': 0, '10': 'independentNoteData'},
+    {'1': 'markNoteData', '3': 5, '4': 1, '5': 11, '6': '.MarkNotePageData', '9': 0, '10': 'markNoteData'},
     {'1': 'penPool', '3': 6, '4': 3, '5': 11, '6': '.NotePage.PenPoolEntry', '10': 'penPool'},
   ],
-  '3': [NotePage_MattingResultPoolEntry$json, NotePage_MattingMarkPoolEntry$json, NotePage_PenPoolEntry$json],
-};
-
-@$core.Deprecated('Use notePageDescriptor instead')
-const NotePage_MattingResultPoolEntry$json = {
-  '1': 'MattingResultPoolEntry',
-  '2': [
-    {'1': 'key', '3': 1, '4': 1, '5': 13, '10': 'key'},
-    {'1': 'value', '3': 2, '4': 1, '5': 11, '6': '.MattingResult', '10': 'value'},
+  '3': [NotePage_PenPoolEntry$json],
+  '8': [
+    {'1': 'content'},
   ],
-  '7': {'7': true},
-};
-
-@$core.Deprecated('Use notePageDescriptor instead')
-const NotePage_MattingMarkPoolEntry$json = {
-  '1': 'MattingMarkPoolEntry',
-  '2': [
-    {'1': 'key', '3': 1, '4': 1, '5': 13, '10': 'key'},
-    {'1': 'value', '3': 2, '4': 1, '5': 11, '6': '.MattingMark', '10': 'value'},
-  ],
-  '7': {'7': true},
 };
 
 @$core.Deprecated('Use notePageDescriptor instead')
@@ -143,16 +92,65 @@ const NotePage_PenPoolEntry$json = {
 
 /// Descriptor for `NotePage`. Decode as a `google.protobuf.DescriptorProto`.
 final $typed_data.Uint8List notePageDescriptor = $convert.base64Decode(
-    'CghOb3RlUGFnZRIUCgV3aWR0aBgBIAEoAVIFd2lkdGgSFgoGaGVpZ2h0GAIgASgBUgZoZWlnaH'
-    'QSIwoFaXRlbXMYAyADKAsyDS5Ob3RlUGFnZUl0ZW1SBWl0ZW1zEk4KEW1hdHRpbmdSZXN1bHRQ'
-    'b29sGAQgAygLMiAuTm90ZVBhZ2UuTWF0dGluZ1Jlc3VsdFBvb2xFbnRyeVIRbWF0dGluZ1Jlc3'
-    'VsdFBvb2wSSAoPbWF0dGluZ01hcmtQb29sGAUgAygLMh4uTm90ZVBhZ2UuTWF0dGluZ01hcmtQ'
-    'b29sRW50cnlSD21hdHRpbmdNYXJrUG9vbBIwCgdwZW5Qb29sGAYgAygLMhYuTm90ZVBhZ2UuUG'
-    'VuUG9vbEVudHJ5UgdwZW5Qb29sGlQKFk1hdHRpbmdSZXN1bHRQb29sRW50cnkSEAoDa2V5GAEg'
-    'ASgNUgNrZXkSJAoFdmFsdWUYAiABKAsyDi5NYXR0aW5nUmVzdWx0UgV2YWx1ZToCOAEaUAoUTW'
-    'F0dGluZ01hcmtQb29sRW50cnkSEAoDa2V5GAEgASgNUgNrZXkSIgoFdmFsdWUYAiABKAsyDC5N'
-    'YXR0aW5nTWFya1IFdmFsdWU6AjgBGkAKDFBlblBvb2xFbnRyeRIQCgNrZXkYASABKA1SA2tleR'
-    'IaCgV2YWx1ZRgCIAEoCzIELlBlblIFdmFsdWU6AjgB');
+    'CghOb3RlUGFnZRIUCgV3aWR0aBgBIAEoAlIFd2lkdGgSFgoGaGVpZ2h0GAIgASgCUgZoZWlnaH'
+    'QSIwoFaXRlbXMYAyADKAsyDS5Ob3RlUGFnZUl0ZW1SBWl0ZW1zEkwKE2luZGVwZW5kZW50Tm90'
+    'ZURhdGEYBCABKAsyGC5JbmRlcGVuZGVudE5vdGVQYWdlRGF0YUgAUhNpbmRlcGVuZGVudE5vdG'
+    'VEYXRhEjcKDG1hcmtOb3RlRGF0YRgFIAEoCzIRLk1hcmtOb3RlUGFnZURhdGFIAFIMbWFya05v'
+    'dGVEYXRhEjAKB3BlblBvb2wYBiADKAsyFi5Ob3RlUGFnZS5QZW5Qb29sRW50cnlSB3BlblBvb2'
+    'waQAoMUGVuUG9vbEVudHJ5EhAKA2tleRgBIAEoDVIDa2V5EhoKBXZhbHVlGAIgASgLMgQuUGVu'
+    'UgV2YWx1ZToCOAFCCQoHY29udGVudA==');
+
+@$core.Deprecated('Use independentNotePageDataDescriptor instead')
+const IndependentNotePageData$json = {
+  '1': 'IndependentNotePageData',
+  '2': [
+    {'1': 'mattingResultPool', '3': 1, '4': 3, '5': 11, '6': '.IndependentNotePageData.MattingResultPoolEntry', '10': 'mattingResultPool'},
+  ],
+  '3': [IndependentNotePageData_MattingResultPoolEntry$json],
+};
+
+@$core.Deprecated('Use independentNotePageDataDescriptor instead')
+const IndependentNotePageData_MattingResultPoolEntry$json = {
+  '1': 'MattingResultPoolEntry',
+  '2': [
+    {'1': 'key', '3': 1, '4': 1, '5': 13, '10': 'key'},
+    {'1': 'value', '3': 2, '4': 1, '5': 11, '6': '.MattingResult', '10': 'value'},
+  ],
+  '7': {'7': true},
+};
+
+/// Descriptor for `IndependentNotePageData`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List independentNotePageDataDescriptor = $convert.base64Decode(
+    'ChdJbmRlcGVuZGVudE5vdGVQYWdlRGF0YRJdChFtYXR0aW5nUmVzdWx0UG9vbBgBIAMoCzIvLk'
+    'luZGVwZW5kZW50Tm90ZVBhZ2VEYXRhLk1hdHRpbmdSZXN1bHRQb29sRW50cnlSEW1hdHRpbmdS'
+    'ZXN1bHRQb29sGlQKFk1hdHRpbmdSZXN1bHRQb29sRW50cnkSEAoDa2V5GAEgASgNUgNrZXkSJA'
+    'oFdmFsdWUYAiABKAsyDi5NYXR0aW5nUmVzdWx0UgV2YWx1ZToCOAE=');
+
+@$core.Deprecated('Use markNotePageDataDescriptor instead')
+const MarkNotePageData$json = {
+  '1': 'MarkNotePageData',
+  '2': [
+    {'1': 'mattingMarkPool', '3': 1, '4': 3, '5': 11, '6': '.MarkNotePageData.MattingMarkPoolEntry', '10': 'mattingMarkPool'},
+  ],
+  '3': [MarkNotePageData_MattingMarkPoolEntry$json],
+};
+
+@$core.Deprecated('Use markNotePageDataDescriptor instead')
+const MarkNotePageData_MattingMarkPoolEntry$json = {
+  '1': 'MattingMarkPoolEntry',
+  '2': [
+    {'1': 'key', '3': 1, '4': 1, '5': 13, '10': 'key'},
+    {'1': 'value', '3': 2, '4': 1, '5': 11, '6': '.MattingMark', '10': 'value'},
+  ],
+  '7': {'7': true},
+};
+
+/// Descriptor for `MarkNotePageData`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List markNotePageDataDescriptor = $convert.base64Decode(
+    'ChBNYXJrTm90ZVBhZ2VEYXRhElAKD21hdHRpbmdNYXJrUG9vbBgBIAMoCzImLk1hcmtOb3RlUG'
+    'FnZURhdGEuTWF0dGluZ01hcmtQb29sRW50cnlSD21hdHRpbmdNYXJrUG9vbBpQChRNYXR0aW5n'
+    'TWFya1Bvb2xFbnRyeRIQCgNrZXkYASABKA1SA2tleRIiCgV2YWx1ZRgCIAEoCzIMLk1hdHRpbm'
+    'dNYXJrUgV2YWx1ZToCOAE=');
 
 @$core.Deprecated('Use notePageItemDescriptor instead')
 const NotePageItem$json = {
@@ -206,14 +204,14 @@ final $typed_data.Uint8List penDescriptor = $convert.base64Decode(
 const Point$json = {
   '1': 'Point',
   '2': [
-    {'1': 'x', '3': 1, '4': 1, '5': 1, '10': 'x'},
-    {'1': 'y', '3': 2, '4': 1, '5': 1, '10': 'y'},
+    {'1': 'x', '3': 1, '4': 1, '5': 2, '10': 'x'},
+    {'1': 'y', '3': 2, '4': 1, '5': 2, '10': 'y'},
   ],
 };
 
 /// Descriptor for `Point`. Decode as a `google.protobuf.DescriptorProto`.
 final $typed_data.Uint8List pointDescriptor = $convert.base64Decode(
-    'CgVQb2ludBIMCgF4GAEgASgBUgF4EgwKAXkYAiABKAFSAXk=');
+    'CgVQb2ludBIMCgF4GAEgASgCUgF4EgwKAXkYAiABKAJSAXk=');
 
 @$core.Deprecated('Use mattingResultDescriptor instead')
 const MattingResult$json = {
@@ -261,64 +259,64 @@ final $typed_data.Uint8List mattingMarkDescriptor = $convert.base64Decode(
 const MattingMarkHorizontal$json = {
   '1': 'MattingMarkHorizontal',
   '2': [
-    {'1': 'startX', '3': 1, '4': 1, '5': 1, '10': 'startX'},
-    {'1': 'endX', '3': 2, '4': 1, '5': 1, '10': 'endX'},
+    {'1': 'startX', '3': 1, '4': 1, '5': 2, '10': 'startX'},
+    {'1': 'endX', '3': 2, '4': 1, '5': 2, '10': 'endX'},
     {'1': 'height', '3': 3, '4': 1, '5': 2, '10': 'height'},
   ],
 };
 
 /// Descriptor for `MattingMarkHorizontal`. Decode as a `google.protobuf.DescriptorProto`.
 final $typed_data.Uint8List mattingMarkHorizontalDescriptor = $convert.base64Decode(
-    'ChVNYXR0aW5nTWFya0hvcml6b250YWwSFgoGc3RhcnRYGAEgASgBUgZzdGFydFgSEgoEZW5kWB'
-    'gCIAEoAVIEZW5kWBIWCgZoZWlnaHQYAyABKAJSBmhlaWdodA==');
+    'ChVNYXR0aW5nTWFya0hvcml6b250YWwSFgoGc3RhcnRYGAEgASgCUgZzdGFydFgSEgoEZW5kWB'
+    'gCIAEoAlIEZW5kWBIWCgZoZWlnaHQYAyABKAJSBmhlaWdodA==');
 
 @$core.Deprecated('Use mattingMarkVerticalDescriptor instead')
 const MattingMarkVertical$json = {
   '1': 'MattingMarkVertical',
   '2': [
-    {'1': 'startY', '3': 1, '4': 1, '5': 1, '10': 'startY'},
-    {'1': 'endY', '3': 2, '4': 1, '5': 1, '10': 'endY'},
+    {'1': 'startY', '3': 1, '4': 1, '5': 2, '10': 'startY'},
+    {'1': 'endY', '3': 2, '4': 1, '5': 2, '10': 'endY'},
     {'1': 'width', '3': 3, '4': 1, '5': 2, '10': 'width'},
   ],
 };
 
 /// Descriptor for `MattingMarkVertical`. Decode as a `google.protobuf.DescriptorProto`.
 final $typed_data.Uint8List mattingMarkVerticalDescriptor = $convert.base64Decode(
-    'ChNNYXR0aW5nTWFya1ZlcnRpY2FsEhYKBnN0YXJ0WRgBIAEoAVIGc3RhcnRZEhIKBGVuZFkYAi'
-    'ABKAFSBGVuZFkSFAoFd2lkdGgYAyABKAJSBXdpZHRo');
+    'ChNNYXR0aW5nTWFya1ZlcnRpY2FsEhYKBnN0YXJ0WRgBIAEoAlIGc3RhcnRZEhIKBGVuZFkYAi'
+    'ABKAJSBGVuZFkSFAoFd2lkdGgYAyABKAJSBXdpZHRo');
 
 @$core.Deprecated('Use mattingMarkLineDescriptor instead')
 const MattingMarkLine$json = {
   '1': 'MattingMarkLine',
   '2': [
-    {'1': 'startX', '3': 1, '4': 1, '5': 1, '10': 'startX'},
-    {'1': 'endX', '3': 2, '4': 1, '5': 1, '10': 'endX'},
-    {'1': 'startY', '3': 3, '4': 1, '5': 1, '10': 'startY'},
-    {'1': 'endY', '3': 4, '4': 1, '5': 1, '10': 'endY'},
+    {'1': 'startX', '3': 1, '4': 1, '5': 2, '10': 'startX'},
+    {'1': 'endX', '3': 2, '4': 1, '5': 2, '10': 'endX'},
+    {'1': 'startY', '3': 3, '4': 1, '5': 2, '10': 'startY'},
+    {'1': 'endY', '3': 4, '4': 1, '5': 2, '10': 'endY'},
     {'1': 'width', '3': 5, '4': 1, '5': 2, '10': 'width'},
   ],
 };
 
 /// Descriptor for `MattingMarkLine`. Decode as a `google.protobuf.DescriptorProto`.
 final $typed_data.Uint8List mattingMarkLineDescriptor = $convert.base64Decode(
-    'Cg9NYXR0aW5nTWFya0xpbmUSFgoGc3RhcnRYGAEgASgBUgZzdGFydFgSEgoEZW5kWBgCIAEoAV'
-    'IEZW5kWBIWCgZzdGFydFkYAyABKAFSBnN0YXJ0WRISCgRlbmRZGAQgASgBUgRlbmRZEhQKBXdp'
+    'Cg9NYXR0aW5nTWFya0xpbmUSFgoGc3RhcnRYGAEgASgCUgZzdGFydFgSEgoEZW5kWBgCIAEoAl'
+    'IEZW5kWBIWCgZzdGFydFkYAyABKAJSBnN0YXJ0WRISCgRlbmRZGAQgASgCUgRlbmRZEhQKBXdp'
     'ZHRoGAUgASgCUgV3aWR0aA==');
 
 @$core.Deprecated('Use mattingMarkRectangleDescriptor instead')
 const MattingMarkRectangle$json = {
   '1': 'MattingMarkRectangle',
   '2': [
-    {'1': 'leftTopX', '3': 1, '4': 1, '5': 1, '10': 'leftTopX'},
-    {'1': 'leftTopY', '3': 2, '4': 1, '5': 1, '10': 'leftTopY'},
-    {'1': 'rightBottomX', '3': 3, '4': 1, '5': 1, '10': 'rightBottomX'},
-    {'1': 'rightBottomY', '3': 4, '4': 1, '5': 1, '10': 'rightBottomY'},
+    {'1': 'leftTopX', '3': 1, '4': 1, '5': 2, '10': 'leftTopX'},
+    {'1': 'leftTopY', '3': 2, '4': 1, '5': 2, '10': 'leftTopY'},
+    {'1': 'rightBottomX', '3': 3, '4': 1, '5': 2, '10': 'rightBottomX'},
+    {'1': 'rightBottomY', '3': 4, '4': 1, '5': 2, '10': 'rightBottomY'},
   ],
 };
 
 /// Descriptor for `MattingMarkRectangle`. Decode as a `google.protobuf.DescriptorProto`.
 final $typed_data.Uint8List mattingMarkRectangleDescriptor = $convert.base64Decode(
-    'ChRNYXR0aW5nTWFya1JlY3RhbmdsZRIaCghsZWZ0VG9wWBgBIAEoAVIIbGVmdFRvcFgSGgoIbG'
-    'VmdFRvcFkYAiABKAFSCGxlZnRUb3BZEiIKDHJpZ2h0Qm90dG9tWBgDIAEoAVIMcmlnaHRCb3R0'
-    'b21YEiIKDHJpZ2h0Qm90dG9tWRgEIAEoAVIMcmlnaHRCb3R0b21Z');
+    'ChRNYXR0aW5nTWFya1JlY3RhbmdsZRIaCghsZWZ0VG9wWBgBIAEoAlIIbGVmdFRvcFgSGgoIbG'
+    'VmdFRvcFkYAiABKAJSCGxlZnRUb3BZEiIKDHJpZ2h0Qm90dG9tWBgDIAEoAlIMcmlnaHRCb3R0'
+    'b21YEiIKDHJpZ2h0Qm90dG9tWRgEIAEoAlIMcmlnaHRCb3R0b21Z');
 

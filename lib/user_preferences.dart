@@ -13,6 +13,7 @@ class UserPreferences {
 
   static const _keyLastOpenedFilePath = "lastOpenedFilePath";
   static const _keyPrefixLastPage = "lastPageOf";
+  static const _keyPrefixLastNotePage = "lastNotePageOf";
 
   UserPreferences._() {
     ready = SharedPreferences.getInstance().then((value) {
@@ -59,14 +60,31 @@ class UserPreferences {
     return _sharedPreferences!.getInt(_keyOfLastPage(file));
   }
 
-  setLastPage(File file, int? page) {
+  int? lastNotePageOf(File file) {
     if (!_allReady) return null;
-    final key = _keyOfLastPage(file);
-    if (page == null) {
-      return _removeIfNeeded(key);
+    return _sharedPreferences!.getInt(_keyOfLastNotePage(file));
+  }
+
+  void setLastPage(File file, int? page) {
+    if (!_allReady) return;
+    _setInt(_keyOfLastPage(file), page);
+  }
+
+  void setLastNotePage(File file, int? page) {
+    if (!_allReady) return;
+    _setInt(_keyOfLastNotePage(file), page);
+  }
+
+  void _setInt(String key, int? value) {
+    if (value == _sharedPreferences!.getInt(key)) {
+      return;
     }
-    logInfo("[userPreferences]: $key: $page");
-    _sharedPreferences!.setInt(key, page);
+    if (value == null) {
+      _removeIfNeeded(key);
+      return;
+    }
+    logInfo("[userPreferences]: $key: $value");
+    _sharedPreferences!.setInt(key, value);
   }
 
   bool get _allReady {
@@ -82,9 +100,8 @@ class UserPreferences {
   }
 
   /// must [_allReady] to use this
-  String _keyOfLastPage(File file) {
-    return "$_keyPrefixLastPage:${p.relative(file.path, from: documentProxy.rootDirectory!.path)}";
-  }
+  String _keyOfLastPage(File file) => "$_keyPrefixLastPage:${p.relative(file.path, from: documentProxy.rootDirectory!.path)}";
+  String _keyOfLastNotePage(File file) => "$_keyPrefixLastNotePage:${p.relative(file.path, from: documentProxy.rootDirectory!.path)}";
 
   /// must [ready] to use this
   _removeIfNeeded(String key) {

@@ -82,6 +82,8 @@
             <string>ANY</string>
         </dict>
     </dict>
+
+    <!--impeller下canvas.drawPoints的raster造成明显卡顿。因此暂禁用impeller-->
     <key>FLTEnableImpeller</key>
     <false />
 </dict>

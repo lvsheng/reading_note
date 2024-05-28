@@ -17,23 +17,17 @@ import 'note.pbenum.dart';
 
 export 'note.pbenum.dart';
 
-enum NoteBookMeta_Content {
-  independentNoteBookMeta, 
-  bookMarkNoteBookMeta, 
-  notSet
-}
-
 class NoteBookMeta extends $pb.GeneratedMessage {
   factory NoteBookMeta({
-    IndependentNoteBookMeta? independentNoteBookMeta,
-    BookMarkNoteBookMeta? bookMarkNoteBookMeta,
+    $core.int? lastPageId,
+    $core.Map<$core.int, $core.int>? pages,
   }) {
     final $result = create();
-    if (independentNoteBookMeta != null) {
-      $result.independentNoteBookMeta = independentNoteBookMeta;
+    if (lastPageId != null) {
+      $result.lastPageId = lastPageId;
     }
-    if (bookMarkNoteBookMeta != null) {
-      $result.bookMarkNoteBookMeta = bookMarkNoteBookMeta;
+    if (pages != null) {
+      $result.pages.addAll(pages);
     }
     return $result;
   }
@@ -41,15 +35,9 @@ class NoteBookMeta extends $pb.GeneratedMessage {
   factory NoteBookMeta.fromBuffer($core.List<$core.int> i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromBuffer(i, r);
   factory NoteBookMeta.fromJson($core.String i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(i, r);
 
-  static const $core.Map<$core.int, NoteBookMeta_Content> _NoteBookMeta_ContentByTag = {
-    1 : NoteBookMeta_Content.independentNoteBookMeta,
-    2 : NoteBookMeta_Content.bookMarkNoteBookMeta,
-    0 : NoteBookMeta_Content.notSet
-  };
   static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'NoteBookMeta', createEmptyInstance: create)
-    ..oo(0, [1, 2])
-    ..aOM<IndependentNoteBookMeta>(1, _omitFieldNames ? '' : 'independentNoteBookMeta', protoName: 'independentNoteBookMeta', subBuilder: IndependentNoteBookMeta.create)
-    ..aOM<BookMarkNoteBookMeta>(2, _omitFieldNames ? '' : 'bookMarkNoteBookMeta', protoName: 'bookMarkNoteBookMeta', subBuilder: BookMarkNoteBookMeta.create)
+    ..a<$core.int>(1, _omitFieldNames ? '' : 'lastPageId', $pb.PbFieldType.OU3, protoName: 'lastPageId')
+    ..m<$core.int, $core.int>(2, _omitFieldNames ? '' : 'pages', entryClassName: 'NoteBookMeta.PagesEntry', keyFieldType: $pb.PbFieldType.OU3, valueFieldType: $pb.PbFieldType.OU3)
     ..hasRequiredFields = false
   ;
 
@@ -74,135 +62,6 @@ class NoteBookMeta extends $pb.GeneratedMessage {
   static NoteBookMeta getDefault() => _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<NoteBookMeta>(create);
   static NoteBookMeta? _defaultInstance;
 
-  NoteBookMeta_Content whichContent() => _NoteBookMeta_ContentByTag[$_whichOneof(0)]!;
-  void clearContent() => clearField($_whichOneof(0));
-
-  @$pb.TagNumber(1)
-  IndependentNoteBookMeta get independentNoteBookMeta => $_getN(0);
-  @$pb.TagNumber(1)
-  set independentNoteBookMeta(IndependentNoteBookMeta v) { setField(1, v); }
-  @$pb.TagNumber(1)
-  $core.bool hasIndependentNoteBookMeta() => $_has(0);
-  @$pb.TagNumber(1)
-  void clearIndependentNoteBookMeta() => clearField(1);
-  @$pb.TagNumber(1)
-  IndependentNoteBookMeta ensureIndependentNoteBookMeta() => $_ensure(0);
-
-  @$pb.TagNumber(2)
-  BookMarkNoteBookMeta get bookMarkNoteBookMeta => $_getN(1);
-  @$pb.TagNumber(2)
-  set bookMarkNoteBookMeta(BookMarkNoteBookMeta v) { setField(2, v); }
-  @$pb.TagNumber(2)
-  $core.bool hasBookMarkNoteBookMeta() => $_has(1);
-  @$pb.TagNumber(2)
-  void clearBookMarkNoteBookMeta() => clearField(2);
-  @$pb.TagNumber(2)
-  BookMarkNoteBookMeta ensureBookMarkNoteBookMeta() => $_ensure(1);
-}
-
-class IndependentNoteBookMeta extends $pb.GeneratedMessage {
-  factory IndependentNoteBookMeta({
-    $core.int? lastPageId,
-    $core.Iterable<$core.int>? pages,
-  }) {
-    final $result = create();
-    if (lastPageId != null) {
-      $result.lastPageId = lastPageId;
-    }
-    if (pages != null) {
-      $result.pages.addAll(pages);
-    }
-    return $result;
-  }
-  IndependentNoteBookMeta._() : super();
-  factory IndependentNoteBookMeta.fromBuffer($core.List<$core.int> i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromBuffer(i, r);
-  factory IndependentNoteBookMeta.fromJson($core.String i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(i, r);
-
-  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'IndependentNoteBookMeta', createEmptyInstance: create)
-    ..a<$core.int>(1, _omitFieldNames ? '' : 'lastPageId', $pb.PbFieldType.OU3, protoName: 'lastPageId')
-    ..p<$core.int>(2, _omitFieldNames ? '' : 'pages', $pb.PbFieldType.KU3)
-    ..hasRequiredFields = false
-  ;
-
-  @$core.Deprecated(
-  'Using this can add significant overhead to your binary. '
-  'Use [GeneratedMessageGenericExtensions.deepCopy] instead. '
-  'Will be removed in next major version')
-  IndependentNoteBookMeta clone() => IndependentNoteBookMeta()..mergeFromMessage(this);
-  @$core.Deprecated(
-  'Using this can add significant overhead to your binary. '
-  'Use [GeneratedMessageGenericExtensions.rebuild] instead. '
-  'Will be removed in next major version')
-  IndependentNoteBookMeta copyWith(void Function(IndependentNoteBookMeta) updates) => super.copyWith((message) => updates(message as IndependentNoteBookMeta)) as IndependentNoteBookMeta;
-
-  $pb.BuilderInfo get info_ => _i;
-
-  @$core.pragma('dart2js:noInline')
-  static IndependentNoteBookMeta create() => IndependentNoteBookMeta._();
-  IndependentNoteBookMeta createEmptyInstance() => create();
-  static $pb.PbList<IndependentNoteBookMeta> createRepeated() => $pb.PbList<IndependentNoteBookMeta>();
-  @$core.pragma('dart2js:noInline')
-  static IndependentNoteBookMeta getDefault() => _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<IndependentNoteBookMeta>(create);
-  static IndependentNoteBookMeta? _defaultInstance;
-
-  @$pb.TagNumber(1)
-  $core.int get lastPageId => $_getIZ(0);
-  @$pb.TagNumber(1)
-  set lastPageId($core.int v) { $_setUnsignedInt32(0, v); }
-  @$pb.TagNumber(1)
-  $core.bool hasLastPageId() => $_has(0);
-  @$pb.TagNumber(1)
-  void clearLastPageId() => clearField(1);
-
-  @$pb.TagNumber(2)
-  $core.List<$core.int> get pages => $_getList(1);
-}
-
-class BookMarkNoteBookMeta extends $pb.GeneratedMessage {
-  factory BookMarkNoteBookMeta({
-    $core.int? lastPageId,
-    $core.Map<$core.int, $core.int>? pages,
-  }) {
-    final $result = create();
-    if (lastPageId != null) {
-      $result.lastPageId = lastPageId;
-    }
-    if (pages != null) {
-      $result.pages.addAll(pages);
-    }
-    return $result;
-  }
-  BookMarkNoteBookMeta._() : super();
-  factory BookMarkNoteBookMeta.fromBuffer($core.List<$core.int> i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromBuffer(i, r);
-  factory BookMarkNoteBookMeta.fromJson($core.String i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(i, r);
-
-  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'BookMarkNoteBookMeta', createEmptyInstance: create)
-    ..a<$core.int>(1, _omitFieldNames ? '' : 'lastPageId', $pb.PbFieldType.OU3, protoName: 'lastPageId')
-    ..m<$core.int, $core.int>(2, _omitFieldNames ? '' : 'pages', entryClassName: 'BookMarkNoteBookMeta.PagesEntry', keyFieldType: $pb.PbFieldType.OU3, valueFieldType: $pb.PbFieldType.OU3)
-    ..hasRequiredFields = false
-  ;
-
-  @$core.Deprecated(
-  'Using this can add significant overhead to your binary. '
-  'Use [GeneratedMessageGenericExtensions.deepCopy] instead. '
-  'Will be removed in next major version')
-  BookMarkNoteBookMeta clone() => BookMarkNoteBookMeta()..mergeFromMessage(this);
-  @$core.Deprecated(
-  'Using this can add significant overhead to your binary. '
-  'Use [GeneratedMessageGenericExtensions.rebuild] instead. '
-  'Will be removed in next major version')
-  BookMarkNoteBookMeta copyWith(void Function(BookMarkNoteBookMeta) updates) => super.copyWith((message) => updates(message as BookMarkNoteBookMeta)) as BookMarkNoteBookMeta;
-
-  $pb.BuilderInfo get info_ => _i;
-
-  @$core.pragma('dart2js:noInline')
-  static BookMarkNoteBookMeta create() => BookMarkNoteBookMeta._();
-  BookMarkNoteBookMeta createEmptyInstance() => create();
-  static $pb.PbList<BookMarkNoteBookMeta> createRepeated() => $pb.PbList<BookMarkNoteBookMeta>();
-  @$core.pragma('dart2js:noInline')
-  static BookMarkNoteBookMeta getDefault() => _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<BookMarkNoteBookMeta>(create);
-  static BookMarkNoteBookMeta? _defaultInstance;
-
   @$pb.TagNumber(1)
   $core.int get lastPageId => $_getIZ(0);
   @$pb.TagNumber(1)
@@ -216,13 +75,19 @@ class BookMarkNoteBookMeta extends $pb.GeneratedMessage {
   $core.Map<$core.int, $core.int> get pages => $_getMap(1);
 }
 
+enum NotePage_Content {
+  independentNoteData, 
+  markNoteData, 
+  notSet
+}
+
 class NotePage extends $pb.GeneratedMessage {
   factory NotePage({
     $core.double? width,
     $core.double? height,
     $core.Iterable<NotePageItem>? items,
-    $core.Map<$core.int, MattingResult>? mattingResultPool,
-    $core.Map<$core.int, MattingMark>? mattingMarkPool,
+    IndependentNotePageData? independentNoteData,
+    MarkNotePageData? markNoteData,
     $core.Map<$core.int, Pen>? penPool,
   }) {
     final $result = create();
@@ -235,11 +100,11 @@ class NotePage extends $pb.GeneratedMessage {
     if (items != null) {
       $result.items.addAll(items);
     }
-    if (mattingResultPool != null) {
-      $result.mattingResultPool.addAll(mattingResultPool);
+    if (independentNoteData != null) {
+      $result.independentNoteData = independentNoteData;
     }
-    if (mattingMarkPool != null) {
-      $result.mattingMarkPool.addAll(mattingMarkPool);
+    if (markNoteData != null) {
+      $result.markNoteData = markNoteData;
     }
     if (penPool != null) {
       $result.penPool.addAll(penPool);
@@ -250,12 +115,18 @@ class NotePage extends $pb.GeneratedMessage {
   factory NotePage.fromBuffer($core.List<$core.int> i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromBuffer(i, r);
   factory NotePage.fromJson($core.String i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(i, r);
 
+  static const $core.Map<$core.int, NotePage_Content> _NotePage_ContentByTag = {
+    4 : NotePage_Content.independentNoteData,
+    5 : NotePage_Content.markNoteData,
+    0 : NotePage_Content.notSet
+  };
   static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'NotePage', createEmptyInstance: create)
-    ..a<$core.double>(1, _omitFieldNames ? '' : 'width', $pb.PbFieldType.OD)
-    ..a<$core.double>(2, _omitFieldNames ? '' : 'height', $pb.PbFieldType.OD)
+    ..oo(0, [4, 5])
+    ..a<$core.double>(1, _omitFieldNames ? '' : 'width', $pb.PbFieldType.OF)
+    ..a<$core.double>(2, _omitFieldNames ? '' : 'height', $pb.PbFieldType.OF)
     ..pc<NotePageItem>(3, _omitFieldNames ? '' : 'items', $pb.PbFieldType.PM, subBuilder: NotePageItem.create)
-    ..m<$core.int, MattingResult>(4, _omitFieldNames ? '' : 'mattingResultPool', protoName: 'mattingResultPool', entryClassName: 'NotePage.MattingResultPoolEntry', keyFieldType: $pb.PbFieldType.OU3, valueFieldType: $pb.PbFieldType.OM, valueCreator: MattingResult.create, valueDefaultOrMaker: MattingResult.getDefault)
-    ..m<$core.int, MattingMark>(5, _omitFieldNames ? '' : 'mattingMarkPool', protoName: 'mattingMarkPool', entryClassName: 'NotePage.MattingMarkPoolEntry', keyFieldType: $pb.PbFieldType.OU3, valueFieldType: $pb.PbFieldType.OM, valueCreator: MattingMark.create, valueDefaultOrMaker: MattingMark.getDefault)
+    ..aOM<IndependentNotePageData>(4, _omitFieldNames ? '' : 'independentNoteData', protoName: 'independentNoteData', subBuilder: IndependentNotePageData.create)
+    ..aOM<MarkNotePageData>(5, _omitFieldNames ? '' : 'markNoteData', protoName: 'markNoteData', subBuilder: MarkNotePageData.create)
     ..m<$core.int, Pen>(6, _omitFieldNames ? '' : 'penPool', protoName: 'penPool', entryClassName: 'NotePage.PenPoolEntry', keyFieldType: $pb.PbFieldType.OU3, valueFieldType: $pb.PbFieldType.OM, valueCreator: Pen.create, valueDefaultOrMaker: Pen.getDefault)
     ..hasRequiredFields = false
   ;
@@ -281,10 +152,13 @@ class NotePage extends $pb.GeneratedMessage {
   static NotePage getDefault() => _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<NotePage>(create);
   static NotePage? _defaultInstance;
 
+  NotePage_Content whichContent() => _NotePage_ContentByTag[$_whichOneof(0)]!;
+  void clearContent() => clearField($_whichOneof(0));
+
   @$pb.TagNumber(1)
   $core.double get width => $_getN(0);
   @$pb.TagNumber(1)
-  set width($core.double v) { $_setDouble(0, v); }
+  set width($core.double v) { $_setFloat(0, v); }
   @$pb.TagNumber(1)
   $core.bool hasWidth() => $_has(0);
   @$pb.TagNumber(1)
@@ -293,7 +167,7 @@ class NotePage extends $pb.GeneratedMessage {
   @$pb.TagNumber(2)
   $core.double get height => $_getN(1);
   @$pb.TagNumber(2)
-  set height($core.double v) { $_setDouble(1, v); }
+  set height($core.double v) { $_setFloat(1, v); }
   @$pb.TagNumber(2)
   $core.bool hasHeight() => $_has(1);
   @$pb.TagNumber(2)
@@ -303,13 +177,117 @@ class NotePage extends $pb.GeneratedMessage {
   $core.List<NotePageItem> get items => $_getList(2);
 
   @$pb.TagNumber(4)
-  $core.Map<$core.int, MattingResult> get mattingResultPool => $_getMap(3);
+  IndependentNotePageData get independentNoteData => $_getN(3);
+  @$pb.TagNumber(4)
+  set independentNoteData(IndependentNotePageData v) { setField(4, v); }
+  @$pb.TagNumber(4)
+  $core.bool hasIndependentNoteData() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearIndependentNoteData() => clearField(4);
+  @$pb.TagNumber(4)
+  IndependentNotePageData ensureIndependentNoteData() => $_ensure(3);
 
   @$pb.TagNumber(5)
-  $core.Map<$core.int, MattingMark> get mattingMarkPool => $_getMap(4);
+  MarkNotePageData get markNoteData => $_getN(4);
+  @$pb.TagNumber(5)
+  set markNoteData(MarkNotePageData v) { setField(5, v); }
+  @$pb.TagNumber(5)
+  $core.bool hasMarkNoteData() => $_has(4);
+  @$pb.TagNumber(5)
+  void clearMarkNoteData() => clearField(5);
+  @$pb.TagNumber(5)
+  MarkNotePageData ensureMarkNoteData() => $_ensure(4);
 
   @$pb.TagNumber(6)
   $core.Map<$core.int, Pen> get penPool => $_getMap(5);
+}
+
+class IndependentNotePageData extends $pb.GeneratedMessage {
+  factory IndependentNotePageData({
+    $core.Map<$core.int, MattingResult>? mattingResultPool,
+  }) {
+    final $result = create();
+    if (mattingResultPool != null) {
+      $result.mattingResultPool.addAll(mattingResultPool);
+    }
+    return $result;
+  }
+  IndependentNotePageData._() : super();
+  factory IndependentNotePageData.fromBuffer($core.List<$core.int> i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromBuffer(i, r);
+  factory IndependentNotePageData.fromJson($core.String i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(i, r);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'IndependentNotePageData', createEmptyInstance: create)
+    ..m<$core.int, MattingResult>(1, _omitFieldNames ? '' : 'mattingResultPool', protoName: 'mattingResultPool', entryClassName: 'IndependentNotePageData.MattingResultPoolEntry', keyFieldType: $pb.PbFieldType.OU3, valueFieldType: $pb.PbFieldType.OM, valueCreator: MattingResult.create, valueDefaultOrMaker: MattingResult.getDefault)
+    ..hasRequiredFields = false
+  ;
+
+  @$core.Deprecated(
+  'Using this can add significant overhead to your binary. '
+  'Use [GeneratedMessageGenericExtensions.deepCopy] instead. '
+  'Will be removed in next major version')
+  IndependentNotePageData clone() => IndependentNotePageData()..mergeFromMessage(this);
+  @$core.Deprecated(
+  'Using this can add significant overhead to your binary. '
+  'Use [GeneratedMessageGenericExtensions.rebuild] instead. '
+  'Will be removed in next major version')
+  IndependentNotePageData copyWith(void Function(IndependentNotePageData) updates) => super.copyWith((message) => updates(message as IndependentNotePageData)) as IndependentNotePageData;
+
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static IndependentNotePageData create() => IndependentNotePageData._();
+  IndependentNotePageData createEmptyInstance() => create();
+  static $pb.PbList<IndependentNotePageData> createRepeated() => $pb.PbList<IndependentNotePageData>();
+  @$core.pragma('dart2js:noInline')
+  static IndependentNotePageData getDefault() => _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<IndependentNotePageData>(create);
+  static IndependentNotePageData? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $core.Map<$core.int, MattingResult> get mattingResultPool => $_getMap(0);
+}
+
+class MarkNotePageData extends $pb.GeneratedMessage {
+  factory MarkNotePageData({
+    $core.Map<$core.int, MattingMark>? mattingMarkPool,
+  }) {
+    final $result = create();
+    if (mattingMarkPool != null) {
+      $result.mattingMarkPool.addAll(mattingMarkPool);
+    }
+    return $result;
+  }
+  MarkNotePageData._() : super();
+  factory MarkNotePageData.fromBuffer($core.List<$core.int> i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromBuffer(i, r);
+  factory MarkNotePageData.fromJson($core.String i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(i, r);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'MarkNotePageData', createEmptyInstance: create)
+    ..m<$core.int, MattingMark>(1, _omitFieldNames ? '' : 'mattingMarkPool', protoName: 'mattingMarkPool', entryClassName: 'MarkNotePageData.MattingMarkPoolEntry', keyFieldType: $pb.PbFieldType.OU3, valueFieldType: $pb.PbFieldType.OM, valueCreator: MattingMark.create, valueDefaultOrMaker: MattingMark.getDefault)
+    ..hasRequiredFields = false
+  ;
+
+  @$core.Deprecated(
+  'Using this can add significant overhead to your binary. '
+  'Use [GeneratedMessageGenericExtensions.deepCopy] instead. '
+  'Will be removed in next major version')
+  MarkNotePageData clone() => MarkNotePageData()..mergeFromMessage(this);
+  @$core.Deprecated(
+  'Using this can add significant overhead to your binary. '
+  'Use [GeneratedMessageGenericExtensions.rebuild] instead. '
+  'Will be removed in next major version')
+  MarkNotePageData copyWith(void Function(MarkNotePageData) updates) => super.copyWith((message) => updates(message as MarkNotePageData)) as MarkNotePageData;
+
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static MarkNotePageData create() => MarkNotePageData._();
+  MarkNotePageData createEmptyInstance() => create();
+  static $pb.PbList<MarkNotePageData> createRepeated() => $pb.PbList<MarkNotePageData>();
+  @$core.pragma('dart2js:noInline')
+  static MarkNotePageData getDefault() => _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<MarkNotePageData>(create);
+  static MarkNotePageData? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $core.Map<$core.int, MattingMark> get mattingMarkPool => $_getMap(0);
 }
 
 enum NotePageItem_Content {
@@ -564,8 +542,8 @@ class Point extends $pb.GeneratedMessage {
   factory Point.fromJson($core.String i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(i, r);
 
   static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'Point', createEmptyInstance: create)
-    ..a<$core.double>(1, _omitFieldNames ? '' : 'x', $pb.PbFieldType.OD)
-    ..a<$core.double>(2, _omitFieldNames ? '' : 'y', $pb.PbFieldType.OD)
+    ..a<$core.double>(1, _omitFieldNames ? '' : 'x', $pb.PbFieldType.OF)
+    ..a<$core.double>(2, _omitFieldNames ? '' : 'y', $pb.PbFieldType.OF)
     ..hasRequiredFields = false
   ;
 
@@ -593,7 +571,7 @@ class Point extends $pb.GeneratedMessage {
   @$pb.TagNumber(1)
   $core.double get x => $_getN(0);
   @$pb.TagNumber(1)
-  set x($core.double v) { $_setDouble(0, v); }
+  set x($core.double v) { $_setFloat(0, v); }
   @$pb.TagNumber(1)
   $core.bool hasX() => $_has(0);
   @$pb.TagNumber(1)
@@ -602,7 +580,7 @@ class Point extends $pb.GeneratedMessage {
   @$pb.TagNumber(2)
   $core.double get y => $_getN(1);
   @$pb.TagNumber(2)
-  set y($core.double v) { $_setDouble(1, v); }
+  set y($core.double v) { $_setFloat(1, v); }
   @$pb.TagNumber(2)
   $core.bool hasY() => $_has(1);
   @$pb.TagNumber(2)
@@ -857,8 +835,8 @@ class MattingMarkHorizontal extends $pb.GeneratedMessage {
   factory MattingMarkHorizontal.fromJson($core.String i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(i, r);
 
   static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'MattingMarkHorizontal', createEmptyInstance: create)
-    ..a<$core.double>(1, _omitFieldNames ? '' : 'startX', $pb.PbFieldType.OD, protoName: 'startX')
-    ..a<$core.double>(2, _omitFieldNames ? '' : 'endX', $pb.PbFieldType.OD, protoName: 'endX')
+    ..a<$core.double>(1, _omitFieldNames ? '' : 'startX', $pb.PbFieldType.OF, protoName: 'startX')
+    ..a<$core.double>(2, _omitFieldNames ? '' : 'endX', $pb.PbFieldType.OF, protoName: 'endX')
     ..a<$core.double>(3, _omitFieldNames ? '' : 'height', $pb.PbFieldType.OF)
     ..hasRequiredFields = false
   ;
@@ -887,7 +865,7 @@ class MattingMarkHorizontal extends $pb.GeneratedMessage {
   @$pb.TagNumber(1)
   $core.double get startX => $_getN(0);
   @$pb.TagNumber(1)
-  set startX($core.double v) { $_setDouble(0, v); }
+  set startX($core.double v) { $_setFloat(0, v); }
   @$pb.TagNumber(1)
   $core.bool hasStartX() => $_has(0);
   @$pb.TagNumber(1)
@@ -896,7 +874,7 @@ class MattingMarkHorizontal extends $pb.GeneratedMessage {
   @$pb.TagNumber(2)
   $core.double get endX => $_getN(1);
   @$pb.TagNumber(2)
-  set endX($core.double v) { $_setDouble(1, v); }
+  set endX($core.double v) { $_setFloat(1, v); }
   @$pb.TagNumber(2)
   $core.bool hasEndX() => $_has(1);
   @$pb.TagNumber(2)
@@ -935,8 +913,8 @@ class MattingMarkVertical extends $pb.GeneratedMessage {
   factory MattingMarkVertical.fromJson($core.String i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(i, r);
 
   static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'MattingMarkVertical', createEmptyInstance: create)
-    ..a<$core.double>(1, _omitFieldNames ? '' : 'startY', $pb.PbFieldType.OD, protoName: 'startY')
-    ..a<$core.double>(2, _omitFieldNames ? '' : 'endY', $pb.PbFieldType.OD, protoName: 'endY')
+    ..a<$core.double>(1, _omitFieldNames ? '' : 'startY', $pb.PbFieldType.OF, protoName: 'startY')
+    ..a<$core.double>(2, _omitFieldNames ? '' : 'endY', $pb.PbFieldType.OF, protoName: 'endY')
     ..a<$core.double>(3, _omitFieldNames ? '' : 'width', $pb.PbFieldType.OF)
     ..hasRequiredFields = false
   ;
@@ -965,7 +943,7 @@ class MattingMarkVertical extends $pb.GeneratedMessage {
   @$pb.TagNumber(1)
   $core.double get startY => $_getN(0);
   @$pb.TagNumber(1)
-  set startY($core.double v) { $_setDouble(0, v); }
+  set startY($core.double v) { $_setFloat(0, v); }
   @$pb.TagNumber(1)
   $core.bool hasStartY() => $_has(0);
   @$pb.TagNumber(1)
@@ -974,7 +952,7 @@ class MattingMarkVertical extends $pb.GeneratedMessage {
   @$pb.TagNumber(2)
   $core.double get endY => $_getN(1);
   @$pb.TagNumber(2)
-  set endY($core.double v) { $_setDouble(1, v); }
+  set endY($core.double v) { $_setFloat(1, v); }
   @$pb.TagNumber(2)
   $core.bool hasEndY() => $_has(1);
   @$pb.TagNumber(2)
@@ -1021,10 +999,10 @@ class MattingMarkLine extends $pb.GeneratedMessage {
   factory MattingMarkLine.fromJson($core.String i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(i, r);
 
   static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'MattingMarkLine', createEmptyInstance: create)
-    ..a<$core.double>(1, _omitFieldNames ? '' : 'startX', $pb.PbFieldType.OD, protoName: 'startX')
-    ..a<$core.double>(2, _omitFieldNames ? '' : 'endX', $pb.PbFieldType.OD, protoName: 'endX')
-    ..a<$core.double>(3, _omitFieldNames ? '' : 'startY', $pb.PbFieldType.OD, protoName: 'startY')
-    ..a<$core.double>(4, _omitFieldNames ? '' : 'endY', $pb.PbFieldType.OD, protoName: 'endY')
+    ..a<$core.double>(1, _omitFieldNames ? '' : 'startX', $pb.PbFieldType.OF, protoName: 'startX')
+    ..a<$core.double>(2, _omitFieldNames ? '' : 'endX', $pb.PbFieldType.OF, protoName: 'endX')
+    ..a<$core.double>(3, _omitFieldNames ? '' : 'startY', $pb.PbFieldType.OF, protoName: 'startY')
+    ..a<$core.double>(4, _omitFieldNames ? '' : 'endY', $pb.PbFieldType.OF, protoName: 'endY')
     ..a<$core.double>(5, _omitFieldNames ? '' : 'width', $pb.PbFieldType.OF)
     ..hasRequiredFields = false
   ;
@@ -1053,7 +1031,7 @@ class MattingMarkLine extends $pb.GeneratedMessage {
   @$pb.TagNumber(1)
   $core.double get startX => $_getN(0);
   @$pb.TagNumber(1)
-  set startX($core.double v) { $_setDouble(0, v); }
+  set startX($core.double v) { $_setFloat(0, v); }
   @$pb.TagNumber(1)
   $core.bool hasStartX() => $_has(0);
   @$pb.TagNumber(1)
@@ -1062,7 +1040,7 @@ class MattingMarkLine extends $pb.GeneratedMessage {
   @$pb.TagNumber(2)
   $core.double get endX => $_getN(1);
   @$pb.TagNumber(2)
-  set endX($core.double v) { $_setDouble(1, v); }
+  set endX($core.double v) { $_setFloat(1, v); }
   @$pb.TagNumber(2)
   $core.bool hasEndX() => $_has(1);
   @$pb.TagNumber(2)
@@ -1071,7 +1049,7 @@ class MattingMarkLine extends $pb.GeneratedMessage {
   @$pb.TagNumber(3)
   $core.double get startY => $_getN(2);
   @$pb.TagNumber(3)
-  set startY($core.double v) { $_setDouble(2, v); }
+  set startY($core.double v) { $_setFloat(2, v); }
   @$pb.TagNumber(3)
   $core.bool hasStartY() => $_has(2);
   @$pb.TagNumber(3)
@@ -1080,7 +1058,7 @@ class MattingMarkLine extends $pb.GeneratedMessage {
   @$pb.TagNumber(4)
   $core.double get endY => $_getN(3);
   @$pb.TagNumber(4)
-  set endY($core.double v) { $_setDouble(3, v); }
+  set endY($core.double v) { $_setFloat(3, v); }
   @$pb.TagNumber(4)
   $core.bool hasEndY() => $_has(3);
   @$pb.TagNumber(4)
@@ -1123,10 +1101,10 @@ class MattingMarkRectangle extends $pb.GeneratedMessage {
   factory MattingMarkRectangle.fromJson($core.String i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(i, r);
 
   static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'MattingMarkRectangle', createEmptyInstance: create)
-    ..a<$core.double>(1, _omitFieldNames ? '' : 'leftTopX', $pb.PbFieldType.OD, protoName: 'leftTopX')
-    ..a<$core.double>(2, _omitFieldNames ? '' : 'leftTopY', $pb.PbFieldType.OD, protoName: 'leftTopY')
-    ..a<$core.double>(3, _omitFieldNames ? '' : 'rightBottomX', $pb.PbFieldType.OD, protoName: 'rightBottomX')
-    ..a<$core.double>(4, _omitFieldNames ? '' : 'rightBottomY', $pb.PbFieldType.OD, protoName: 'rightBottomY')
+    ..a<$core.double>(1, _omitFieldNames ? '' : 'leftTopX', $pb.PbFieldType.OF, protoName: 'leftTopX')
+    ..a<$core.double>(2, _omitFieldNames ? '' : 'leftTopY', $pb.PbFieldType.OF, protoName: 'leftTopY')
+    ..a<$core.double>(3, _omitFieldNames ? '' : 'rightBottomX', $pb.PbFieldType.OF, protoName: 'rightBottomX')
+    ..a<$core.double>(4, _omitFieldNames ? '' : 'rightBottomY', $pb.PbFieldType.OF, protoName: 'rightBottomY')
     ..hasRequiredFields = false
   ;
 
@@ -1154,7 +1132,7 @@ class MattingMarkRectangle extends $pb.GeneratedMessage {
   @$pb.TagNumber(1)
   $core.double get leftTopX => $_getN(0);
   @$pb.TagNumber(1)
-  set leftTopX($core.double v) { $_setDouble(0, v); }
+  set leftTopX($core.double v) { $_setFloat(0, v); }
   @$pb.TagNumber(1)
   $core.bool hasLeftTopX() => $_has(0);
   @$pb.TagNumber(1)
@@ -1163,7 +1141,7 @@ class MattingMarkRectangle extends $pb.GeneratedMessage {
   @$pb.TagNumber(2)
   $core.double get leftTopY => $_getN(1);
   @$pb.TagNumber(2)
-  set leftTopY($core.double v) { $_setDouble(1, v); }
+  set leftTopY($core.double v) { $_setFloat(1, v); }
   @$pb.TagNumber(2)
   $core.bool hasLeftTopY() => $_has(1);
   @$pb.TagNumber(2)
@@ -1172,7 +1150,7 @@ class MattingMarkRectangle extends $pb.GeneratedMessage {
   @$pb.TagNumber(3)
   $core.double get rightBottomX => $_getN(2);
   @$pb.TagNumber(3)
-  set rightBottomX($core.double v) { $_setDouble(2, v); }
+  set rightBottomX($core.double v) { $_setFloat(2, v); }
   @$pb.TagNumber(3)
   $core.bool hasRightBottomX() => $_has(2);
   @$pb.TagNumber(3)
@@ -1181,7 +1159,7 @@ class MattingMarkRectangle extends $pb.GeneratedMessage {
   @$pb.TagNumber(4)
   $core.double get rightBottomY => $_getN(3);
   @$pb.TagNumber(4)
-  set rightBottomY($core.double v) { $_setDouble(3, v); }
+  set rightBottomY($core.double v) { $_setFloat(3, v); }
   @$pb.TagNumber(4)
   $core.bool hasRightBottomY() => $_has(3);
   @$pb.TagNumber(4)
