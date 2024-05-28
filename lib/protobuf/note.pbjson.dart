@@ -29,13 +29,13 @@ final $typed_data.Uint8List penTypeDescriptor = $convert.base64Decode(
 const ImageType$json = {
   '1': 'ImageType',
   '2': [
-    {'1': 'IT_PNG', '2': 0},
+    {'1': 'IT_2BIT_1CHANNEL', '2': 0},
   ],
 };
 
 /// Descriptor for `ImageType`. Decode as a `google.protobuf.EnumDescriptorProto`.
 final $typed_data.Uint8List imageTypeDescriptor = $convert.base64Decode(
-    'CglJbWFnZVR5cGUSCgoGSVRfUE5HEAA=');
+    'CglJbWFnZVR5cGUSFAoQSVRfMkJJVF8xQ0hBTk5FTBAA');
 
 @$core.Deprecated('Use noteBookMetaDescriptor instead')
 const NoteBookMeta$json = {
@@ -221,6 +221,8 @@ const MattingResult$json = {
     {'1': 'bookPageMattingMarkId', '3': 2, '4': 1, '5': 13, '10': 'bookPageMattingMarkId'},
     {'1': 'imageType', '3': 3, '4': 1, '5': 14, '6': '.ImageType', '10': 'imageType'},
     {'1': 'imageData', '3': 4, '4': 1, '5': 12, '10': 'imageData'},
+    {'1': 'imageWidth', '3': 5, '4': 1, '5': 13, '10': 'imageWidth'},
+    {'1': 'imageHeight', '3': 6, '4': 1, '5': 13, '10': 'imageHeight'},
   ],
 };
 
@@ -229,7 +231,8 @@ final $typed_data.Uint8List mattingResultDescriptor = $convert.base64Decode(
     'Cg1NYXR0aW5nUmVzdWx0EiYKDmJvb2tQYWdlTnVtYmVyGAEgASgNUg5ib29rUGFnZU51bWJlch'
     'I0ChVib29rUGFnZU1hdHRpbmdNYXJrSWQYAiABKA1SFWJvb2tQYWdlTWF0dGluZ01hcmtJZBIo'
     'CglpbWFnZVR5cGUYAyABKA4yCi5JbWFnZVR5cGVSCWltYWdlVHlwZRIcCglpbWFnZURhdGEYBC'
-    'ABKAxSCWltYWdlRGF0YQ==');
+    'ABKAxSCWltYWdlRGF0YRIeCgppbWFnZVdpZHRoGAUgASgNUgppbWFnZVdpZHRoEiAKC2ltYWdl'
+    'SGVpZ2h0GAYgASgNUgtpbWFnZUhlaWdodA==');
 
 @$core.Deprecated('Use mattingMarkDescriptor instead')
 const MattingMark$json = {
@@ -261,37 +264,39 @@ const MattingMarkHorizontal$json = {
   '2': [
     {'1': 'startX', '3': 1, '4': 1, '5': 2, '10': 'startX'},
     {'1': 'endX', '3': 2, '4': 1, '5': 2, '10': 'endX'},
-    {'1': 'height', '3': 3, '4': 1, '5': 2, '10': 'height'},
+    {'1': 'y', '3': 3, '4': 1, '5': 2, '10': 'y'},
+    {'1': 'height', '3': 4, '4': 1, '5': 2, '10': 'height'},
   ],
 };
 
 /// Descriptor for `MattingMarkHorizontal`. Decode as a `google.protobuf.DescriptorProto`.
 final $typed_data.Uint8List mattingMarkHorizontalDescriptor = $convert.base64Decode(
     'ChVNYXR0aW5nTWFya0hvcml6b250YWwSFgoGc3RhcnRYGAEgASgCUgZzdGFydFgSEgoEZW5kWB'
-    'gCIAEoAlIEZW5kWBIWCgZoZWlnaHQYAyABKAJSBmhlaWdodA==');
+    'gCIAEoAlIEZW5kWBIMCgF5GAMgASgCUgF5EhYKBmhlaWdodBgEIAEoAlIGaGVpZ2h0');
 
 @$core.Deprecated('Use mattingMarkVerticalDescriptor instead')
 const MattingMarkVertical$json = {
   '1': 'MattingMarkVertical',
   '2': [
-    {'1': 'startY', '3': 1, '4': 1, '5': 2, '10': 'startY'},
-    {'1': 'endY', '3': 2, '4': 1, '5': 2, '10': 'endY'},
-    {'1': 'width', '3': 3, '4': 1, '5': 2, '10': 'width'},
+    {'1': 'x', '3': 1, '4': 1, '5': 2, '10': 'x'},
+    {'1': 'startY', '3': 2, '4': 1, '5': 2, '10': 'startY'},
+    {'1': 'endY', '3': 3, '4': 1, '5': 2, '10': 'endY'},
+    {'1': 'width', '3': 4, '4': 1, '5': 2, '10': 'width'},
   ],
 };
 
 /// Descriptor for `MattingMarkVertical`. Decode as a `google.protobuf.DescriptorProto`.
 final $typed_data.Uint8List mattingMarkVerticalDescriptor = $convert.base64Decode(
-    'ChNNYXR0aW5nTWFya1ZlcnRpY2FsEhYKBnN0YXJ0WRgBIAEoAlIGc3RhcnRZEhIKBGVuZFkYAi'
-    'ABKAJSBGVuZFkSFAoFd2lkdGgYAyABKAJSBXdpZHRo');
+    'ChNNYXR0aW5nTWFya1ZlcnRpY2FsEgwKAXgYASABKAJSAXgSFgoGc3RhcnRZGAIgASgCUgZzdG'
+    'FydFkSEgoEZW5kWRgDIAEoAlIEZW5kWRIUCgV3aWR0aBgEIAEoAlIFd2lkdGg=');
 
 @$core.Deprecated('Use mattingMarkLineDescriptor instead')
 const MattingMarkLine$json = {
   '1': 'MattingMarkLine',
   '2': [
     {'1': 'startX', '3': 1, '4': 1, '5': 2, '10': 'startX'},
-    {'1': 'endX', '3': 2, '4': 1, '5': 2, '10': 'endX'},
-    {'1': 'startY', '3': 3, '4': 1, '5': 2, '10': 'startY'},
+    {'1': 'startY', '3': 2, '4': 1, '5': 2, '10': 'startY'},
+    {'1': 'endX', '3': 3, '4': 1, '5': 2, '10': 'endX'},
     {'1': 'endY', '3': 4, '4': 1, '5': 2, '10': 'endY'},
     {'1': 'width', '3': 5, '4': 1, '5': 2, '10': 'width'},
   ],
@@ -299,8 +304,8 @@ const MattingMarkLine$json = {
 
 /// Descriptor for `MattingMarkLine`. Decode as a `google.protobuf.DescriptorProto`.
 final $typed_data.Uint8List mattingMarkLineDescriptor = $convert.base64Decode(
-    'Cg9NYXR0aW5nTWFya0xpbmUSFgoGc3RhcnRYGAEgASgCUgZzdGFydFgSEgoEZW5kWBgCIAEoAl'
-    'IEZW5kWBIWCgZzdGFydFkYAyABKAJSBnN0YXJ0WRISCgRlbmRZGAQgASgCUgRlbmRZEhQKBXdp'
+    'Cg9NYXR0aW5nTWFya0xpbmUSFgoGc3RhcnRYGAEgASgCUgZzdGFydFgSFgoGc3RhcnRZGAIgAS'
+    'gCUgZzdGFydFkSEgoEZW5kWBgDIAEoAlIEZW5kWBISCgRlbmRZGAQgASgCUgRlbmRZEhQKBXdp'
     'ZHRoGAUgASgCUgV3aWR0aA==');
 
 @$core.Deprecated('Use mattingMarkRectangleDescriptor instead')

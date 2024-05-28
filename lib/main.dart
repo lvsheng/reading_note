@@ -10,12 +10,14 @@ import 'package:reading_note/document_proxy.dart';
 import 'package:reading_note/deep_link.dart';
 import 'package:reading_note/note_page.dart';
 import 'package:reading_note/log.dart';
+import 'package:reading_note/pdf_matting.dart';
 import 'package:reading_note/stylus_gesture_detector.dart';
 import 'package:reading_note/user_preferences.dart';
 import 'package:pdfrx/pdfrx.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'package:tuple/tuple.dart';
 import 'package:visibility_detector/visibility_detector.dart';
+import 'package:reading_note/protobuf/note.pb.dart' as pb;
 
 void main() {
   runApp(const MyApp());
@@ -44,7 +46,9 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
-  static final int maxInt = double.maxFinite.round();
+  static final int _maxInt = double.maxFinite.round();
+
+  Widget? _img;
 
   late AppLinks _appLinks;
   StreamSubscription<Uri>? _linkSubscription;
@@ -220,6 +224,27 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                           onDown: (details) {
                             note.startDraw();
                             note.addPoint(note.canvasPositionToPagePosition(details.localPosition, pageRect));
+                            matting(
+                                    _reading!,
+                                    _document!,
+                                    page.pageNumber,
+                                    pb.MattingMark()
+                                      ..horizontal = (pb.MattingMarkHorizontal()
+                                        ..startX = 0
+                                        ..endX = 300
+                                        ..y = 300
+                                        ..height = 100),
+                                    1)
+                                .then((result) {
+                              imageOfMattingResult(result).then((image) {
+                                if (image != null) {
+                                  setState(() {
+                                    _img = Image.memory(image.buffer.asUint8List());
+                                  });
+                                }
+                              });
+                            });
+                            ; // todo
                           },
                           onMove: (localPosition) {
                             note.addPoint(note.canvasPositionToPagePosition(localPosition, pageRect));
@@ -244,7 +269,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                     child: DecoratedBox(
                       decoration: const BoxDecoration(color: Colors.white),
                       child: ScrollablePositionedList.builder(
-                        itemCount: maxInt,
+                        itemCount: _maxInt,
                         initialScrollIndex: _initialNotePageNumber,
                         itemBuilder: (BuildContext context, int index) {
                           const margin = Size(10.0, 20.0);
@@ -354,6 +379,9 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                   ),
                 ),
               ),
+
+            // if (_document != null && _capturedPageNumber != null) _getCaptureWidget(),
+            Container(width: 500, height: 500, color: Colors.red, child: _img,),
           ],
         ),
       ), // This trailing comma makes auto-formatting nicer for build methods.

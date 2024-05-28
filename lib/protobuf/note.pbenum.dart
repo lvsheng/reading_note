@@ -27,10 +27,10 @@ class PenType extends $pb.ProtobufEnum {
 }
 
 class ImageType extends $pb.ProtobufEnum {
-  static const ImageType IT_PNG = ImageType._(0, _omitEnumNames ? '' : 'IT_PNG');
+  static const ImageType IT_2BIT_1CHANNEL = ImageType._(0, _omitEnumNames ? '' : 'IT_2BIT_1CHANNEL');
 
   static const $core.List<ImageType> values = <ImageType> [
-    IT_PNG,
+    IT_2BIT_1CHANNEL,
   ];
 
   static final $core.Map<$core.int, ImageType> _byValue = $pb.ProtobufEnum.initByValue(values);

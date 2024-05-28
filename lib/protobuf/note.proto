@@ -53,7 +53,7 @@ message Point {
 }
 
 enum ImageType {
-    IT_PNG = 0;
+    IT_2BIT_1CHANNEL = 0;
 }
 
 message MattingResult {
@@ -61,6 +61,8 @@ message MattingResult {
     uint32 bookPageMattingMarkId = 2;
     ImageType imageType = 3;
     bytes imageData = 4;
+    uint32 imageWidth = 5;
+    uint32 imageHeight = 6;
 }
 
 message MattingMark {
@@ -76,19 +78,21 @@ message MattingMark {
 message MattingMarkHorizontal {
     float startX = 1;
     float endX = 2;
-    float height = 3;
+    float y = 3;
+    float height = 4;
 }
 
 message MattingMarkVertical {
-    float startY = 1;
-    float endY = 2;
-    float width = 3;
+    float x = 1;
+    float startY = 2;
+    float endY = 3;
+    float width = 4;
 }
 
 message MattingMarkLine {
     float startX = 1;
-    float endX = 2;
-    float startY = 3;
+    float startY = 2;
+    float endX = 3;
     float endY = 4;
     float width = 5;
 }
