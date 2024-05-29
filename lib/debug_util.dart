@@ -7,6 +7,7 @@ import 'package:protobuf/protobuf.dart';
 
 File? _pdfFile;
 
+final kDebugMode = false; // fixme
 void setCurrentPdf(File? file) {
   _pdfFile = file;
 }

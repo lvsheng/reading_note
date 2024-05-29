@@ -83,7 +83,10 @@
         </dict>
     </dict>
 
-    <!--impeller下canvas.drawPoints的raster造成明显卡顿。因此暂禁用impeller-->
+    <!--
+    impeller下canvas.drawPoints的raster造成明显卡顿。因此暂禁用impeller
+    TODO: report to flutter
+    -->
     <key>FLTEnableImpeller</key>
     <false />
 </dict>

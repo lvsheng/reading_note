@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:reading_note/log.dart';
+import 'package:reading_note/pdf_matting_util.dart';
 import 'package:reading_note/protobuf/note.pb.dart' as pb;
 import 'package:tuple/tuple.dart';
 
@@ -8,10 +9,11 @@ import 'note_page.dart';
 
 abstract class NotePainter extends CustomPainter {
   final NotePage _note;
-  late Tuple2<int /*penId*/, Paint> _lastPaint;
+  late Tuple2<int /*penId*/, Paint> _lastPenPaint;
+  static Paint? _markResultPaint;
 
   NotePainter(this._note) : super(repaint: _note) {
-    _lastPaint = Tuple2(
+    _lastPenPaint = Tuple2(
         0,
         Paint()
           ..strokeJoin = StrokeJoin.round
@@ -34,34 +36,83 @@ abstract class NotePainter extends CustomPainter {
         case pb.NotePageItem_Content.path:
           final path = item.path;
           _updatePenIfNeeded(path.penId, _note.getPen(path.penId));
-          final points = path.points.map((point) => pagePositionToCanvasPosition(point)).toList(growable: false);
+          final points =
+              path.points.map((point) => pagePositionToCanvas(pb.Point(x: point.x + item.x, y: point.y + item.y))).toList(growable: false);
           countPoints += points.length;
-          canvas.drawPoints(PointMode.polygon, points, _lastPaint.item2);
+          canvas.drawPoints(PointMode.polygon, points, _lastPenPaint.item2);
           break;
 
+        case pb.NotePageItem_Content.mattingMarkId:
+          final mattingMark = (_note as MarkNotePage).getMattingMark(item.mattingMarkId);
+          if (mattingMark == null) {
+            logError("disappeared mattingMark ${item.mattingMarkId}");
+            return;
+          }
+          late Rect rect;
+          switch (mattingMark.whichContent()) {
+            case pb.MattingMark_Content.horizontal:
+              final halfHeight = mattingMark.horizontal.height / 2;
+              rect = Rect.fromLTRB(mattingMark.horizontal.left, mattingMark.horizontal.y - halfHeight, mattingMark.horizontal.right,
+                  mattingMark.horizontal.y + halfHeight);
+              break;
+            default:
+              throw "TODO";
+          }
+
+          canvas.drawRect(
+              pageRectToCanvas(rect),
+              Paint()
+                ..color = Colors.yellowAccent.withAlpha(125)
+                ..style = PaintingStyle.fill);
+          canvas.drawRect(
+              pageRectToCanvas(rect),
+              Paint()
+                ..color = Colors.black87
+                ..style = PaintingStyle.stroke
+                ..strokeWidth = pageWidthToCanvas(1));
+          break;
+
+        case pb.NotePageItem_Content.mattingResultId:
+          final mattingResult = (_note as IndependentNotePage).getMattingResult(item.mattingResultId);
+          if (mattingResult == null) {
+            logError("disappeared mattingResult: ${item.mattingResultId} for $_note");
+            return;
+          }
+          final tuple = imageOfMattingResult(mattingResult);
+          final image = tuple.item1;
+          if (image == null) {
+            logWarn("matting image not ready, wait it");
+            tuple.item2!.then((_) => _note.triggerRepaint());
+            return;
+          }
+          canvas.drawImage(image, pageOffsetToCanvas(Offset(item.x, item.y)), Paint());
         default:
           throw "TODO";
       }
     });
 
-    logDebug("[StylusGesture] _paintDrawingData end. countPoints:$countPoints cost:${DateTime.now().millisecondsSinceEpoch - ts}ms");
+    logInfo("[StylusGesture] _paintDrawingData end. countPoints:$countPoints cost:${DateTime.now().millisecondsSinceEpoch - ts}ms");
   }
 
   void _updatePenIfNeeded(int penId, pb.Pen pen, [bool force = false]) {
-    if (!force && penId == _lastPaint.item1) {
+    if (!force && penId == _lastPenPaint.item1) {
       return;
     }
 
-    _lastPaint = Tuple2(
+    _lastPenPaint = Tuple2(
         penId,
-        _lastPaint.item2
+        _lastPenPaint.item2
           ..color = Color(pen.color)
-          ..strokeWidth = pageWidthToCanvasWidth(pen.strokeWidth));
+          ..strokeWidth = pageWidthToCanvas(pen.strokeWidth));
   }
 
-  double pageWidthToCanvasWidth(double v);
+  double pageWidthToCanvas(double v);
 
-  Offset pagePositionToCanvasPosition(pb.Point pagePosition);
+  Offset pagePositionToCanvas(pb.Point pagePosition);
+
+  Rect pageRectToCanvas(Rect rect);
+
+  Offset pageOffsetToCanvas(Offset pageOffset);
 
   @override
   bool shouldRepaint(NotePainter oldDelegate) => false;
@@ -76,11 +127,19 @@ class MarkNotePainter extends NotePainter {
   MarkNotePainter(this._pageRect, super.note);
 
   @override
-  double pageWidthToCanvasWidth(double v) => (_note as MarkNotePage).pageWidthToCanvasWidth(v, _pageRect);
+  double pageWidthToCanvas(double v) => (_note as MarkNotePage).pageWidthToCanvas(v, _pageRect);
 
   @override
-  Offset pagePositionToCanvasPosition(pb.Point pagePosition) =>
-      (_note as MarkNotePage).pagePositionToCanvasPosition(pagePosition, _pageRect);
+  Offset pagePositionToCanvas(pb.Point pagePosition) => (_note as MarkNotePage).pagePositionToCanvas(pagePosition, _pageRect);
+
+  @override
+  Rect pageRectToCanvas(Rect rect) => (_note as MarkNotePage).pageRectToCanvas(rect, _pageRect);
+
+  @override
+  Offset pageOffsetToCanvas(Offset offset) {
+    // TODO: implement pageOffsetToCanvas
+    throw UnimplementedError();
+  }
 }
 
 class IndependentNotePainter extends NotePainter {
@@ -91,9 +150,17 @@ class IndependentNotePainter extends NotePainter {
   set scale(double value) => _scale = value;
 
   @override
-  Offset pagePositionToCanvasPosition(pb.Point pagePosition) =>
-      (_note as IndependentNotePage).pagePositionToCanvasPosition(pagePosition, _scale);
+  Offset pagePositionToCanvas(pb.Point pagePosition) => (_note as IndependentNotePage).pagePositionToCanvas(pagePosition, _scale);
 
   @override
-  double pageWidthToCanvasWidth(double v) => (_note as IndependentNotePage).pageWidthToCanvasWidth(v, _scale);
+  double pageWidthToCanvas(double v) => (_note as IndependentNotePage).pageWidthToCanvas(v, _scale);
+
+  @override
+  Rect pageRectToCanvas(Rect pageRect) {
+    // TODO: implement pageRectToCanvas
+    throw UnimplementedError();
+  }
+
+  @override
+  Offset pageOffsetToCanvas(Offset pageOffset) => (_note as IndependentNotePage).pageOffsetToCanvas(pageOffset, _scale);
 }

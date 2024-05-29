@@ -8,16 +8,17 @@ import 'package:app_links/app_links.dart';
 import 'package:reading_note/custom_painter.dart';
 import 'package:reading_note/document_proxy.dart';
 import 'package:reading_note/deep_link.dart';
+import 'package:reading_note/matting_transfer_station.dart';
 import 'package:reading_note/note_page.dart';
 import 'package:reading_note/log.dart';
-import 'package:reading_note/pdf_matting.dart';
 import 'package:reading_note/stylus_gesture_detector.dart';
 import 'package:reading_note/user_preferences.dart';
 import 'package:pdfrx/pdfrx.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'package:tuple/tuple.dart';
 import 'package:visibility_detector/visibility_detector.dart';
-import 'package:reading_note/protobuf/note.pb.dart' as pb;
+
+import 'debug_util.dart' as debug;
 
 void main() {
   runApp(const MyApp());
@@ -58,7 +59,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
   int _initialPageNumber = 1;
   int _initialNotePageNumber = 1;
   int _pageNumber = 1;
-  Map<int, Tuple2<MarkNotePage?, bool /*begin load*/ >>? _pageMarkNoteMap; // todo: 考虑清理不在用的文件？
+  Map<int, Tuple2<MarkNotePage?, bool /*begin load*/ >>? _pageMarkNoteMap; // todo: 考虑清理不在用的文件？ todo: dispose on clean?
   Map<int, Tuple2<IndependentNotePage?, bool /*begin load*/ >>? _pageIndependentNoteMap;
   PdfDocument? _document;
   PdfViewerController? _controller;
@@ -120,7 +121,15 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     _timerSaveFile.cancel();
     saveIfNeeded();
     WidgetsBinding.instance.removeObserver(this);
+    if (_reading != null) {
+      MattingTransferStation.instanceOf(_reading!).removeListener(_mattingStateListener);
+    }
     super.dispose();
+  }
+
+  void _mattingStateListener() {
+    if (!mounted) return;
+    setState(() {});
   }
 
   Future<void> initDeepLinks() async {
@@ -154,6 +163,9 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
       });
       _transformation = null;
     });
+    MattingTransferStation.instanceOf(_reading!).addListener(_mattingStateListener);
+
+    debug.setCurrentPdf(file);
   }
 
   @override
@@ -196,7 +208,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                       if (noteTuple?.item1 == null) {
                         // if not loading, load it first
                         if (noteTuple == null) {
-                          NotePage.open(true, _reading!, page.pageNumber, page.size).then((note) {
+                          NotePage.open(true, _reading!, _document!, page.pageNumber, page.size).then((note) {
                             if (!mounted) return;
                             setState(() => _pageMarkNoteMap![page.pageNumber] = Tuple2(note as MarkNotePage, true));
                           });
@@ -222,29 +234,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
 
                         PencilGestureDetector(
                           onDown: (details) {
-                            note.startDraw();
-                            note.addPoint(note.canvasPositionToPagePosition(details.localPosition, pageRect));
-                            matting(
-                                    _reading!,
-                                    _document!,
-                                    page.pageNumber,
-                                    pb.MattingMark()
-                                      ..horizontal = (pb.MattingMarkHorizontal()
-                                        ..startX = 85
-                                        ..endX = 200
-                                        ..y = 350
-                                        ..height = 20),
-                                    1)
-                                .then((result) {
-                              imageOfMattingResult(result).then((image) {
-                                if (image != null) {
-                                  setState(() {
-                                    _img = Image.memory(image.buffer.asUint8List());
-                                  });
-                                }
-                              });
-                            });
-                            ; // todo
+                            note.startDraw(note.canvasPositionToPagePosition(details.localPosition, pageRect));
                           },
                           onMove: (localPosition) {
                             note.addPoint(note.canvasPositionToPagePosition(localPosition, pageRect));
@@ -283,6 +273,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                               NotePage.open(
                                       false,
                                       _reading!,
+                                      _document!,
                                       index,
                                       Size(size.width - margin.width * 2,
                                           max(_document!.pages.firstOrNull?.height ?? 0, size.width / 9 * 16)))
@@ -318,7 +309,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                               child: Stack(
                                 children: [
                                   Text("第 ${index + 1} 页"),
-                                  if (_img != null) Positioned(child: _img!, left:  30, top: 380),
+                                  if (_img != null) Positioned(left:  30, top: 380, child: _img!),
                                   ConstrainedBox(
                                       constraints: const BoxConstraints.expand(),
                                       child: IgnorePointer(
@@ -331,14 +322,13 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                                   GestureDetector(onDoubleTap: () => setState(() => _debugShowIndicator = !_debugShowIndicator)),
                                   PencilGestureDetector(
                                     onDown: (details) {
-                                      note.startDraw();
-                                      note.addPoint(note.canvasPositionToPagePosition(details.localPosition, 1.0));
+                                      note.startDraw(note.canvasPositionToPage(details.localPosition, 1.0));
                                     },
                                     onMove: (localPosition) {
-                                      note.addPoint(note.canvasPositionToPagePosition(localPosition, 1.0));
+                                      note.addPoint(note.canvasPositionToPage(localPosition, 1.0));
                                     },
                                     onUp: (details) {
-                                      note.addPoint(note.canvasPositionToPagePosition(details.localPosition, 1.0));
+                                      note.addPoint(note.canvasPositionToPage(details.localPosition, 1.0));
                                       note.endDraw();
                                     },
                                     onCancel: (detail) {
@@ -355,6 +345,8 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                   ),
               ),
             ),
+
+            if (_reading != null) Text("status: ${MattingTransferStation.instanceOf(_reading!).status}"),
 
             Positioned(
               bottom: 30,
@@ -374,7 +366,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                     'pdf               : ${_document?.sourceName}\n'
                     'pages: ${_document?.pages.length}\n'
                     'curPage: $_pageNumber\n'
-                    'curPageSize: ${_document?.pages[_pageNumber].size}\n'
+                    'curPageSize: ${_document?.pages[_pageNumber - 1].size}\n'
                     'controller:\n$_transformation\n',
                     style: const TextStyle(color: Colors.black),
                   ),

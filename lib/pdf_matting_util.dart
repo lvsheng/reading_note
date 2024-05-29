@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:math';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 import 'package:image/image.dart' as img;
@@ -15,22 +16,25 @@ import 'debug_util.dart' as debug;
 
 const _pdfPageCaptureSizeMultiple = 3;
 final _pageCapturedImageMap = LruMap<String, Tuple2<img.Image?, Future<img.Image?>?>>(maximumSize: 5);
-final _mattingDecodeResultMap = LruMap<pb.MattingResult, Tuple2<ByteData?, Future<ByteData?>?>>(maximumSize: 200);
+final _mattingDecodeResultMap = LruMap<pb.MattingResult, Tuple2<ui.Image?, Future<ui.Image?>?>>(maximumSize: 200);
 
 Future<pb.MattingResult> matting(File file, PdfDocument document, int pageNumber, pb.MattingMark mark, int markId) async {
-  debug.setCurrentPdf(file);
-  img.Image? pageImage = await _capture(file, document.pages[pageNumber]);
+  final page = document.pages[pageNumber - 1];
+  img.Image? pageImage = await _capture(file, page);
   if (pageImage == null) {
     throw ("_capture fail: $file, $pageNumber, $document");
   }
 
-  late ui.Rect clippedRect;
+  late Tuple4<int, int, int, int> xywh;
   {
     switch (mark.whichContent()) {
       case pb.MattingMark_Content.horizontal:
-        final halfHeight = mark.horizontal.height / 2;
-        clippedRect =
-            ui.Rect.fromLTRB(mark.horizontal.startX, mark.horizontal.y - halfHeight, mark.horizontal.endX, mark.horizontal.y + halfHeight);
+        final markContent = mark.horizontal;
+        xywh = Tuple4(
+            (markContent.left / page.width * pageImage.width).round(),
+            ((markContent.y - markContent.height / 2.0) / page.height * pageImage.height).round(),
+            ((markContent.right - markContent.left) / page.width * pageImage.width).round(),
+            (markContent.height / page.height * pageImage.height).round());
         break;
 
       case pb.MattingMark_Content.vertical:
@@ -41,16 +45,12 @@ Future<pb.MattingResult> matting(File file, PdfDocument document, int pageNumber
       case pb.MattingMark_Content.notSet:
         logError("INVALID MattingMark $mark");
     }
-    clippedRect = clippedRect * _pdfPageCaptureSizeMultiple.toDouble();
   }
 
-  int width = clippedRect.width.round();
-  int height = clippedRect.height.round();
-  final cropResult = img
-      .copyCrop(pageImage, x: clippedRect.left.round(), y: clippedRect.right.round(), width: width, height: height);
+  final cropResult = img.copyCrop(pageImage, x: xywh.item1, y: xywh.item2, width: xywh.item3, height: xywh.item4);
   debug.saveImage(cropResult, "4.copyCrop");
 
-  // todo: background
+  // todo: background thread?
   final bytes = cropResult.buffer.asUint8List();
   debug.saveBytes(bytes, "5.cropResult.buffer");
   final compressed = const ZLibEncoder().encode(bytes, level: 6);
@@ -58,8 +58,8 @@ Future<pb.MattingResult> matting(File file, PdfDocument document, int pageNumber
   final result = pb.MattingResult()
     ..bookPageNumber = pageNumber
     ..bookPageMattingMarkId = markId
-    ..imageWidth = width
-    ..imageHeight = height
+    ..imageWidth = xywh.item3
+    ..imageHeight = xywh.item4
     ..imageData = compressed;
   debug.saveGeneratedMessage(result, "7.MattingResult");
 
@@ -68,60 +68,47 @@ Future<pb.MattingResult> matting(File file, PdfDocument document, int pageNumber
   return result;
 }
 
-Future<ByteData?> imageOfMattingResult(pb.MattingResult mattingResult, [img.Image? image]) async {
+/// @return: tuple.item1或item2至少一个非null
+Tuple2<ui.Image?, Future<ui.Image?>?> imageOfMattingResult(pb.MattingResult mattingResult, [img.Image? image]) {
   final tuple = _mattingDecodeResultMap[mattingResult];
   if (tuple != null) {
-    if (tuple.item1 != null) {
-      return tuple.item1!;
-    }
-    return tuple.item2!;
+    assert(tuple.item1 != null || tuple.item2 != null);
+    return tuple;
   }
 
-  // // fixme: remove testing
-  // image = null;
+  logDebug("[image.convert] 1. imageOfMattingResult");
+  const paletteStep = 255 / 4.0;
+  image = img.Image.fromBytes(
+    bytes: image?.buffer ??
+        Uint8List.fromList(() {
+          final decompressed = const ZLibDecoder().decodeBytes(mattingResult.imageData);
+          debug.saveIntList(decompressed, "8.decompressed");
+          return decompressed;
+        }())
+            .buffer,
+    width: mattingResult.imageWidth,
+    height: mattingResult.imageHeight,
+    format: img.Format.uint2,
+    numChannels: 1,
 
-  if (image == null) {
-    final decompressed = const ZLibDecoder().decodeBytes(mattingResult.imageData);
-    debug.saveIntList(decompressed, "8.decompressed");
-    image = img.Image.fromBytes(
-      bytes: Uint8List.fromList(decompressed).buffer,
-      width: mattingResult.imageWidth,
-      height: mattingResult.imageHeight,
-      format: img.Format.uint2,
-      numChannels: 1,
-    );
-    debug.saveImage(image, "9.image.fromBytes");
-  }
+    // use palette to convert the 2bit(4 level) color per pixel
+    withPalette: true,
+    palette: img.PaletteUint8(4, 4)
+      ..setRgba(0, 0, 0, 0, 255)
+      ..setRgba(1, paletteStep, paletteStep, paletteStep, 255)
+      ..setRgba(2, paletteStep * 2, paletteStep * 2, paletteStep * 2, 255)
+      ..setRgba(3, 0, 0, 0, 0), // 白色以透明代替
+  );
+  debug.saveImage(image, "9.image.fromBytes");
 
-  assert(() {
-    final future = _convertImageToFlutterUi(image!).then((uiImage) {
-      debug.saveUIImage(uiImage, "10.opt2.1.uiImage");
-      return uiImage.toByteData(format: ui.ImageByteFormat.png);
-    }).then((byteData) {
-      if (byteData == null) {
-        logError("uiImage.toByteData fail: $mattingResult");
-        // _mattingDecodeResultMap.remove(mattingResult);
-      } else {
-        // _mattingDecodeResultMap[mattingResult] = Tuple2(byteData, null);
-      }
-      debug.saveByteData(byteData!, "10.opt2.2.toByteData");
-    });
-    // _mattingDecodeResultMap[mattingResult] = Tuple2(null, future);
-    // return future;
+  final future = _convertImageToFlutterUi(image).then((uiImage) {
+    _mattingDecodeResultMap[mattingResult] = Tuple2(uiImage, null);
+    debug.saveUIImage(uiImage, "11.uiImage");
+    logDebug("[image.convert] 3. got uiImage");
+    return uiImage;
+  });
 
-    return true;
-  }());
-
-  final pngBytes = img.encodePng(image);
-  debug.savePng(pngBytes, "10.opt1.1.encodePng");
-
-  // 这里buffer长度比实际用到的要多4倍+ todo：考虑realloc，释放一部分内存？ todo: 异步线程拷贝时只拷贝有效长度？
-  final byteData = pngBytes.buffer.asByteData(0, pngBytes.lengthInBytes);
-  debug.saveByteData(byteData, "10.opt1.2.asByteData");
-
-  _mattingDecodeResultMap[mattingResult] = Tuple2(byteData, null); // todo: async, save future
-
-  return byteData;
+  return _mattingDecodeResultMap[mattingResult] = Tuple2(null, future);
 }
 
 String _genKey(File file, int pageNumber) => "${file.path}:$pageNumber";
@@ -179,19 +166,22 @@ Future<img.Image?> _capture(File pdfFile, PdfPage page) async {
 }
 
 img.Image _encodeForMatting(img.Image src) {
-  // fixme: async, background service
+  final ts = DateTime.now().millisecondsSinceEpoch;
+  // fixme: async, background thread?
   assert(!src.hasPalette);
   final result = img.Image(
     width: src.width,
     height: src.height,
+
+    // for lowest memory, and no obvious jagged, use 4 bit per pixel
     format: img.Format.uint2,
     numChannels: 1,
   );
   assert(src.frames.length == 1);
 
-  const thresholds = [0.4, 0.6, 0.8, 1.0];
+  const thresholds = [0.4/*more black for showing text clearly*/, 0.6, 0.8, 1.0];
   for (final p in src.frames.first) {
-    final y = 0.3 * p.rNormalized + 0.59 * p.gNormalized + 0.11 * p.bNormalized; // see [luminanceThreshold]
+    final y = 0.3 * p.rNormalized + 0.59 * p.gNormalized + 0.11 * p.bNormalized; // from [img.luminanceThreshold]
     int y2 = thresholds.length;
     for (int i = 0; i < thresholds.length; ++i) {
       if (y <= thresholds[i]) {
@@ -202,22 +192,45 @@ img.Image _encodeForMatting(img.Image src) {
 
     result.getPixel(p.x, p.y).r = y2;
   }
+
+  logInfo("encodeForMatting cost:${DateTime.now().millisecondsSinceEpoch - ts}ms"); // (about 40ms)
   return result;
 }
 
 /// from [https://github.com/brendan-duncan/image/blob/main/doc/flutter.md]
 Future<ui.Image> _convertImageToFlutterUi(img.Image image) async {
+// /*
+  // todo: 解码结果放在本地文件缓存中，下次直接读取？，而不用从raw数据中现场解码
   if (image.format != img.Format.uint8 || image.numChannels != 4) {
+    final ts = DateTime.now().millisecondsSinceEpoch;
     final cmd = img.Command()
       ..image(image)
       ..convert(format: img.Format.uint8, numChannels: 4);
-    final rgba8 = await cmd.getImageThread();
+    logDebug("[image.convert] 2. begin await cmd.convert $image");
+
+    // fixme: why thread so slow? (200～300ms per interval)
+    // final rgba8 = await cmd.getImageThread();
+    final rgba8 = await cmd.getImage();
     if (rgba8 != null) {
       image = rgba8;
     }
+    logInfo("[image.convert] image.convert done: $image cost:${DateTime.now().millisecondsSinceEpoch - ts}ms");
   }
+  debug.saveImage(image, "10.image.convert.4channel");
+  final bytes = image.toUint8List();
+// */
+  // final bytes = img.encodePng(image, level: Deflate.NO_COMPRESSION, singleFrame: true, filter: img.PngFilter.none);
+  // debug.savePng(bytes, "10.opt1.1.encodePng");
+  // final bytes = img.encodeBmp(image);
+  // debug.saveBytes(bytes, "10.img.encode.bmp");
+  // final bytes = img.encodeJpg(image);
+  // debug.saveBytes(bytes, "10.img.encode.jpg");
+  // final bytes = img.encodeCur(image, singleFrame: true);
+  // debug.saveBytes(bytes, "10.img.encode.jpg");
+  // final bytes = img.encodeTga(image);
+  // debug.saveBytes(bytes, "10.img.encode.jpg");
 
-  ui.ImmutableBuffer buffer = await ui.ImmutableBuffer.fromUint8List(image.toUint8List());
+  ui.ImmutableBuffer buffer = await ui.ImmutableBuffer.fromUint8List(bytes);
 
   ui.ImageDescriptor id = ui.ImageDescriptor.raw(buffer, height: image.height, width: image.width, pixelFormat: ui.PixelFormat.rgba8888);
 
@@ -228,4 +241,3 @@ Future<ui.Image> _convertImageToFlutterUi(img.Image image) async {
 
   return uiImage;
 }
-

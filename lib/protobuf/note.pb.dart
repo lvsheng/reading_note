@@ -204,9 +204,13 @@ class NotePage extends $pb.GeneratedMessage {
 
 class IndependentNotePageData extends $pb.GeneratedMessage {
   factory IndependentNotePageData({
+    $core.int? lastMattingResultId,
     $core.Map<$core.int, MattingResult>? mattingResultPool,
   }) {
     final $result = create();
+    if (lastMattingResultId != null) {
+      $result.lastMattingResultId = lastMattingResultId;
+    }
     if (mattingResultPool != null) {
       $result.mattingResultPool.addAll(mattingResultPool);
     }
@@ -217,7 +221,8 @@ class IndependentNotePageData extends $pb.GeneratedMessage {
   factory IndependentNotePageData.fromJson($core.String i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(i, r);
 
   static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'IndependentNotePageData', createEmptyInstance: create)
-    ..m<$core.int, MattingResult>(1, _omitFieldNames ? '' : 'mattingResultPool', protoName: 'mattingResultPool', entryClassName: 'IndependentNotePageData.MattingResultPoolEntry', keyFieldType: $pb.PbFieldType.OU3, valueFieldType: $pb.PbFieldType.OM, valueCreator: MattingResult.create, valueDefaultOrMaker: MattingResult.getDefault)
+    ..a<$core.int>(1, _omitFieldNames ? '' : 'lastMattingResultId', $pb.PbFieldType.OU3, protoName: 'lastMattingResultId')
+    ..m<$core.int, MattingResult>(2, _omitFieldNames ? '' : 'mattingResultPool', protoName: 'mattingResultPool', entryClassName: 'IndependentNotePageData.MattingResultPoolEntry', keyFieldType: $pb.PbFieldType.OU3, valueFieldType: $pb.PbFieldType.OM, valueCreator: MattingResult.create, valueDefaultOrMaker: MattingResult.getDefault)
     ..hasRequiredFields = false
   ;
 
@@ -243,14 +248,27 @@ class IndependentNotePageData extends $pb.GeneratedMessage {
   static IndependentNotePageData? _defaultInstance;
 
   @$pb.TagNumber(1)
-  $core.Map<$core.int, MattingResult> get mattingResultPool => $_getMap(0);
+  $core.int get lastMattingResultId => $_getIZ(0);
+  @$pb.TagNumber(1)
+  set lastMattingResultId($core.int v) { $_setUnsignedInt32(0, v); }
+  @$pb.TagNumber(1)
+  $core.bool hasLastMattingResultId() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearLastMattingResultId() => clearField(1);
+
+  @$pb.TagNumber(2)
+  $core.Map<$core.int, MattingResult> get mattingResultPool => $_getMap(1);
 }
 
 class MarkNotePageData extends $pb.GeneratedMessage {
   factory MarkNotePageData({
+    $core.int? lastMattingMarkId,
     $core.Map<$core.int, MattingMark>? mattingMarkPool,
   }) {
     final $result = create();
+    if (lastMattingMarkId != null) {
+      $result.lastMattingMarkId = lastMattingMarkId;
+    }
     if (mattingMarkPool != null) {
       $result.mattingMarkPool.addAll(mattingMarkPool);
     }
@@ -261,7 +279,8 @@ class MarkNotePageData extends $pb.GeneratedMessage {
   factory MarkNotePageData.fromJson($core.String i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(i, r);
 
   static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'MarkNotePageData', createEmptyInstance: create)
-    ..m<$core.int, MattingMark>(1, _omitFieldNames ? '' : 'mattingMarkPool', protoName: 'mattingMarkPool', entryClassName: 'MarkNotePageData.MattingMarkPoolEntry', keyFieldType: $pb.PbFieldType.OU3, valueFieldType: $pb.PbFieldType.OM, valueCreator: MattingMark.create, valueDefaultOrMaker: MattingMark.getDefault)
+    ..a<$core.int>(1, _omitFieldNames ? '' : 'lastMattingMarkId', $pb.PbFieldType.OU3, protoName: 'lastMattingMarkId')
+    ..m<$core.int, MattingMark>(2, _omitFieldNames ? '' : 'mattingMarkPool', protoName: 'mattingMarkPool', entryClassName: 'MarkNotePageData.MattingMarkPoolEntry', keyFieldType: $pb.PbFieldType.OU3, valueFieldType: $pb.PbFieldType.OM, valueCreator: MattingMark.create, valueDefaultOrMaker: MattingMark.getDefault)
     ..hasRequiredFields = false
   ;
 
@@ -287,7 +306,16 @@ class MarkNotePageData extends $pb.GeneratedMessage {
   static MarkNotePageData? _defaultInstance;
 
   @$pb.TagNumber(1)
-  $core.Map<$core.int, MattingMark> get mattingMarkPool => $_getMap(0);
+  $core.int get lastMattingMarkId => $_getIZ(0);
+  @$pb.TagNumber(1)
+  set lastMattingMarkId($core.int v) { $_setUnsignedInt32(0, v); }
+  @$pb.TagNumber(1)
+  $core.bool hasLastMattingMarkId() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearLastMattingMarkId() => clearField(1);
+
+  @$pb.TagNumber(2)
+  $core.Map<$core.int, MattingMark> get mattingMarkPool => $_getMap(1);
 }
 
 enum NotePageItem_Content {
@@ -299,11 +327,20 @@ enum NotePageItem_Content {
 
 class NotePageItem extends $pb.GeneratedMessage {
   factory NotePageItem({
+    $core.double? x,
+    $core.double? y,
     Path? path,
     $core.int? mattingMarkId,
     $core.int? mattingResultId,
+    $core.double? scale,
   }) {
     final $result = create();
+    if (x != null) {
+      $result.x = x;
+    }
+    if (y != null) {
+      $result.y = y;
+    }
     if (path != null) {
       $result.path = path;
     }
@@ -313,6 +350,9 @@ class NotePageItem extends $pb.GeneratedMessage {
     if (mattingResultId != null) {
       $result.mattingResultId = mattingResultId;
     }
+    if (scale != null) {
+      $result.scale = scale;
+    }
     return $result;
   }
   NotePageItem._() : super();
@@ -320,16 +360,19 @@ class NotePageItem extends $pb.GeneratedMessage {
   factory NotePageItem.fromJson($core.String i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(i, r);
 
   static const $core.Map<$core.int, NotePageItem_Content> _NotePageItem_ContentByTag = {
-    1 : NotePageItem_Content.path,
-    2 : NotePageItem_Content.mattingMarkId,
-    3 : NotePageItem_Content.mattingResultId,
+    3 : NotePageItem_Content.path,
+    4 : NotePageItem_Content.mattingMarkId,
+    5 : NotePageItem_Content.mattingResultId,
     0 : NotePageItem_Content.notSet
   };
   static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'NotePageItem', createEmptyInstance: create)
-    ..oo(0, [1, 2, 3])
-    ..aOM<Path>(1, _omitFieldNames ? '' : 'path', subBuilder: Path.create)
-    ..a<$core.int>(2, _omitFieldNames ? '' : 'mattingMarkId', $pb.PbFieldType.OU3, protoName: 'mattingMarkId')
-    ..a<$core.int>(3, _omitFieldNames ? '' : 'mattingResultId', $pb.PbFieldType.OU3, protoName: 'mattingResultId')
+    ..oo(0, [3, 4, 5])
+    ..a<$core.double>(1, _omitFieldNames ? '' : 'x', $pb.PbFieldType.OF)
+    ..a<$core.double>(2, _omitFieldNames ? '' : 'y', $pb.PbFieldType.OF)
+    ..aOM<Path>(3, _omitFieldNames ? '' : 'path', subBuilder: Path.create)
+    ..a<$core.int>(4, _omitFieldNames ? '' : 'mattingMarkId', $pb.PbFieldType.OU3, protoName: 'mattingMarkId')
+    ..a<$core.int>(5, _omitFieldNames ? '' : 'mattingResultId', $pb.PbFieldType.OU3, protoName: 'mattingResultId')
+    ..a<$core.double>(6, _omitFieldNames ? '' : 'scale', $pb.PbFieldType.OF)
     ..hasRequiredFields = false
   ;
 
@@ -358,33 +401,60 @@ class NotePageItem extends $pb.GeneratedMessage {
   void clearContent() => clearField($_whichOneof(0));
 
   @$pb.TagNumber(1)
-  Path get path => $_getN(0);
+  $core.double get x => $_getN(0);
   @$pb.TagNumber(1)
-  set path(Path v) { setField(1, v); }
+  set x($core.double v) { $_setFloat(0, v); }
   @$pb.TagNumber(1)
-  $core.bool hasPath() => $_has(0);
+  $core.bool hasX() => $_has(0);
   @$pb.TagNumber(1)
-  void clearPath() => clearField(1);
-  @$pb.TagNumber(1)
-  Path ensurePath() => $_ensure(0);
+  void clearX() => clearField(1);
 
   @$pb.TagNumber(2)
-  $core.int get mattingMarkId => $_getIZ(1);
+  $core.double get y => $_getN(1);
   @$pb.TagNumber(2)
-  set mattingMarkId($core.int v) { $_setUnsignedInt32(1, v); }
+  set y($core.double v) { $_setFloat(1, v); }
   @$pb.TagNumber(2)
-  $core.bool hasMattingMarkId() => $_has(1);
+  $core.bool hasY() => $_has(1);
   @$pb.TagNumber(2)
-  void clearMattingMarkId() => clearField(2);
+  void clearY() => clearField(2);
 
   @$pb.TagNumber(3)
-  $core.int get mattingResultId => $_getIZ(2);
+  Path get path => $_getN(2);
   @$pb.TagNumber(3)
-  set mattingResultId($core.int v) { $_setUnsignedInt32(2, v); }
+  set path(Path v) { setField(3, v); }
   @$pb.TagNumber(3)
-  $core.bool hasMattingResultId() => $_has(2);
+  $core.bool hasPath() => $_has(2);
   @$pb.TagNumber(3)
-  void clearMattingResultId() => clearField(3);
+  void clearPath() => clearField(3);
+  @$pb.TagNumber(3)
+  Path ensurePath() => $_ensure(2);
+
+  @$pb.TagNumber(4)
+  $core.int get mattingMarkId => $_getIZ(3);
+  @$pb.TagNumber(4)
+  set mattingMarkId($core.int v) { $_setUnsignedInt32(3, v); }
+  @$pb.TagNumber(4)
+  $core.bool hasMattingMarkId() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearMattingMarkId() => clearField(4);
+
+  @$pb.TagNumber(5)
+  $core.int get mattingResultId => $_getIZ(4);
+  @$pb.TagNumber(5)
+  set mattingResultId($core.int v) { $_setUnsignedInt32(4, v); }
+  @$pb.TagNumber(5)
+  $core.bool hasMattingResultId() => $_has(4);
+  @$pb.TagNumber(5)
+  void clearMattingResultId() => clearField(5);
+
+  @$pb.TagNumber(6)
+  $core.double get scale => $_getN(5);
+  @$pb.TagNumber(6)
+  set scale($core.double v) { $_setFloat(5, v); }
+  @$pb.TagNumber(6)
+  $core.bool hasScale() => $_has(5);
+  @$pb.TagNumber(6)
+  void clearScale() => clearField(6);
 }
 
 class Path extends $pb.GeneratedMessage {
@@ -592,9 +662,9 @@ class MattingResult extends $pb.GeneratedMessage {
     $core.int? bookPageNumber,
     $core.int? bookPageMattingMarkId,
     ImageType? imageType,
-    $core.List<$core.int>? imageData,
     $core.int? imageWidth,
     $core.int? imageHeight,
+    $core.List<$core.int>? imageData,
   }) {
     final $result = create();
     if (bookPageNumber != null) {
@@ -606,14 +676,14 @@ class MattingResult extends $pb.GeneratedMessage {
     if (imageType != null) {
       $result.imageType = imageType;
     }
-    if (imageData != null) {
-      $result.imageData = imageData;
-    }
     if (imageWidth != null) {
       $result.imageWidth = imageWidth;
     }
     if (imageHeight != null) {
       $result.imageHeight = imageHeight;
+    }
+    if (imageData != null) {
+      $result.imageData = imageData;
     }
     return $result;
   }
@@ -625,9 +695,9 @@ class MattingResult extends $pb.GeneratedMessage {
     ..a<$core.int>(1, _omitFieldNames ? '' : 'bookPageNumber', $pb.PbFieldType.OU3, protoName: 'bookPageNumber')
     ..a<$core.int>(2, _omitFieldNames ? '' : 'bookPageMattingMarkId', $pb.PbFieldType.OU3, protoName: 'bookPageMattingMarkId')
     ..e<ImageType>(3, _omitFieldNames ? '' : 'imageType', $pb.PbFieldType.OE, protoName: 'imageType', defaultOrMaker: ImageType.IT_2BIT_1CHANNEL, valueOf: ImageType.valueOf, enumValues: ImageType.values)
-    ..a<$core.List<$core.int>>(4, _omitFieldNames ? '' : 'imageData', $pb.PbFieldType.OY, protoName: 'imageData')
-    ..a<$core.int>(5, _omitFieldNames ? '' : 'imageWidth', $pb.PbFieldType.OU3, protoName: 'imageWidth')
-    ..a<$core.int>(6, _omitFieldNames ? '' : 'imageHeight', $pb.PbFieldType.OU3, protoName: 'imageHeight')
+    ..a<$core.int>(4, _omitFieldNames ? '' : 'imageWidth', $pb.PbFieldType.OU3, protoName: 'imageWidth')
+    ..a<$core.int>(5, _omitFieldNames ? '' : 'imageHeight', $pb.PbFieldType.OU3, protoName: 'imageHeight')
+    ..a<$core.List<$core.int>>(6, _omitFieldNames ? '' : 'imageData', $pb.PbFieldType.OY, protoName: 'imageData')
     ..hasRequiredFields = false
   ;
 
@@ -680,31 +750,31 @@ class MattingResult extends $pb.GeneratedMessage {
   void clearImageType() => clearField(3);
 
   @$pb.TagNumber(4)
-  $core.List<$core.int> get imageData => $_getN(3);
+  $core.int get imageWidth => $_getIZ(3);
   @$pb.TagNumber(4)
-  set imageData($core.List<$core.int> v) { $_setBytes(3, v); }
+  set imageWidth($core.int v) { $_setUnsignedInt32(3, v); }
   @$pb.TagNumber(4)
-  $core.bool hasImageData() => $_has(3);
+  $core.bool hasImageWidth() => $_has(3);
   @$pb.TagNumber(4)
-  void clearImageData() => clearField(4);
+  void clearImageWidth() => clearField(4);
 
   @$pb.TagNumber(5)
-  $core.int get imageWidth => $_getIZ(4);
+  $core.int get imageHeight => $_getIZ(4);
   @$pb.TagNumber(5)
-  set imageWidth($core.int v) { $_setUnsignedInt32(4, v); }
+  set imageHeight($core.int v) { $_setUnsignedInt32(4, v); }
   @$pb.TagNumber(5)
-  $core.bool hasImageWidth() => $_has(4);
+  $core.bool hasImageHeight() => $_has(4);
   @$pb.TagNumber(5)
-  void clearImageWidth() => clearField(5);
+  void clearImageHeight() => clearField(5);
 
   @$pb.TagNumber(6)
-  $core.int get imageHeight => $_getIZ(5);
+  $core.List<$core.int> get imageData => $_getN(5);
   @$pb.TagNumber(6)
-  set imageHeight($core.int v) { $_setUnsignedInt32(5, v); }
+  set imageData($core.List<$core.int> v) { $_setBytes(5, v); }
   @$pb.TagNumber(6)
-  $core.bool hasImageHeight() => $_has(5);
+  $core.bool hasImageData() => $_has(5);
   @$pb.TagNumber(6)
-  void clearImageHeight() => clearField(6);
+  void clearImageData() => clearField(6);
 }
 
 enum MattingMark_Content {
@@ -722,6 +792,7 @@ class MattingMark extends $pb.GeneratedMessage {
     MattingMarkVertical? vertical,
     MattingMarkLine? line,
     MattingMarkRectangle? rectangle,
+    $core.Iterable<$core.int>? linkingIndependentNoteId,
   }) {
     final $result = create();
     if (color != null) {
@@ -738,6 +809,9 @@ class MattingMark extends $pb.GeneratedMessage {
     }
     if (rectangle != null) {
       $result.rectangle = rectangle;
+    }
+    if (linkingIndependentNoteId != null) {
+      $result.linkingIndependentNoteId.addAll(linkingIndependentNoteId);
     }
     return $result;
   }
@@ -759,6 +833,7 @@ class MattingMark extends $pb.GeneratedMessage {
     ..aOM<MattingMarkVertical>(3, _omitFieldNames ? '' : 'vertical', subBuilder: MattingMarkVertical.create)
     ..aOM<MattingMarkLine>(4, _omitFieldNames ? '' : 'line', subBuilder: MattingMarkLine.create)
     ..aOM<MattingMarkRectangle>(5, _omitFieldNames ? '' : 'rectangle', subBuilder: MattingMarkRectangle.create)
+    ..p<$core.int>(6, _omitFieldNames ? '' : 'linkingIndependentNoteId', $pb.PbFieldType.KU3, protoName: 'linkingIndependentNoteId')
     ..hasRequiredFields = false
   ;
 
@@ -838,21 +913,24 @@ class MattingMark extends $pb.GeneratedMessage {
   void clearRectangle() => clearField(5);
   @$pb.TagNumber(5)
   MattingMarkRectangle ensureRectangle() => $_ensure(4);
+
+  @$pb.TagNumber(6)
+  $core.List<$core.int> get linkingIndependentNoteId => $_getList(5);
 }
 
 class MattingMarkHorizontal extends $pb.GeneratedMessage {
   factory MattingMarkHorizontal({
-    $core.double? startX,
-    $core.double? endX,
+    $core.double? left,
+    $core.double? right,
     $core.double? y,
     $core.double? height,
   }) {
     final $result = create();
-    if (startX != null) {
-      $result.startX = startX;
+    if (left != null) {
+      $result.left = left;
     }
-    if (endX != null) {
-      $result.endX = endX;
+    if (right != null) {
+      $result.right = right;
     }
     if (y != null) {
       $result.y = y;
@@ -867,8 +945,8 @@ class MattingMarkHorizontal extends $pb.GeneratedMessage {
   factory MattingMarkHorizontal.fromJson($core.String i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(i, r);
 
   static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'MattingMarkHorizontal', createEmptyInstance: create)
-    ..a<$core.double>(1, _omitFieldNames ? '' : 'startX', $pb.PbFieldType.OF, protoName: 'startX')
-    ..a<$core.double>(2, _omitFieldNames ? '' : 'endX', $pb.PbFieldType.OF, protoName: 'endX')
+    ..a<$core.double>(1, _omitFieldNames ? '' : 'left', $pb.PbFieldType.OF)
+    ..a<$core.double>(2, _omitFieldNames ? '' : 'right', $pb.PbFieldType.OF)
     ..a<$core.double>(3, _omitFieldNames ? '' : 'y', $pb.PbFieldType.OF)
     ..a<$core.double>(4, _omitFieldNames ? '' : 'height', $pb.PbFieldType.OF)
     ..hasRequiredFields = false
@@ -896,22 +974,22 @@ class MattingMarkHorizontal extends $pb.GeneratedMessage {
   static MattingMarkHorizontal? _defaultInstance;
 
   @$pb.TagNumber(1)
-  $core.double get startX => $_getN(0);
+  $core.double get left => $_getN(0);
   @$pb.TagNumber(1)
-  set startX($core.double v) { $_setFloat(0, v); }
+  set left($core.double v) { $_setFloat(0, v); }
   @$pb.TagNumber(1)
-  $core.bool hasStartX() => $_has(0);
+  $core.bool hasLeft() => $_has(0);
   @$pb.TagNumber(1)
-  void clearStartX() => clearField(1);
+  void clearLeft() => clearField(1);
 
   @$pb.TagNumber(2)
-  $core.double get endX => $_getN(1);
+  $core.double get right => $_getN(1);
   @$pb.TagNumber(2)
-  set endX($core.double v) { $_setFloat(1, v); }
+  set right($core.double v) { $_setFloat(1, v); }
   @$pb.TagNumber(2)
-  $core.bool hasEndX() => $_has(1);
+  $core.bool hasRight() => $_has(1);
   @$pb.TagNumber(2)
-  void clearEndX() => clearField(2);
+  void clearRight() => clearField(2);
 
   @$pb.TagNumber(3)
   $core.double get y => $_getN(2);
@@ -935,22 +1013,22 @@ class MattingMarkHorizontal extends $pb.GeneratedMessage {
 class MattingMarkVertical extends $pb.GeneratedMessage {
   factory MattingMarkVertical({
     $core.double? x,
-    $core.double? startY,
-    $core.double? endY,
-    $core.double? width,
+    $core.double? top,
+    $core.double? bottom,
+    $core.double? lineWidth,
   }) {
     final $result = create();
     if (x != null) {
       $result.x = x;
     }
-    if (startY != null) {
-      $result.startY = startY;
+    if (top != null) {
+      $result.top = top;
     }
-    if (endY != null) {
-      $result.endY = endY;
+    if (bottom != null) {
+      $result.bottom = bottom;
     }
-    if (width != null) {
-      $result.width = width;
+    if (lineWidth != null) {
+      $result.lineWidth = lineWidth;
     }
     return $result;
   }
@@ -960,9 +1038,9 @@ class MattingMarkVertical extends $pb.GeneratedMessage {
 
   static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'MattingMarkVertical', createEmptyInstance: create)
     ..a<$core.double>(1, _omitFieldNames ? '' : 'x', $pb.PbFieldType.OF)
-    ..a<$core.double>(2, _omitFieldNames ? '' : 'startY', $pb.PbFieldType.OF, protoName: 'startY')
-    ..a<$core.double>(3, _omitFieldNames ? '' : 'endY', $pb.PbFieldType.OF, protoName: 'endY')
-    ..a<$core.double>(4, _omitFieldNames ? '' : 'width', $pb.PbFieldType.OF)
+    ..a<$core.double>(2, _omitFieldNames ? '' : 'top', $pb.PbFieldType.OF)
+    ..a<$core.double>(3, _omitFieldNames ? '' : 'bottom', $pb.PbFieldType.OF)
+    ..a<$core.double>(4, _omitFieldNames ? '' : 'lineWidth', $pb.PbFieldType.OF, protoName: 'lineWidth')
     ..hasRequiredFields = false
   ;
 
@@ -997,31 +1075,31 @@ class MattingMarkVertical extends $pb.GeneratedMessage {
   void clearX() => clearField(1);
 
   @$pb.TagNumber(2)
-  $core.double get startY => $_getN(1);
+  $core.double get top => $_getN(1);
   @$pb.TagNumber(2)
-  set startY($core.double v) { $_setFloat(1, v); }
+  set top($core.double v) { $_setFloat(1, v); }
   @$pb.TagNumber(2)
-  $core.bool hasStartY() => $_has(1);
+  $core.bool hasTop() => $_has(1);
   @$pb.TagNumber(2)
-  void clearStartY() => clearField(2);
+  void clearTop() => clearField(2);
 
   @$pb.TagNumber(3)
-  $core.double get endY => $_getN(2);
+  $core.double get bottom => $_getN(2);
   @$pb.TagNumber(3)
-  set endY($core.double v) { $_setFloat(2, v); }
+  set bottom($core.double v) { $_setFloat(2, v); }
   @$pb.TagNumber(3)
-  $core.bool hasEndY() => $_has(2);
+  $core.bool hasBottom() => $_has(2);
   @$pb.TagNumber(3)
-  void clearEndY() => clearField(3);
+  void clearBottom() => clearField(3);
 
   @$pb.TagNumber(4)
-  $core.double get width => $_getN(3);
+  $core.double get lineWidth => $_getN(3);
   @$pb.TagNumber(4)
-  set width($core.double v) { $_setFloat(3, v); }
+  set lineWidth($core.double v) { $_setFloat(3, v); }
   @$pb.TagNumber(4)
-  $core.bool hasWidth() => $_has(3);
+  $core.bool hasLineWidth() => $_has(3);
   @$pb.TagNumber(4)
-  void clearWidth() => clearField(4);
+  void clearLineWidth() => clearField(4);
 }
 
 class MattingMarkLine extends $pb.GeneratedMessage {
@@ -1030,7 +1108,7 @@ class MattingMarkLine extends $pb.GeneratedMessage {
     $core.double? startY,
     $core.double? endX,
     $core.double? endY,
-    $core.double? width,
+    $core.double? lineWidth,
   }) {
     final $result = create();
     if (startX != null) {
@@ -1045,8 +1123,8 @@ class MattingMarkLine extends $pb.GeneratedMessage {
     if (endY != null) {
       $result.endY = endY;
     }
-    if (width != null) {
-      $result.width = width;
+    if (lineWidth != null) {
+      $result.lineWidth = lineWidth;
     }
     return $result;
   }
@@ -1059,7 +1137,7 @@ class MattingMarkLine extends $pb.GeneratedMessage {
     ..a<$core.double>(2, _omitFieldNames ? '' : 'startY', $pb.PbFieldType.OF, protoName: 'startY')
     ..a<$core.double>(3, _omitFieldNames ? '' : 'endX', $pb.PbFieldType.OF, protoName: 'endX')
     ..a<$core.double>(4, _omitFieldNames ? '' : 'endY', $pb.PbFieldType.OF, protoName: 'endY')
-    ..a<$core.double>(5, _omitFieldNames ? '' : 'width', $pb.PbFieldType.OF)
+    ..a<$core.double>(5, _omitFieldNames ? '' : 'lineWidth', $pb.PbFieldType.OF, protoName: 'lineWidth')
     ..hasRequiredFields = false
   ;
 
@@ -1121,13 +1199,13 @@ class MattingMarkLine extends $pb.GeneratedMessage {
   void clearEndY() => clearField(4);
 
   @$pb.TagNumber(5)
-  $core.double get width => $_getN(4);
+  $core.double get lineWidth => $_getN(4);
   @$pb.TagNumber(5)
-  set width($core.double v) { $_setFloat(4, v); }
+  set lineWidth($core.double v) { $_setFloat(4, v); }
   @$pb.TagNumber(5)
-  $core.bool hasWidth() => $_has(4);
+  $core.bool hasLineWidth() => $_has(4);
   @$pb.TagNumber(5)
-  void clearWidth() => clearField(5);
+  void clearLineWidth() => clearField(5);
 }
 
 class MattingMarkRectangle extends $pb.GeneratedMessage {

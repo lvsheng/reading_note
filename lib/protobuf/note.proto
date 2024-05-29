@@ -16,20 +16,25 @@ message NotePage {
     map<uint32, Pen> penPool = 6;
 }
 
-message IndependentNotePageData { // 独立笔记本
-    map<uint32, MattingResult> mattingResultPool = 1; // 内容来自MattingMark
+message IndependentNotePageData { // 独立笔记本的特有数据
+    uint32 lastMattingResultId = 1;
+    map<uint32, MattingResult> mattingResultPool = 2; // 内容来自MattingMark区域的截图
 }
 
-message MarkNotePageData { // 书内标记
-    map<uint32, MattingMark> mattingMarkPool = 1;
+message MarkNotePageData { // 书内标记的特有数据
+    uint32 lastMattingMarkId = 1;
+    map<uint32, MattingMark> mattingMarkPool = 2;
 }
 
 message NotePageItem {
+    float x = 1;
+    float y = 2;
     oneof content {
-        Path path = 1;
-        uint32 mattingMarkId = 2;
-        uint32 mattingResultId = 3;
+        Path path = 3; // 其内point的位置为参照起点的相对位置
+        uint32 mattingMarkId = 4; // IndependentNote时有效。为方便直接获取截图区域，其内的坐标与起点有信息重复
+        uint32 mattingResultId = 5; // only for MarkNote
     }
+    optional float scale = 6;
 }
 
 message Path {
@@ -59,10 +64,10 @@ enum ImageType {
 message MattingResult {
     uint32 bookPageNumber = 1;
     uint32 bookPageMattingMarkId = 2;
-    ImageType imageType = 3;
-    bytes imageData = 4;
-    uint32 imageWidth = 5;
-    uint32 imageHeight = 6;
+    optional ImageType imageType = 3;
+    uint32 imageWidth = 4;
+    uint32 imageHeight = 5;
+    bytes imageData = 6;
 }
 
 message MattingMark {
@@ -73,20 +78,21 @@ message MattingMark {
         MattingMarkLine line = 4;
         MattingMarkRectangle rectangle = 5;
     }
+    repeated uint32  linkingIndependentNoteId = 6;
 }
 
 message MattingMarkHorizontal {
-    float startX = 1;
-    float endX = 2;
+    float left = 1;
+    float right = 2;
     float y = 3;
     float height = 4;
 }
 
 message MattingMarkVertical {
     float x = 1;
-    float startY = 2;
-    float endY = 3;
-    float width = 4;
+    float top = 2;
+    float bottom = 3;
+    float lineWidth = 4;
 }
 
 message MattingMarkLine {
@@ -94,7 +100,7 @@ message MattingMarkLine {
     float startY = 2;
     float endX = 3;
     float endY = 4;
-    float width = 5;
+    float lineWidth = 5;
 }
 
 message MattingMarkRectangle {
