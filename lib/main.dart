@@ -230,10 +230,10 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                                     page.pageNumber,
                                     pb.MattingMark()
                                       ..horizontal = (pb.MattingMarkHorizontal()
-                                        ..startX = 0
-                                        ..endX = 300
-                                        ..y = 300
-                                        ..height = 100),
+                                        ..startX = 85
+                                        ..endX = 200
+                                        ..y = 350
+                                        ..height = 20),
                                     1)
                                 .then((result) {
                               imageOfMattingResult(result).then((image) {
@@ -318,6 +318,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                               child: Stack(
                                 children: [
                                   Text("第 ${index + 1} 页"),
+                                  if (_img != null) Positioned(child: _img!, left:  30, top: 380),
                                   ConstrainedBox(
                                       constraints: const BoxConstraints.expand(),
                                       child: IgnorePointer(
@@ -379,9 +380,6 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                   ),
                 ),
               ),
-
-            // if (_document != null && _capturedPageNumber != null) _getCaptureWidget(),
-            Container(width: 500, height: 500, color: Colors.red, child: _img,),
           ],
         ),
       ), // This trailing comma makes auto-formatting nicer for build methods.

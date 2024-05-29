@@ -5,34 +5,23 @@ import 'package:image/image.dart' as img;
 import 'package:pdfrx/pdfrx.dart';
 import 'package:quiver/collection.dart';
 import 'package:reading_note/protobuf/note.pb.dart' as pb;
-import 'package:path/path.dart' as p;
 import 'package:tuple/tuple.dart';
+import 'package:archive/archive.dart';
 
 import 'log.dart';
+import 'debug_util.dart' as debug;
 
 // todo: promise reject handle
-// todo: async decode/encode
 
 const _pdfPageCaptureSizeMultiple = 3;
-final _pageImageMap = LruMap<String, img.Image>(maximumSize: 5); // todo: captureing future tuple
+final _pageCapturedImageMap = LruMap<String, Tuple2<img.Image?, Future<img.Image?>?>>(maximumSize: 5);
 final _mattingDecodeResultMap = LruMap<pb.MattingResult, Tuple2<ByteData?, Future<ByteData?>?>>(maximumSize: 200);
 
-File? testingFile;
 Future<pb.MattingResult> matting(File file, PdfDocument document, int pageNumber, pb.MattingMark mark, int markId) async {
-  testingFile = file; // fixme
-
-  final page = document.pages[pageNumber];
-  final pageImageKey = _genKey(file, pageNumber);
-
-  late img.Image? pageImage;
-  {
-    pageImage = _pageImageMap[pageImageKey];
-    pageImage ??= await _capture(file, page);
-    if (pageImage == null) {
-      logError("_capture fail: $file, $pageNumber, $document, $page");
-      return pb.MattingResult();
-    }
-    _pageImageMap[pageImageKey] = pageImage;
+  debug.setCurrentPdf(file);
+  img.Image? pageImage = await _capture(file, document.pages[pageNumber]);
+  if (pageImage == null) {
+    throw ("_capture fail: $file, $pageNumber, $document");
   }
 
   late ui.Rect clippedRect;
@@ -59,35 +48,27 @@ Future<pb.MattingResult> matting(File file, PdfDocument document, int pageNumber
   int height = clippedRect.height.round();
   final cropResult = img
       .copyCrop(pageImage, x: clippedRect.left.round(), y: clippedRect.right.round(), width: width, height: height);
+  debug.saveImage(cropResult, "4.copyCrop");
 
-/*
-  _saveImageForDebug2(file, cropResult, "cropResult");
-*/
-
+  // todo: background
   final bytes = cropResult.buffer.asUint8List();
+  debug.saveBytes(bytes, "5.cropResult.buffer");
+  final compressed = const ZLibEncoder().encode(bytes, level: 6);
+  debug.saveIntList(compressed, "6.compressed");
   final result = pb.MattingResult()
     ..bookPageNumber = pageNumber
     ..bookPageMattingMarkId = markId
     ..imageWidth = width
     ..imageHeight = height
-    ..imageData = bytes; // todo: zip
+    ..imageData = compressed;
+  debug.saveGeneratedMessage(result, "7.MattingResult");
 
-/*
-  _saveImageForDebug2(file, img.Image.fromBytes(
-    width: width,
-    height: height,
-    bytes: Uint8List.fromList(result.imageData).buffer,
-    format: img.Format.uint2,
-    numChannels: 1,
-  ), "cropResult.decode");
-*/
-
-  imageOfMattingResult(result); // just trigger, no wait
+  imageOfMattingResult(result, cropResult); // just trigger, no wait
 
   return result;
 }
 
-Future<ByteData?> imageOfMattingResult(pb.MattingResult mattingResult) async {
+Future<ByteData?> imageOfMattingResult(pb.MattingResult mattingResult, [img.Image? image]) async {
   final tuple = _mattingDecodeResultMap[mattingResult];
   if (tuple != null) {
     if (tuple.item1 != null) {
@@ -96,58 +77,109 @@ Future<ByteData?> imageOfMattingResult(pb.MattingResult mattingResult) async {
     return tuple.item2!;
   }
 
-  final image = img.Image.fromBytes(
-    width: mattingResult.imageWidth,
-    height: mattingResult.imageHeight,
-    bytes: Uint8List.fromList(mattingResult.imageData).buffer,
-    format: img.Format.uint2,
-    numChannels: 1,
-  );
-  _saveImageForDebug2(testingFile!, image, "decode");
-  final future = _convertImageToFlutterUi(image).then((uiImage) => uiImage.toByteData(format: ui.ImageByteFormat.png)).then((byteData) {
-    if (byteData == null) {
-      logError("uiImage.toByteData fail: $mattingResult");
-      _mattingDecodeResultMap.remove(mattingResult);
-    } else {
-      _mattingDecodeResultMap[mattingResult] = Tuple2(byteData, null);
-    }
-  });
+  // // fixme: remove testing
+  // image = null;
 
-  _mattingDecodeResultMap[mattingResult] = Tuple2(null, future);
-  return future;
+  if (image == null) {
+    final decompressed = const ZLibDecoder().decodeBytes(mattingResult.imageData);
+    debug.saveIntList(decompressed, "8.decompressed");
+    image = img.Image.fromBytes(
+      bytes: Uint8List.fromList(decompressed).buffer,
+      width: mattingResult.imageWidth,
+      height: mattingResult.imageHeight,
+      format: img.Format.uint2,
+      numChannels: 1,
+    );
+    debug.saveImage(image, "9.image.fromBytes");
+  }
+
+  assert(() {
+    final future = _convertImageToFlutterUi(image!).then((uiImage) {
+      debug.saveUIImage(uiImage, "10.opt2.1.uiImage");
+      return uiImage.toByteData(format: ui.ImageByteFormat.png);
+    }).then((byteData) {
+      if (byteData == null) {
+        logError("uiImage.toByteData fail: $mattingResult");
+        // _mattingDecodeResultMap.remove(mattingResult);
+      } else {
+        // _mattingDecodeResultMap[mattingResult] = Tuple2(byteData, null);
+      }
+      debug.saveByteData(byteData!, "10.opt2.2.toByteData");
+    });
+    // _mattingDecodeResultMap[mattingResult] = Tuple2(null, future);
+    // return future;
+
+    return true;
+  }());
+
+  final pngBytes = img.encodePng(image);
+  debug.savePng(pngBytes, "10.opt1.1.encodePng");
+
+  // 这里buffer长度比实际用到的要多4倍+ todo：考虑realloc，释放一部分内存？ todo: 异步线程拷贝时只拷贝有效长度？
+  final byteData = pngBytes.buffer.asByteData(0, pngBytes.lengthInBytes);
+  debug.saveByteData(byteData, "10.opt1.2.asByteData");
+
+  _mattingDecodeResultMap[mattingResult] = Tuple2(byteData, null); // todo: async, save future
+
+  return byteData;
 }
 
 String _genKey(File file, int pageNumber) => "${file.path}:$pageNumber";
 
 Future<img.Image?> _capture(File pdfFile, PdfPage page) async {
-  final pdfImage =
-      await page.render(fullWidth: page.width * _pdfPageCaptureSizeMultiple, fullHeight: page.height * _pdfPageCaptureSizeMultiple);
-  if (pdfImage == null) {
-    logError("page.render fail: $page");
-    return null;
+  final pageImageKey = _genKey(pdfFile, page.pageNumber);
+  final tuple = _pageCapturedImageMap[pageImageKey];
+  img.Image? result;
+  if (tuple != null) {
+    result = tuple.item1;
+    result ??= await tuple.item2;
+    if (result != null) {
+      return result;
+    }
   }
-  logDebug("_capture got pdfImage. format:${pdfImage.format} size:${pdfImage.width}*${pdfImage.height} pixels.length:${pdfImage.pixels.length}");
+  logInfo("begin capture pdf page: $pdfFile, p${page.pageNumber}");
 
-  const orderMap = {
-    ui.PixelFormat.rgba8888: img.ChannelOrder.rgba,
-    ui.PixelFormat.bgra8888: img.ChannelOrder.bgra,
-    ui.PixelFormat.rgbaFloat32: img.ChannelOrder.rgba
-  };
+  final future = page
+      .render(fullWidth: page.width * _pdfPageCaptureSizeMultiple, fullHeight: page.height * _pdfPageCaptureSizeMultiple)
+      .then((renderResult) {
+    if (renderResult == null) {
+      throw "page.render fail: $pageImageKey";
+    }
+    debug.saveBytes(renderResult.pixels, "1.page.render");
+    return renderResult;
+  }).then((pdfImage) {
+    logDebug(
+        "_capture got pdfImage. format:${pdfImage.format} size:${pdfImage.width}*${pdfImage.height} pixels.length:${pdfImage.pixels.length}");
+    final image = img.Image.fromBytes(
+        width: pdfImage.width,
+        height: pdfImage.height,
+        bytes: pdfImage.pixels.buffer,
+        format: img.Format.uint8,
+        numChannels: 4,
+        order: (const {
+          ui.PixelFormat.rgba8888: img.ChannelOrder.rgba,
+          ui.PixelFormat.bgra8888: img.ChannelOrder.bgra,
+          ui.PixelFormat.rgbaFloat32: img.ChannelOrder.rgba
+        })[pdfImage.format]);
+    pdfImage.dispose();
+    debug.saveImage(image, "2.image.fromBytes");
+    return _encodeForMatting(image);
+  }).then((result) {
+    debug.saveImage(result, "3.encodeForMatting");
+    _pageCapturedImageMap[pageImageKey] = Tuple2(result, null);
+    return result;
+  }).catchError((error) {
+    _pageCapturedImageMap.remove(pageImageKey);
+    logError("_capture fail: $pageImageKey");
+    return null; // fixme
+  });
 
-  final encodedForMatting = _encodeForMatting(img.Image.fromBytes(
-      width: pdfImage.width,
-      height: pdfImage.height,
-      bytes: pdfImage.pixels.buffer,
-      format: img.Format.uint8,
-      numChannels: 4,
-      order: orderMap[pdfImage.format]));
-  pdfImage.dispose();
-
-  // _saveImageForDebug2(pdfFile, encodedForMatting, "_encodeForMatting.v2");
-  return encodedForMatting;
+  _pageCapturedImageMap[pageImageKey] = Tuple2(null, future);
+  return future;
 }
 
 img.Image _encodeForMatting(img.Image src) {
+  // fixme: async, background service
   assert(!src.hasPalette);
   final result = img.Image(
     width: src.width,
@@ -197,15 +229,3 @@ Future<ui.Image> _convertImageToFlutterUi(img.Image image) async {
   return uiImage;
 }
 
-void _saveImageForDebug(File pdfFile, ui.Image image) async {
-  final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
-  if (byteData == null) return null;
-  logDebug("byteData.length: ${byteData.buffer.lengthInBytes}");
-  await File("${p.dirname(pdfFile.path)}/debug.png").writeAsBytes(byteData.buffer.asUint8List());
-}
-
-void _saveImageForDebug2(File pdfFile, img.Image image, [String namePostfix = ""]) async {
-  final png = img.encodePng(image);
-  logDebug("png.length ${png.length}");
-  await File("${p.dirname(pdfFile.path)}/debug-$namePostfix.png").writeAsBytes(png);
-}
