@@ -1,6 +1,6 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:reading_note/log.dart';
+import 'package:reading_note/util/log.dart';
 
 class PencilGestureDetector extends StatelessWidget {
   final Widget? child;

@@ -2,32 +2,28 @@ import 'dart:async';
 import 'dart:io';
 import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:reading_note/log.dart';
+import 'package:reading_note/util/log.dart';
 import 'package:path/path.dart' as path;
 
-final DocumentProxy documentProxy = DocumentProxy._();
+final FileSystemProxy fileSystemProxy = FileSystemProxy._();
 
-class DocumentProxy {
+class FileSystemProxy {
   static const MethodChannel _channel = MethodChannel('document_proxy');
+  static const _supportedFileTypes = {".pdf"};
 
-  static const supportedFileTypes = {".pdf"};
-  static bool support(FileSystemEntity file) => file is File &&
-      supportedFileTypes.contains(path.extension(file.path));
+  static bool _support(FileSystemEntity file) => file is File && _supportedFileTypes.contains(path.extension(file.path));
 
-  late Future<Directory> rootDirectoryReady;
+  late final Future<Directory> rootDirectoryReady;
   Directory? rootDirectory;
 
-  DocumentProxy._() {
-    rootDirectoryReady =
-        _fetchRootDirUri().then((value) => rootDirectory = value);
+  FileSystemProxy._() {
+    rootDirectoryReady = _fetchRootDirUri().then((value) => rootDirectory = value);
   }
 
   Future<File?> get firstFile async {
     await rootDirectoryReady;
     final notFound = File("./");
-    final result = (await rootDirectory!.list(recursive: true).firstWhere((file) {
-      return support(file);
-    }, orElse: () => notFound)) as File;
+    final result = (await rootDirectory!.list(recursive: true).firstWhere(_support, orElse: () => notFound)) as File;
     return result.hashCode == notFound.hashCode ? null : result;
   }
 
@@ -54,8 +50,7 @@ class DocumentProxy {
       }
     }
 
-    logWarn(
-        "Could not get iCloud document directory, using ApplicationDocumentDirectory as fallback.");
+    logWarn("Could not get iCloud document directory, using ApplicationDocumentDirectory as fallback.");
     return getApplicationDocumentsDirectory();
   }
 }

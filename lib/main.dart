@@ -5,13 +5,12 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/cupertino.dart';
 import 'package:app_links/app_links.dart';
-import 'package:flutter/material.dart' as material;
 import 'package:reading_note/custom_painter.dart';
-import 'package:reading_note/document_proxy.dart';
+import 'package:reading_note/file_system_proxy.dart';
 import 'package:reading_note/deep_link.dart';
-import 'package:reading_note/matte_transfer_station.dart';
-import 'package:reading_note/note_page.dart';
-import 'package:reading_note/log.dart';
+import 'package:reading_note/status_manager/status_manager.dart';
+import 'package:reading_note/note_page/note_page.dart';
+import 'package:reading_note/util/log.dart';
 import 'package:reading_note/stylus_gesture_detector.dart';
 import 'package:reading_note/user_preferences.dart';
 import 'package:pdfrx/pdfrx.dart';
@@ -19,23 +18,18 @@ import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'package:tuple/tuple.dart';
 import 'package:visibility_detector/visibility_detector.dart';
 
-import 'debug_util.dart' as debug;
+import 'util/debug.dart' as debug;
+import 'note_page/independent_note_page.dart';
+import 'note_page/mark_note_page.dart';
+import 'widgets/control_panel_builder.dart';
 
-void main() {
-  runApp(const MyApp());
-}
+void main() => runApp(const MyApp());
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return const CupertinoApp(
-      title: 'Reading Note',
-      theme: CupertinoThemeData(),
-      home: MyHomePage(),
-    );
-  }
+  Widget build(BuildContext context) => const CupertinoApp(title: 'Reading Note', theme: CupertinoThemeData(), home: MyHomePage());
 }
 
 class MyHomePage extends StatefulWidget {
@@ -48,8 +42,6 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
   static final int _maxInt = double.maxFinite.round();
 
-  Widget? _img;
-
   late AppLinks _appLinks;
   StreamSubscription<Uri>? _linkSubscription;
   Directory? _rootDirectory;
@@ -59,14 +51,13 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
   int _initialNotePageNumber = 1;
   int _pageNumber = 1;
   Map<int, Tuple2<MarkNotePage?, bool /*begin load*/ >>? _pageMarkNoteMap; // todo: 考虑清理不在用的文件？ todo: dispose on clean?
-  Map<int, Tuple2<IndependentNotePage?, bool /*begin load*/ >>? _pageIndependentNoteMap;
+  Map<int, Tuple2<IndependentNotePage?, bool /*begin load*/ >>? _pageIndependentNoteMap; // todo: map移走？
   PdfDocument? _document;
   PdfViewerController? _controller;
   Matrix4? _transformation;
 
   String? _errorTip;
   bool _debugShowIndicator = false;
-  bool _coverIndependentNote = false;
   late Timer _timerSaveFile;
 
   @override
@@ -74,16 +65,16 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     super.initState();
 
     WidgetsBinding.instance.addObserver(this);
-    initDeepLinks();
-    fetchData();
-
+    _initDeepLinks();
+    _fetchData();
     _timerSaveFile = Timer.periodic(const Duration(seconds: 3), (timer) {
       if (!mounted) return;
-      saveIfNeeded();
+      _saveIfNeeded();
     });
+    statusManager.addListener(_statusListener);
   }
 
-  saveIfNeeded() {
+  _saveIfNeeded() {
     for (final group in [_pageMarkNoteMap?.values, _pageIndependentNoteMap?.values]) {
       if (group == null) continue;
       for (final tuple in group) {
@@ -94,15 +85,15 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     }
   }
 
-  void fetchData() async {
-    final rootDirectory = await documentProxy.rootDirectoryReady;
+  void _fetchData() async {
+    final rootDirectory = await fileSystemProxy.rootDirectoryReady;
     setState(() {
       _rootDirectory = rootDirectory;
     });
 
     {
       var file = await userPreferences.lastOpenedFile;
-      file ??= await documentProxy.firstFile;
+      file ??= await fileSystemProxy.firstFile;
       if (file != null) {
         open(file);
       } else {
@@ -116,22 +107,20 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _linkSubscription?.cancel();
     _timerSaveFile.cancel();
-    saveIfNeeded();
-    WidgetsBinding.instance.removeObserver(this);
-    if (_reading != null) {
-      MattingManager.instanceOf(_reading!).removeListener(_mattingStatusListener);
-    }
+    _saveIfNeeded();
+    statusManager.removeListener(_statusListener);
     super.dispose();
   }
 
-  void _mattingStatusListener() {
+  void _statusListener() {
     if (!mounted) return;
     setState(() {});
   }
 
-  Future<void> initDeepLinks() async {
+  Future<void> _initDeepLinks() async {
     _appLinks = AppLinks();
 
     _linkSubscription = _appLinks.uriLinkStream.listen((uri) async {
@@ -144,7 +133,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
   }
 
   open(File file) {
-    saveIfNeeded();
+    _saveIfNeeded();
     userPreferences.setLastOpenedFile(file);
     setState(() {
       _reading = file;
@@ -163,7 +152,6 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
         });
       _transformation = null;
     });
-    MattingManager.instanceOf(_reading!).addListener(_mattingStatusListener);
 
     debug.setCurrentPdf(file);
   }
@@ -204,7 +192,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                     if (noteTuple?.item1 == null) {
                       // if not loading, load it first
                       if (noteTuple == null) {
-                        NotePage.open(true, _reading!, _document!, page.pageNumber, page.size).then((note) {
+                        NotePage.open(NoteType.bookMarkNote, _reading!, _document!, page.pageNumber, page.size).then((note) {
                           if (!mounted) return;
                           setState(() => _pageMarkNoteMap![page.pageNumber] = Tuple2(note as MarkNotePage, true));
                         });
@@ -244,109 +232,93 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                     ];
                   }),
             )),
-          if (_reading != null)
+          if (_reading != null && statusManager.interactingNoteType == NoteType.independentNote)
             Positioned.fill(
-              child: IgnorePointer(
-                ignoring: !_coverIndependentNote,
-                child: Opacity(
-                  opacity: _coverIndependentNote ? 0.85 : 0.0,
-                  child: DecoratedBox(
-                    decoration: const BoxDecoration(color: CupertinoColors.white),
-                    child: ScrollablePositionedList.builder(
-                      itemCount: _maxInt,
-                      initialScrollIndex: _initialNotePageNumber,
-                      itemBuilder: (BuildContext context, int index) {
-                        const margin = Size(10.0, 20.0);
-                        final size = MediaQuery.of(context).size;
-                        final noteTuple = _pageIndependentNoteMap![index];
+              child: Opacity(
+                opacity: 0.85,
+                child: DecoratedBox(
+                  decoration: const BoxDecoration(color: CupertinoColors.white),
+                  child: ScrollablePositionedList.builder(
+                    itemCount: _maxInt,
+                    initialScrollIndex: _initialNotePageNumber,
+                    itemBuilder: (BuildContext context, int index) {
+                      const margin = Size(10.0, 20.0);
+                      final size = MediaQuery.of(context).size;
+                      final noteTuple = _pageIndependentNoteMap![index];
 
-                        // note not ready
-                        if (noteTuple?.item1 == null) {
-                          // if not loading, load it first
-                          if (noteTuple == null && _document != null) {
-                            NotePage.open(
-                                    false,
-                                    _reading!,
-                                    _document!,
-                                    index,
-                                    Size(
-                                        size.width - margin.width * 2, max(_document!.pages.firstOrNull?.height ?? 0, size.width / 9 * 16)))
-                                .then((note) {
-                              if (!mounted) return;
-                              setState(() => _pageIndependentNoteMap![index] = Tuple2(note as IndependentNotePage, true));
-                            });
-                          }
-
-                          return SizedBox(width: size.width, height: size.height, child: const Center(child: Text("loading")));
+                      // note not ready
+                      if (noteTuple?.item1 == null) {
+                        // if not loading, load it first
+                        if (noteTuple == null && _document != null) {
+                          NotePage.open(NoteType.independentNote, _reading!, _document!, index,
+                                  Size(size.width - margin.width * 2, max(_document!.pages.firstOrNull?.height ?? 0, size.width / 9 * 16)))
+                              .then((note) {
+                            if (!mounted) return;
+                            setState(() => _pageIndependentNoteMap![index] = Tuple2(note as IndependentNotePage, true));
+                          });
                         }
 
-                        final note = noteTuple!.item1!;
+                        return SizedBox(width: size.width, height: size.height, child: const Center(child: Text("loading")));
+                      }
 
-                        return VisibilityDetector(
-                          key: Key(index.toString()),
-                          onVisibilityChanged: (info) {
-                            if (info.visibleFraction > 0) {
-                              assert(_reading != null);
-                              userPreferences.setLastNotePage(_reading!, index);
-                            }
-                          },
-                          child: Container(
-                            height: note.size.height,
-                            margin: EdgeInsets.only(top: MediaQuery.of(context).viewPadding.top, left: margin.width, right: margin.width),
-                            decoration: const BoxDecoration(
-                              borderRadius: BorderRadius.all(Radius.circular(8)),
-                              color: CupertinoColors.white,
-                              boxShadow: [
-                                BoxShadow(color: CupertinoColors.inactiveGray, spreadRadius: 3, blurRadius: 3),
-                              ],
-                            ),
-                            child: Stack(
-                              children: [
-                                Text("第 ${index + 1} 页"),
-                                if (_img != null) Positioned(left: 30, top: 380, child: _img!),
-                                ConstrainedBox(
-                                    constraints: const BoxConstraints.expand(),
-                                    child: IgnorePointer(
-                                        child: RepaintBoundary(
-                                      child: CustomPaint(
-                                        painter: IndependentNotePainter(note),
-                                        isComplex: true, // fixme
-                                      ),
-                                    ))),
-                                GestureDetector(onDoubleTap: () => setState(() => _debugShowIndicator = !_debugShowIndicator)),
-                                PencilGestureDetector(
-                                  onDown: (details) {
-                                    note.startDraw(note.canvasPositionToPage(details.localPosition, 1.0));
-                                  },
-                                  onMove: (localPosition) {
-                                    note.addPoint(note.canvasPositionToPage(localPosition, 1.0));
-                                  },
-                                  onUp: (details) {
-                                    note.addPoint(note.canvasPositionToPage(details.localPosition, 1.0));
-                                    note.endDraw();
-                                  },
-                                  onCancel: (detail) {
-                                    note.endDraw();
-                                  },
-                                ),
-                              ],
-                            ),
+                      final note = noteTuple!.item1!;
+
+                      return VisibilityDetector(
+                        key: Key(index.toString()),
+                        onVisibilityChanged: (info) {
+                          if (info.visibleFraction > 0) {
+                            assert(_reading != null);
+                            userPreferences.setLastNotePage(_reading!, index);
+                          }
+                        },
+                        child: Container(
+                          height: note.size.height,
+                          margin: EdgeInsets.only(top: MediaQuery.of(context).viewPadding.top, left: margin.width, right: margin.width),
+                          decoration: const BoxDecoration(
+                            borderRadius: BorderRadius.all(Radius.circular(8)),
+                            color: CupertinoColors.white,
+                            boxShadow: [
+                              BoxShadow(color: CupertinoColors.inactiveGray, spreadRadius: 3, blurRadius: 3),
+                            ],
                           ),
-                        );
-                      },
-                    ),
+                          child: Stack(
+                            children: [
+                              Text("第 ${index + 1} 页"),
+                              ConstrainedBox(
+                                  constraints: const BoxConstraints.expand(),
+                                  child: IgnorePointer(
+                                      child: RepaintBoundary(
+                                    child: CustomPaint(
+                                      painter: IndependentNotePainter(note),
+                                      isComplex: true, // fixme
+                                    ),
+                                  ))),
+                              GestureDetector(onDoubleTap: () => setState(() => _debugShowIndicator = !_debugShowIndicator)),
+                              PencilGestureDetector(
+                                onDown: (details) {
+                                  note.startDraw(note.canvasPositionToPage(details.localPosition, 1.0));
+                                },
+                                onMove: (localPosition) {
+                                  note.addPoint(note.canvasPositionToPage(localPosition, 1.0));
+                                },
+                                onUp: (details) {
+                                  note.addPoint(note.canvasPositionToPage(details.localPosition, 1.0));
+                                  note.endDraw();
+                                },
+                                onCancel: (detail) {
+                                  note.endDraw();
+                                },
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
                   ),
                 ),
               ),
             ),
-          if (_reading != null) Text("status: ${MattingManager.instanceOf(_reading!).status}"),
-          Positioned(
-            bottom: 30,
-            left: 30,
-            child: material.FloatingActionButton.large(
-                onPressed: () => setState(() => _coverIndependentNote = !_coverIndependentNote),
-                child: const Icon(material.Icons.edit_note_sharp, size: 80)),
-          ),
+          if (ControlPanelBuilder.ready) ControlPanelBuilder.build(),
           if (_errorTip != null)
             Center(child: Text(_errorTip!, style: const TextStyle(color: CupertinoColors.destructiveRed, fontSize: 20))),
           if (_debugShowIndicator)
@@ -393,7 +365,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
   void didChangeAppLifecycleState(AppLifecycleState state) {
     logDebug("didChangeAppLifecycleState: $state");
     if (state == AppLifecycleState.inactive) {
-      saveIfNeeded();
+      _saveIfNeeded();
     }
   }
 }

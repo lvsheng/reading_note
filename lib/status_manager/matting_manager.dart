@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:pdfrx/pdfrx.dart';
 import 'package:quiver/collection.dart';
-import 'package:reading_note/pdf_matting_util.dart';
+import 'package:reading_note/pdf_matting_performer.dart';
 import 'package:reading_note/protobuf/note.pb.dart' as pb;
 import 'package:tuple/tuple.dart';
 
@@ -26,10 +26,7 @@ class MattingManager extends ChangeNotifier {
 
   MattingManager._(this._book);
 
-  MattingStatus get status =>
-      _caching.isEmpty ? MattingStatus.notStarted : (_allDone ? MattingStatus.allDone : MattingStatus.ing);
-
-  bool get _allDone => _caching.values.every((tuple) => tuple.item1 != null);
+  MattingStatus get status => _caching.isEmpty ? MattingStatus.notStarted : (_allDone ? MattingStatus.allDone : MattingStatus.ing);
 
   void startOne(pb.MattingMark mark, int markId, PdfDocument document, int pageNumber) {
     _caching[mark] = Tuple2(
@@ -54,4 +51,6 @@ class MattingManager extends ChangeNotifier {
     notifyListeners();
     return result.cast();
   }
+
+  bool get _allDone => _caching.values.every((tuple) => tuple.item1 != null);
 }

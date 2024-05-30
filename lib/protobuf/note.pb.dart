@@ -517,19 +517,19 @@ class Path extends $pb.GeneratedMessage {
 
 class Pen extends $pb.GeneratedMessage {
   factory Pen({
-    PenType? penType,
+    PenType? type,
     $core.int? color,
-    $core.double? strokeWidth,
+    $core.double? lineWidth,
   }) {
     final $result = create();
-    if (penType != null) {
-      $result.penType = penType;
+    if (type != null) {
+      $result.type = type;
     }
     if (color != null) {
       $result.color = color;
     }
-    if (strokeWidth != null) {
-      $result.strokeWidth = strokeWidth;
+    if (lineWidth != null) {
+      $result.lineWidth = lineWidth;
     }
     return $result;
   }
@@ -538,9 +538,9 @@ class Pen extends $pb.GeneratedMessage {
   factory Pen.fromJson($core.String i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(i, r);
 
   static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'Pen', createEmptyInstance: create)
-    ..e<PenType>(1, _omitFieldNames ? '' : 'penType', $pb.PbFieldType.OE, protoName: 'penType', defaultOrMaker: PenType.PT_BALL_POINT_PEN, valueOf: PenType.valueOf, enumValues: PenType.values)
+    ..e<PenType>(1, _omitFieldNames ? '' : 'type', $pb.PbFieldType.OE, defaultOrMaker: PenType.PT_BALL_POINT_PEN, valueOf: PenType.valueOf, enumValues: PenType.values)
     ..a<$core.int>(2, _omitFieldNames ? '' : 'color', $pb.PbFieldType.OU3)
-    ..a<$core.double>(3, _omitFieldNames ? '' : 'strokeWidth', $pb.PbFieldType.OF, protoName: 'strokeWidth')
+    ..a<$core.double>(3, _omitFieldNames ? '' : 'lineWidth', $pb.PbFieldType.OF, protoName: 'lineWidth')
     ..hasRequiredFields = false
   ;
 
@@ -566,13 +566,13 @@ class Pen extends $pb.GeneratedMessage {
   static Pen? _defaultInstance;
 
   @$pb.TagNumber(1)
-  PenType get penType => $_getN(0);
+  PenType get type => $_getN(0);
   @$pb.TagNumber(1)
-  set penType(PenType v) { setField(1, v); }
+  set type(PenType v) { setField(1, v); }
   @$pb.TagNumber(1)
-  $core.bool hasPenType() => $_has(0);
+  $core.bool hasType() => $_has(0);
   @$pb.TagNumber(1)
-  void clearPenType() => clearField(1);
+  void clearType() => clearField(1);
 
   @$pb.TagNumber(2)
   $core.int get color => $_getIZ(1);
@@ -584,13 +584,13 @@ class Pen extends $pb.GeneratedMessage {
   void clearColor() => clearField(2);
 
   @$pb.TagNumber(3)
-  $core.double get strokeWidth => $_getN(2);
+  $core.double get lineWidth => $_getN(2);
   @$pb.TagNumber(3)
-  set strokeWidth($core.double v) { $_setFloat(2, v); }
+  set lineWidth($core.double v) { $_setFloat(2, v); }
   @$pb.TagNumber(3)
-  $core.bool hasStrokeWidth() => $_has(2);
+  $core.bool hasLineWidth() => $_has(2);
   @$pb.TagNumber(3)
-  void clearStrokeWidth() => clearField(3);
+  void clearLineWidth() => clearField(3);
 }
 
 class Point extends $pb.GeneratedMessage {

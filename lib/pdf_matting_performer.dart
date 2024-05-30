@@ -8,8 +8,8 @@ import 'package:reading_note/protobuf/note.pb.dart' as pb;
 import 'package:tuple/tuple.dart';
 import 'package:archive/archive.dart';
 
-import 'log.dart';
-import 'debug_util.dart' as debug;
+import 'util/log.dart';
+import 'util/debug.dart' as debug;
 
 // todo: promise reject handle
 

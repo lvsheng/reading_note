@@ -15,9 +15,11 @@ import 'package:protobuf/protobuf.dart' as $pb;
 
 class PenType extends $pb.ProtobufEnum {
   static const PenType PT_BALL_POINT_PEN = PenType._(0, _omitEnumNames ? '' : 'PT_BALL_POINT_PEN');
+  static const PenType PT_MARK_PEN = PenType._(1, _omitEnumNames ? '' : 'PT_MARK_PEN');
 
   static const $core.List<PenType> values = <PenType> [
     PT_BALL_POINT_PEN,
+    PT_MARK_PEN,
   ];
 
   static final $core.Map<$core.int, PenType> _byValue = $pb.ProtobufEnum.initByValue(values);

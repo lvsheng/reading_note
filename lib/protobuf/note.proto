@@ -43,13 +43,14 @@ message Path {
 }
 
 message Pen {
-    PenType penType = 1;
+    PenType type = 1;
     uint32 color = 2;
-    float strokeWidth = 3;
+    float lineWidth = 3;
 }
 
 enum PenType {
     PT_BALL_POINT_PEN = 0;
+    PT_MARK_PEN = 1;
 }
 
 message Point {

@@ -1,11 +1,13 @@
 import 'dart:ui';
 import 'package:flutter/cupertino.dart';
-import 'package:reading_note/log.dart';
-import 'package:reading_note/pdf_matting_util.dart';
+import 'package:reading_note/util/log.dart';
+import 'package:reading_note/pdf_matting_performer.dart';
 import 'package:reading_note/protobuf/note.pb.dart' as pb;
 import 'package:tuple/tuple.dart';
 
-import 'note_page.dart';
+import 'note_page/independent_note_page.dart';
+import 'note_page/mark_note_page.dart';
+import 'note_page/note_page.dart';
 
 abstract class NotePainter extends CustomPainter {
   final NotePage _note;
@@ -103,7 +105,7 @@ abstract class NotePainter extends CustomPainter {
         penId,
         _lastPenPaint.item2
           ..color = Color(pen.color)
-          ..strokeWidth = pageWidthToCanvas(pen.strokeWidth));
+          ..strokeWidth = pageWidthToCanvas(pen.lineWidth));
   }
 
   double pageWidthToCanvas(double v);

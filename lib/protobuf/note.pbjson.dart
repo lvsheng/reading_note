@@ -18,12 +18,13 @@ const PenType$json = {
   '1': 'PenType',
   '2': [
     {'1': 'PT_BALL_POINT_PEN', '2': 0},
+    {'1': 'PT_MARK_PEN', '2': 1},
   ],
 };
 
 /// Descriptor for `PenType`. Decode as a `google.protobuf.EnumDescriptorProto`.
 final $typed_data.Uint8List penTypeDescriptor = $convert.base64Decode(
-    'CgdQZW5UeXBlEhUKEVBUX0JBTExfUE9JTlRfUEVOEAA=');
+    'CgdQZW5UeXBlEhUKEVBUX0JBTExfUE9JTlRfUEVOEAASDwoLUFRfTUFSS19QRU4QAQ==');
 
 @$core.Deprecated('Use imageTypeDescriptor instead')
 const ImageType$json = {
@@ -197,16 +198,16 @@ final $typed_data.Uint8List pathDescriptor = $convert.base64Decode(
 const Pen$json = {
   '1': 'Pen',
   '2': [
-    {'1': 'penType', '3': 1, '4': 1, '5': 14, '6': '.PenType', '10': 'penType'},
+    {'1': 'type', '3': 1, '4': 1, '5': 14, '6': '.PenType', '10': 'type'},
     {'1': 'color', '3': 2, '4': 1, '5': 13, '10': 'color'},
-    {'1': 'strokeWidth', '3': 3, '4': 1, '5': 2, '10': 'strokeWidth'},
+    {'1': 'lineWidth', '3': 3, '4': 1, '5': 2, '10': 'lineWidth'},
   ],
 };
 
 /// Descriptor for `Pen`. Decode as a `google.protobuf.DescriptorProto`.
 final $typed_data.Uint8List penDescriptor = $convert.base64Decode(
-    'CgNQZW4SIgoHcGVuVHlwZRgBIAEoDjIILlBlblR5cGVSB3BlblR5cGUSFAoFY29sb3IYAiABKA'
-    '1SBWNvbG9yEiAKC3N0cm9rZVdpZHRoGAMgASgCUgtzdHJva2VXaWR0aA==');
+    'CgNQZW4SHAoEdHlwZRgBIAEoDjIILlBlblR5cGVSBHR5cGUSFAoFY29sb3IYAiABKA1SBWNvbG'
+    '9yEhwKCWxpbmVXaWR0aBgDIAEoAlIJbGluZVdpZHRo');
 
 @$core.Deprecated('Use pointDescriptor instead')
 const Point$json = {
