@@ -2,13 +2,12 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:math';
 
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:path/path.dart' as p;
 import 'package:pdfrx/pdfrx.dart';
 import 'package:protobuf/protobuf.dart';
 import 'package:reading_note/log.dart';
-import 'package:reading_note/matting_transfer_station.dart';
-import 'package:reading_note/pdf_matting_util.dart';
+import 'package:reading_note/matte_transfer_station.dart';
 import 'package:reading_note/protobuf/note.pb.dart' as pb;
 import 'package:tuple/tuple.dart';
 
@@ -39,7 +38,7 @@ class _NoteBook {
   final bool _isBookMark; // true: book mark note, false: independent note
   late final File _book;
   late File _file;
-  late PdfDocument _document;
+  late final PdfDocument _document;
   pb.NoteBookMeta? _data;
 
   _NoteBook._(this._book, this._isBookMark, this._document) {
@@ -193,7 +192,7 @@ abstract class NotePage extends ChangeNotifier {
     if (penId == defaultPenId) {
       return pb.Pen()
         ..strokeWidth = _defaultPenWidth
-        ..color = Colors.black.value;
+        ..color = CupertinoColors.black.value;
     }
 
     final result = _penPool[penId];
@@ -231,7 +230,7 @@ class MarkNotePage extends NotePage {
   Rect pageRectToCanvas(Rect rect, Rect pageRect) => Rect.fromLTRB(pageWidthToCanvas(rect.left, pageRect),
       _pageHeightToCanvas(rect.top, pageRect), pageWidthToCanvas(rect.right, pageRect), _pageHeightToCanvas(rect.bottom, pageRect));
 
-  pb.MattingMark? getMattingMark(int id) => _data.markNoteData.mattingMarkPool[id];
+  pb.MattingMark? mattingMarkOfId(int id) => _data.markNoteData.mattingMarkPool[id];
 
   @visibleForTesting
   get mattingMarkPool => _data.markNoteData.mattingMarkPool;
@@ -241,7 +240,7 @@ class MarkNotePage extends NotePage {
     if (!super.endDraw()) return false;
 
     final tuple = _addMattingMark();
-    MattingTransferStation.instanceOf(_noteBook._book).pushMatting(tuple.item1, tuple.item2, _noteBook._document, _pageNumber);
+    MattingManager.instanceOf(_noteBook._book).startOne(tuple.item2, tuple.item1, _noteBook._document, _pageNumber);
 
     return true;
   }
@@ -272,31 +271,31 @@ class MarkNotePage extends NotePage {
 
 class IndependentNotePage extends NotePage {
   IndependentNotePage._(super.pageNumber, super.noteBook, super.data, super.file) {
-    MattingTransferStation.instanceOf(_noteBook._book).addListener(_onMattingTransferStationChange);
+    MattingManager.instanceOf(_noteBook._book).addListener(_mattingStatusListener);
   }
 
   @override
   void dispose() {
-    MattingTransferStation.instanceOf(_noteBook._book).removeListener(_onMattingTransferStationChange);
+    MattingManager.instanceOf(_noteBook._book).removeListener(_mattingStatusListener);
     super.dispose();
   }
 
   @override
   void startDraw(Offset positionOnPage) {
-    tryPlaceMattingResult(positionOnPage);
+    _tryPlaceMatte(positionOnPage);
     return super.startDraw(positionOnPage);
   }
 
-  void tryPlaceMattingResult(Offset positionOnPage) {
-    final newMattingResult = MattingTransferStation.instanceOf(_noteBook._book).takeAway();
-    if (newMattingResult == null) return;
-    for (final mattingResult in newMattingResult) {
-      final id = ++_data.independentNoteData.lastMattingResultId;
-      _data.independentNoteData.mattingResultPool[id] = mattingResult;
+  void _tryPlaceMatte(Offset positionOnPage) {
+    final newMattes = MattingManager.instanceOf(_noteBook._book).takeAwayResults();
+    if (newMattes == null) return;
+    for (final matte in newMattes) {
+      final id = ++_data.independentNoteData.lastMatteId;
+      _data.independentNoteData.mattePool[id] = matte;
       _data.items.add(pb.NotePageItem()
         ..x = positionOnPage.dx
         ..y = positionOnPage.dy
-        ..mattingResultId = id);
+        ..matteId = id);
     }
     triggerRepaint();
   }
@@ -313,7 +312,7 @@ class IndependentNotePage extends NotePage {
 
   double pageWidthToCanvas(double v, double scale) => v * _defaultPixelDensity * scale;
 
-  pb.MattingResult? getMattingResult(int id) => _data.independentNoteData.mattingResultPool[id];
+  pb.Matte? matteOfId(int id) => _data.independentNoteData.mattePool[id];
 
   @override
   bool _check(Offset p) => p > const Offset(0, 0) && p.dy < _data.height;
@@ -321,7 +320,7 @@ class IndependentNotePage extends NotePage {
   @override
   double get _defaultPenWidth => 2.0;
 
-  void _onMattingTransferStationChange() {
+  void _mattingStatusListener() {
     // todo: 改变状态?
   }
 }

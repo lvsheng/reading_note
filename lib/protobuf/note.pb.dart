@@ -204,15 +204,15 @@ class NotePage extends $pb.GeneratedMessage {
 
 class IndependentNotePageData extends $pb.GeneratedMessage {
   factory IndependentNotePageData({
-    $core.int? lastMattingResultId,
-    $core.Map<$core.int, MattingResult>? mattingResultPool,
+    $core.int? lastMatteId,
+    $core.Map<$core.int, Matte>? mattePool,
   }) {
     final $result = create();
-    if (lastMattingResultId != null) {
-      $result.lastMattingResultId = lastMattingResultId;
+    if (lastMatteId != null) {
+      $result.lastMatteId = lastMatteId;
     }
-    if (mattingResultPool != null) {
-      $result.mattingResultPool.addAll(mattingResultPool);
+    if (mattePool != null) {
+      $result.mattePool.addAll(mattePool);
     }
     return $result;
   }
@@ -221,8 +221,8 @@ class IndependentNotePageData extends $pb.GeneratedMessage {
   factory IndependentNotePageData.fromJson($core.String i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(i, r);
 
   static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'IndependentNotePageData', createEmptyInstance: create)
-    ..a<$core.int>(1, _omitFieldNames ? '' : 'lastMattingResultId', $pb.PbFieldType.OU3, protoName: 'lastMattingResultId')
-    ..m<$core.int, MattingResult>(2, _omitFieldNames ? '' : 'mattingResultPool', protoName: 'mattingResultPool', entryClassName: 'IndependentNotePageData.MattingResultPoolEntry', keyFieldType: $pb.PbFieldType.OU3, valueFieldType: $pb.PbFieldType.OM, valueCreator: MattingResult.create, valueDefaultOrMaker: MattingResult.getDefault)
+    ..a<$core.int>(1, _omitFieldNames ? '' : 'lastMatteId', $pb.PbFieldType.OU3, protoName: 'lastMatteId')
+    ..m<$core.int, Matte>(2, _omitFieldNames ? '' : 'mattePool', protoName: 'mattePool', entryClassName: 'IndependentNotePageData.MattePoolEntry', keyFieldType: $pb.PbFieldType.OU3, valueFieldType: $pb.PbFieldType.OM, valueCreator: Matte.create, valueDefaultOrMaker: Matte.getDefault)
     ..hasRequiredFields = false
   ;
 
@@ -248,16 +248,16 @@ class IndependentNotePageData extends $pb.GeneratedMessage {
   static IndependentNotePageData? _defaultInstance;
 
   @$pb.TagNumber(1)
-  $core.int get lastMattingResultId => $_getIZ(0);
+  $core.int get lastMatteId => $_getIZ(0);
   @$pb.TagNumber(1)
-  set lastMattingResultId($core.int v) { $_setUnsignedInt32(0, v); }
+  set lastMatteId($core.int v) { $_setUnsignedInt32(0, v); }
   @$pb.TagNumber(1)
-  $core.bool hasLastMattingResultId() => $_has(0);
+  $core.bool hasLastMatteId() => $_has(0);
   @$pb.TagNumber(1)
-  void clearLastMattingResultId() => clearField(1);
+  void clearLastMatteId() => clearField(1);
 
   @$pb.TagNumber(2)
-  $core.Map<$core.int, MattingResult> get mattingResultPool => $_getMap(1);
+  $core.Map<$core.int, Matte> get mattePool => $_getMap(1);
 }
 
 class MarkNotePageData extends $pb.GeneratedMessage {
@@ -321,7 +321,7 @@ class MarkNotePageData extends $pb.GeneratedMessage {
 enum NotePageItem_Content {
   path, 
   mattingMarkId, 
-  mattingResultId, 
+  matteId, 
   notSet
 }
 
@@ -331,7 +331,7 @@ class NotePageItem extends $pb.GeneratedMessage {
     $core.double? y,
     Path? path,
     $core.int? mattingMarkId,
-    $core.int? mattingResultId,
+    $core.int? matteId,
     $core.double? scale,
   }) {
     final $result = create();
@@ -347,8 +347,8 @@ class NotePageItem extends $pb.GeneratedMessage {
     if (mattingMarkId != null) {
       $result.mattingMarkId = mattingMarkId;
     }
-    if (mattingResultId != null) {
-      $result.mattingResultId = mattingResultId;
+    if (matteId != null) {
+      $result.matteId = matteId;
     }
     if (scale != null) {
       $result.scale = scale;
@@ -362,7 +362,7 @@ class NotePageItem extends $pb.GeneratedMessage {
   static const $core.Map<$core.int, NotePageItem_Content> _NotePageItem_ContentByTag = {
     3 : NotePageItem_Content.path,
     4 : NotePageItem_Content.mattingMarkId,
-    5 : NotePageItem_Content.mattingResultId,
+    5 : NotePageItem_Content.matteId,
     0 : NotePageItem_Content.notSet
   };
   static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'NotePageItem', createEmptyInstance: create)
@@ -371,7 +371,7 @@ class NotePageItem extends $pb.GeneratedMessage {
     ..a<$core.double>(2, _omitFieldNames ? '' : 'y', $pb.PbFieldType.OF)
     ..aOM<Path>(3, _omitFieldNames ? '' : 'path', subBuilder: Path.create)
     ..a<$core.int>(4, _omitFieldNames ? '' : 'mattingMarkId', $pb.PbFieldType.OU3, protoName: 'mattingMarkId')
-    ..a<$core.int>(5, _omitFieldNames ? '' : 'mattingResultId', $pb.PbFieldType.OU3, protoName: 'mattingResultId')
+    ..a<$core.int>(5, _omitFieldNames ? '' : 'matteId', $pb.PbFieldType.OU3, protoName: 'matteId')
     ..a<$core.double>(6, _omitFieldNames ? '' : 'scale', $pb.PbFieldType.OF)
     ..hasRequiredFields = false
   ;
@@ -439,13 +439,13 @@ class NotePageItem extends $pb.GeneratedMessage {
   void clearMattingMarkId() => clearField(4);
 
   @$pb.TagNumber(5)
-  $core.int get mattingResultId => $_getIZ(4);
+  $core.int get matteId => $_getIZ(4);
   @$pb.TagNumber(5)
-  set mattingResultId($core.int v) { $_setUnsignedInt32(4, v); }
+  set matteId($core.int v) { $_setUnsignedInt32(4, v); }
   @$pb.TagNumber(5)
-  $core.bool hasMattingResultId() => $_has(4);
+  $core.bool hasMatteId() => $_has(4);
   @$pb.TagNumber(5)
-  void clearMattingResultId() => clearField(5);
+  void clearMatteId() => clearField(5);
 
   @$pb.TagNumber(6)
   $core.double get scale => $_getN(5);
@@ -657,8 +657,8 @@ class Point extends $pb.GeneratedMessage {
   void clearY() => clearField(2);
 }
 
-class MattingResult extends $pb.GeneratedMessage {
-  factory MattingResult({
+class Matte extends $pb.GeneratedMessage {
+  factory Matte({
     $core.int? bookPageNumber,
     $core.int? bookPageMattingMarkId,
     ImageType? imageType,
@@ -687,11 +687,11 @@ class MattingResult extends $pb.GeneratedMessage {
     }
     return $result;
   }
-  MattingResult._() : super();
-  factory MattingResult.fromBuffer($core.List<$core.int> i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromBuffer(i, r);
-  factory MattingResult.fromJson($core.String i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(i, r);
+  Matte._() : super();
+  factory Matte.fromBuffer($core.List<$core.int> i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromBuffer(i, r);
+  factory Matte.fromJson($core.String i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(i, r);
 
-  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'MattingResult', createEmptyInstance: create)
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'Matte', createEmptyInstance: create)
     ..a<$core.int>(1, _omitFieldNames ? '' : 'bookPageNumber', $pb.PbFieldType.OU3, protoName: 'bookPageNumber')
     ..a<$core.int>(2, _omitFieldNames ? '' : 'bookPageMattingMarkId', $pb.PbFieldType.OU3, protoName: 'bookPageMattingMarkId')
     ..e<ImageType>(3, _omitFieldNames ? '' : 'imageType', $pb.PbFieldType.OE, protoName: 'imageType', defaultOrMaker: ImageType.IT_2BIT_1CHANNEL, valueOf: ImageType.valueOf, enumValues: ImageType.values)
@@ -705,22 +705,22 @@ class MattingResult extends $pb.GeneratedMessage {
   'Using this can add significant overhead to your binary. '
   'Use [GeneratedMessageGenericExtensions.deepCopy] instead. '
   'Will be removed in next major version')
-  MattingResult clone() => MattingResult()..mergeFromMessage(this);
+  Matte clone() => Matte()..mergeFromMessage(this);
   @$core.Deprecated(
   'Using this can add significant overhead to your binary. '
   'Use [GeneratedMessageGenericExtensions.rebuild] instead. '
   'Will be removed in next major version')
-  MattingResult copyWith(void Function(MattingResult) updates) => super.copyWith((message) => updates(message as MattingResult)) as MattingResult;
+  Matte copyWith(void Function(Matte) updates) => super.copyWith((message) => updates(message as Matte)) as Matte;
 
   $pb.BuilderInfo get info_ => _i;
 
   @$core.pragma('dart2js:noInline')
-  static MattingResult create() => MattingResult._();
-  MattingResult createEmptyInstance() => create();
-  static $pb.PbList<MattingResult> createRepeated() => $pb.PbList<MattingResult>();
+  static Matte create() => Matte._();
+  Matte createEmptyInstance() => create();
+  static $pb.PbList<Matte> createRepeated() => $pb.PbList<Matte>();
   @$core.pragma('dart2js:noInline')
-  static MattingResult getDefault() => _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<MattingResult>(create);
-  static MattingResult? _defaultInstance;
+  static Matte getDefault() => _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<Matte>(create);
+  static Matte? _defaultInstance;
 
   @$pb.TagNumber(1)
   $core.int get bookPageNumber => $_getIZ(0);

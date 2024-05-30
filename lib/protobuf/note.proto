@@ -17,8 +17,8 @@ message NotePage {
 }
 
 message IndependentNotePageData { // 独立笔记本的特有数据
-    uint32 lastMattingResultId = 1;
-    map<uint32, MattingResult> mattingResultPool = 2; // 内容来自MattingMark区域的截图
+    uint32 lastMatteId = 1;
+    map<uint32, Matte> mattePool = 2; // 内容来自MattingMark区域的截图
 }
 
 message MarkNotePageData { // 书内标记的特有数据
@@ -32,7 +32,7 @@ message NotePageItem {
     oneof content {
         Path path = 3; // 其内point的位置为参照起点的相对位置
         uint32 mattingMarkId = 4; // IndependentNote时有效。为方便直接获取截图区域，其内的坐标与起点有信息重复
-        uint32 mattingResultId = 5; // only for MarkNote
+        uint32 matteId = 5; // only for MarkNote
     }
     optional float scale = 6;
 }
@@ -61,7 +61,7 @@ enum ImageType {
     IT_2BIT_1CHANNEL = 0;
 }
 
-message MattingResult {
+message Matte {
     uint32 bookPageNumber = 1;
     uint32 bookPageMattingMarkId = 2;
     optional ImageType imageType = 3;

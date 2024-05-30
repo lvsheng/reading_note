@@ -1,5 +1,5 @@
 import 'dart:ui';
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:reading_note/log.dart';
 import 'package:reading_note/pdf_matting_util.dart';
 import 'package:reading_note/protobuf/note.pb.dart' as pb;
@@ -43,7 +43,7 @@ abstract class NotePainter extends CustomPainter {
           break;
 
         case pb.NotePageItem_Content.mattingMarkId:
-          final mattingMark = (_note as MarkNotePage).getMattingMark(item.mattingMarkId);
+          final mattingMark = (_note as MarkNotePage).mattingMarkOfId(item.mattingMarkId);
           if (mattingMark == null) {
             logError("disappeared mattingMark ${item.mattingMarkId}");
             return;
@@ -62,26 +62,26 @@ abstract class NotePainter extends CustomPainter {
           canvas.drawRect(
               pageRectToCanvas(rect),
               Paint()
-                ..color = Colors.yellowAccent.withAlpha(125)
+                ..color = CupertinoColors.systemYellow.withAlpha(125)
                 ..style = PaintingStyle.fill);
           canvas.drawRect(
               pageRectToCanvas(rect),
               Paint()
-                ..color = Colors.black87
+                ..color = CupertinoColors.darkBackgroundGray
                 ..style = PaintingStyle.stroke
                 ..strokeWidth = pageWidthToCanvas(1));
           break;
 
-        case pb.NotePageItem_Content.mattingResultId:
-          final mattingResult = (_note as IndependentNotePage).getMattingResult(item.mattingResultId);
-          if (mattingResult == null) {
-            logError("disappeared mattingResult: ${item.mattingResultId} for $_note");
+        case pb.NotePageItem_Content.matteId:
+          final matte = (_note as IndependentNotePage).matteOfId(item.matteId);
+          if (matte == null) {
+            logError("disappeared matte: ${item.matteId} for $_note");
             return;
           }
-          final tuple = imageOfMattingResult(mattingResult);
+          final tuple = imageOfMatte(matte);
           final image = tuple.item1;
           if (image == null) {
-            logWarn("matting image not ready, wait it");
+            logWarn("matte image not ready, wait it");
             tuple.item2!.then((_) => _note.triggerRepaint());
             return;
           }

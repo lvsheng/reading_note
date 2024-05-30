@@ -3,12 +3,13 @@ import 'dart:io';
 import 'dart:math';
 import 'dart:ui' as ui;
 
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:app_links/app_links.dart';
+import 'package:flutter/material.dart' as material;
 import 'package:reading_note/custom_painter.dart';
 import 'package:reading_note/document_proxy.dart';
 import 'package:reading_note/deep_link.dart';
-import 'package:reading_note/matting_transfer_station.dart';
+import 'package:reading_note/matte_transfer_station.dart';
 import 'package:reading_note/note_page.dart';
 import 'package:reading_note/log.dart';
 import 'package:reading_note/stylus_gesture_detector.dart';
@@ -29,12 +30,10 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return const CupertinoApp(
       title: 'Reading Note',
-      theme: ThemeData(
-        useMaterial3: true,
-      ),
-      home: const MyHomePage(),
+      theme: CupertinoThemeData(),
+      home: MyHomePage(),
     );
   }
 }
@@ -122,12 +121,12 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     saveIfNeeded();
     WidgetsBinding.instance.removeObserver(this);
     if (_reading != null) {
-      MattingTransferStation.instanceOf(_reading!).removeListener(_mattingStateListener);
+      MattingManager.instanceOf(_reading!).removeListener(_mattingStatusListener);
     }
     super.dispose();
   }
 
-  void _mattingStateListener() {
+  void _mattingStatusListener() {
     if (!mounted) return;
     setState(() {});
   }
@@ -155,226 +154,219 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
       _pageMarkNoteMap = {};
       _pageIndependentNoteMap = {};
       _document = null;
-      _controller = PdfViewerController()..addListener(() {
-        setState(() {
-          if (!mounted) return;
-          _transformation = _controller!.value;
+      _controller = PdfViewerController()
+        ..addListener(() {
+          setState(() {
+            if (!mounted) return;
+            _transformation = _controller!.value;
+          });
         });
-      });
       _transformation = null;
     });
-    MattingTransferStation.instanceOf(_reading!).addListener(_mattingStateListener);
+    MattingManager.instanceOf(_reading!).addListener(_mattingStatusListener);
 
     debug.setCurrentPdf(file);
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: ConstrainedBox(
-        constraints: const BoxConstraints.expand(),
-        child: Stack(
-          children: [
-            if (_reading != null)
-              // todo: 缩放
-              // todo: 书上内容直接标记复制到笔记
-              //   图片：只存单通道/2bit，以节省存储？
-              // todo: 可简单选笔（可加笔：颜色、粗细）
-              Positioned.fill(child: PdfViewer.file(
-                _reading!.path,
-                key: Key(_reading!.path),
-                controller: _controller,
-                initialPageNumber: _initialPageNumber,
-                params: PdfViewerParams(
-                    pageDropShadow: null,
-                    onDocumentChanged: (document) {
-                      if (!mounted) return;
-                      setState(() => _document = document);
-                    },
+    return ConstrainedBox(
+      constraints: const BoxConstraints.expand(),
+      child: Stack(
+        children: [
+          if (_reading != null)
+            // todo: 缩放
+            // todo: 可简单选笔（可加笔：颜色、粗细）
+            Positioned.fill(
+                child: PdfViewer.file(
+              _reading!.path,
+              key: Key(_reading!.path),
+              controller: _controller,
+              initialPageNumber: _initialPageNumber,
+              params: PdfViewerParams(
+                  pageDropShadow: null,
+                  onDocumentChanged: (document) {
+                    if (!mounted) return;
+                    setState(() => _document = document);
+                  },
+                  onPageChanged: (int? pageNumber) {
+                    if (!mounted || pageNumber == null) return;
+                    setState(() => _pageNumber = pageNumber);
+                    userPreferences.setLastPage(_reading!, pageNumber);
+                  },
+                  pagePaintCallbacks: _debugShowIndicator ? [paintPageIndicator] : const [],
 
-                    onPageChanged: (int? pageNumber) {
-                      if (!mounted || pageNumber == null) return;
-                      setState(() => _pageNumber = pageNumber);
-                      userPreferences.setLastPage(_reading!, pageNumber);
-                    },
+                  // page mark note
+                  pageOverlaysBuilder: (context, pageRect, page) {
+                    final noteTuple = _pageMarkNoteMap![page.pageNumber];
 
-                    pagePaintCallbacks: _debugShowIndicator ? [paintPageIndicator] : const [],
-
-                    // page mark note
-                    pageOverlaysBuilder: (context, pageRect, page) {
-                      final noteTuple = _pageMarkNoteMap![page.pageNumber];
-
-                      // note not ready
-                      if (noteTuple?.item1 == null) {
-                        // if not loading, load it first
-                        if (noteTuple == null) {
-                          NotePage.open(true, _reading!, _document!, page.pageNumber, page.size).then((note) {
-                            if (!mounted) return;
-                            setState(() => _pageMarkNoteMap![page.pageNumber] = Tuple2(note as MarkNotePage, true));
-                          });
-                        }
-
-                        return const [];
+                    // note not ready
+                    if (noteTuple?.item1 == null) {
+                      // if not loading, load it first
+                      if (noteTuple == null) {
+                        NotePage.open(true, _reading!, _document!, page.pageNumber, page.size).then((note) {
+                          if (!mounted) return;
+                          setState(() => _pageMarkNoteMap![page.pageNumber] = Tuple2(note as MarkNotePage, true));
+                        });
                       }
 
-                      final note = noteTuple!.item1!;
+                      return const [];
+                    }
 
-                      return [
-                        ConstrainedBox(
-                            constraints: const BoxConstraints.expand(),
-                            child: IgnorePointer(
-                                child: RepaintBoundary(
-                              child: CustomPaint(
-                                painter: MarkNotePainter(pageRect, note),
-                                isComplex: true, // fixme
-                              ),
-                            ))),
+                    final note = noteTuple!.item1!;
 
-                        GestureDetector(onDoubleTap: () => setState(() => _debugShowIndicator = !_debugShowIndicator)),
-
-                        PencilGestureDetector(
-                          onDown: (details) {
-                            note.startDraw(note.canvasPositionToPagePosition(details.localPosition, pageRect));
-                          },
-                          onMove: (localPosition) {
-                            note.addPoint(note.canvasPositionToPagePosition(localPosition, pageRect));
-                          },
-                          onUp: (details) {
-                            note.addPoint(note.canvasPositionToPagePosition(details.localPosition, pageRect));
-                            note.endDraw();
-                          },
-                          onCancel: (detail) {
-                            note.endDraw();
-                          },
-                        ),
-                      ];
-                    }),
-              )),
-            if (_reading != null)
-              Positioned.fill(
-                child: IgnorePointer(
-                  ignoring: !_coverIndependentNote,
-                  child: Opacity(
-                    opacity: _coverIndependentNote ? 0.85 : 0.0,
-                    child: DecoratedBox(
-                      decoration: const BoxDecoration(color: Colors.white),
-                      child: ScrollablePositionedList.builder(
-                        itemCount: _maxInt,
-                        initialScrollIndex: _initialNotePageNumber,
-                        itemBuilder: (BuildContext context, int index) {
-                          const margin = Size(10.0, 20.0);
-                          final size = MediaQuery.of(context).size;
-                          final noteTuple = _pageIndependentNoteMap![index];
-
-                          // note not ready
-                          if (noteTuple?.item1 == null) {
-                            // if not loading, load it first
-                            if (noteTuple == null && _document != null) {
-                              NotePage.open(
-                                      false,
-                                      _reading!,
-                                      _document!,
-                                      index,
-                                      Size(size.width - margin.width * 2,
-                                          max(_document!.pages.firstOrNull?.height ?? 0, size.width / 9 * 16)))
-                                  .then((note) {
-                                if (!mounted) return;
-                                setState(() => _pageIndependentNoteMap![index] = Tuple2(note as IndependentNotePage, true));
-                              });
-                            }
-
-                            return SizedBox(width: size.width, height: size.height, child: const Center(child: Text("loading")));
-                          }
-
-                          final note = noteTuple!.item1!;
-
-                          return VisibilityDetector(
-                            key: Key(index.toString()),
-                            onVisibilityChanged: (info) {
-                              if (info.visibleFraction > 0) {
-                                assert(_reading != null);
-                                userPreferences.setLastNotePage(_reading!, index);
-                              }
-                            },
-                            child: Container(
-                              height: note.size.height,
-                              margin: EdgeInsets.only(top: MediaQuery.of(context).viewPadding.top, left: margin.width, right: margin.width),
-                              decoration: BoxDecoration(
-                                borderRadius: const BorderRadius.all(Radius.circular(8)),
-                                color: Colors.white,
-                                boxShadow: [
-                                  BoxShadow(color: Colors.grey.withAlpha(255), spreadRadius: 3, blurRadius: 3),
-                                ],
-                              ),
-                              child: Stack(
-                                children: [
-                                  Text("第 ${index + 1} 页"),
-                                  if (_img != null) Positioned(left:  30, top: 380, child: _img!),
-                                  ConstrainedBox(
-                                      constraints: const BoxConstraints.expand(),
-                                      child: IgnorePointer(
-                                          child: RepaintBoundary(
-                                        child: CustomPaint(
-                                          painter: IndependentNotePainter(note),
-                                          isComplex: true, // fixme
-                                        ),
-                                      ))),
-                                  GestureDetector(onDoubleTap: () => setState(() => _debugShowIndicator = !_debugShowIndicator)),
-                                  PencilGestureDetector(
-                                    onDown: (details) {
-                                      note.startDraw(note.canvasPositionToPage(details.localPosition, 1.0));
-                                    },
-                                    onMove: (localPosition) {
-                                      note.addPoint(note.canvasPositionToPage(localPosition, 1.0));
-                                    },
-                                    onUp: (details) {
-                                      note.addPoint(note.canvasPositionToPage(details.localPosition, 1.0));
-                                      note.endDraw();
-                                    },
-                                    onCancel: (detail) {
-                                      note.endDraw();
-                                    },
-                                  ),
-                                ],
-                              ),
+                    return [
+                      ConstrainedBox(
+                          constraints: const BoxConstraints.expand(),
+                          child: IgnorePointer(
+                              child: RepaintBoundary(
+                            child: CustomPaint(
+                              painter: MarkNotePainter(pageRect, note),
+                              isComplex: true, // fixme
                             ),
-                          );
+                          ))),
+                      GestureDetector(onDoubleTap: () => setState(() => _debugShowIndicator = !_debugShowIndicator)),
+                      PencilGestureDetector(
+                        onDown: (details) {
+                          note.startDraw(note.canvasPositionToPagePosition(details.localPosition, pageRect));
+                        },
+                        onMove: (localPosition) {
+                          note.addPoint(note.canvasPositionToPagePosition(localPosition, pageRect));
+                        },
+                        onUp: (details) {
+                          note.addPoint(note.canvasPositionToPagePosition(details.localPosition, pageRect));
+                          note.endDraw();
+                        },
+                        onCancel: (detail) {
+                          note.endDraw();
                         },
                       ),
+                    ];
+                  }),
+            )),
+          if (_reading != null)
+            Positioned.fill(
+              child: IgnorePointer(
+                ignoring: !_coverIndependentNote,
+                child: Opacity(
+                  opacity: _coverIndependentNote ? 0.85 : 0.0,
+                  child: DecoratedBox(
+                    decoration: const BoxDecoration(color: CupertinoColors.white),
+                    child: ScrollablePositionedList.builder(
+                      itemCount: _maxInt,
+                      initialScrollIndex: _initialNotePageNumber,
+                      itemBuilder: (BuildContext context, int index) {
+                        const margin = Size(10.0, 20.0);
+                        final size = MediaQuery.of(context).size;
+                        final noteTuple = _pageIndependentNoteMap![index];
+
+                        // note not ready
+                        if (noteTuple?.item1 == null) {
+                          // if not loading, load it first
+                          if (noteTuple == null && _document != null) {
+                            NotePage.open(
+                                    false,
+                                    _reading!,
+                                    _document!,
+                                    index,
+                                    Size(
+                                        size.width - margin.width * 2, max(_document!.pages.firstOrNull?.height ?? 0, size.width / 9 * 16)))
+                                .then((note) {
+                              if (!mounted) return;
+                              setState(() => _pageIndependentNoteMap![index] = Tuple2(note as IndependentNotePage, true));
+                            });
+                          }
+
+                          return SizedBox(width: size.width, height: size.height, child: const Center(child: Text("loading")));
+                        }
+
+                        final note = noteTuple!.item1!;
+
+                        return VisibilityDetector(
+                          key: Key(index.toString()),
+                          onVisibilityChanged: (info) {
+                            if (info.visibleFraction > 0) {
+                              assert(_reading != null);
+                              userPreferences.setLastNotePage(_reading!, index);
+                            }
+                          },
+                          child: Container(
+                            height: note.size.height,
+                            margin: EdgeInsets.only(top: MediaQuery.of(context).viewPadding.top, left: margin.width, right: margin.width),
+                            decoration: const BoxDecoration(
+                              borderRadius: BorderRadius.all(Radius.circular(8)),
+                              color: CupertinoColors.white,
+                              boxShadow: [
+                                BoxShadow(color: CupertinoColors.inactiveGray, spreadRadius: 3, blurRadius: 3),
+                              ],
+                            ),
+                            child: Stack(
+                              children: [
+                                Text("第 ${index + 1} 页"),
+                                if (_img != null) Positioned(left: 30, top: 380, child: _img!),
+                                ConstrainedBox(
+                                    constraints: const BoxConstraints.expand(),
+                                    child: IgnorePointer(
+                                        child: RepaintBoundary(
+                                      child: CustomPaint(
+                                        painter: IndependentNotePainter(note),
+                                        isComplex: true, // fixme
+                                      ),
+                                    ))),
+                                GestureDetector(onDoubleTap: () => setState(() => _debugShowIndicator = !_debugShowIndicator)),
+                                PencilGestureDetector(
+                                  onDown: (details) {
+                                    note.startDraw(note.canvasPositionToPage(details.localPosition, 1.0));
+                                  },
+                                  onMove: (localPosition) {
+                                    note.addPoint(note.canvasPositionToPage(localPosition, 1.0));
+                                  },
+                                  onUp: (details) {
+                                    note.addPoint(note.canvasPositionToPage(details.localPosition, 1.0));
+                                    note.endDraw();
+                                  },
+                                  onCancel: (detail) {
+                                    note.endDraw();
+                                  },
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
                     ),
-                  ),
-              ),
-            ),
-
-            if (_reading != null) Text("status: ${MattingTransferStation.instanceOf(_reading!).status}"),
-
-            Positioned(
-              bottom: 30,
-              left: 30,
-              child: FloatingActionButton.large(
-                  onPressed: () => setState(() => _coverIndependentNote = !_coverIndependentNote),
-                  child: const Icon(Icons.edit_note_sharp, size: 80)),
-            ),
-            if (_errorTip != null) Center(child: Text(_errorTip!, style: const TextStyle(color: Colors.red, fontSize: 20))),
-            if (_debugShowIndicator)
-              IgnorePointer(
-                child: Padding(
-                  padding: const EdgeInsets.only(top: 20, left: 10),
-                  child: Text(
-                    'root: $_rootDirectory\n'
-                    'reading: $_reading\n'
-                    'pdf               : ${_document?.sourceName}\n'
-                    'pages: ${_document?.pages.length}\n'
-                    'curPage: $_pageNumber\n'
-                    'curPageSize: ${_document?.pages[_pageNumber - 1].size}\n'
-                    'controller:\n$_transformation\n',
-                    style: const TextStyle(color: Colors.black),
                   ),
                 ),
               ),
-          ],
-        ),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
+            ),
+          if (_reading != null) Text("status: ${MattingManager.instanceOf(_reading!).status}"),
+          Positioned(
+            bottom: 30,
+            left: 30,
+            child: material.FloatingActionButton.large(
+                onPressed: () => setState(() => _coverIndependentNote = !_coverIndependentNote),
+                child: const Icon(material.Icons.edit_note_sharp, size: 80)),
+          ),
+          if (_errorTip != null)
+            Center(child: Text(_errorTip!, style: const TextStyle(color: CupertinoColors.destructiveRed, fontSize: 20))),
+          if (_debugShowIndicator)
+            IgnorePointer(
+              child: Padding(
+                padding: const EdgeInsets.only(top: 20, left: 10),
+                child: Text(
+                  'root: $_rootDirectory\n'
+                  'reading: $_reading\n'
+                  'pdf               : ${_document?.sourceName}\n'
+                  'pages: ${_document?.pages.length}\n'
+                  'curPage: $_pageNumber\n'
+                  'curPageSize: ${_document?.pages[_pageNumber - 1].size}\n'
+                  'controller:\n$_transformation\n',
+                  style: const TextStyle(color: CupertinoColors.black),
+                ),
+              ),
+            ),
+        ],
+      ),
     );
   }
 
@@ -384,21 +376,16 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     final paint = Paint()..strokeWidth = 3;
 
     // 当前页
-    paint.color = Colors.red;
-    canvas.drawLine(Offset(pageRect.left, pageRect.top),
-        Offset(pageRect.right, pageRect.bottom), paint);
+    paint.color = CupertinoColors.systemRed;
+    canvas.drawLine(Offset(pageRect.left, pageRect.top), Offset(pageRect.right, pageRect.bottom), paint);
     // 后续页
-    paint.color = Colors.green;
-    canvas.drawLine(
-        const Offset(0, 0), Offset(pageRect.right, pageRect.bottom), paint);
+    paint.color = CupertinoColors.systemGreen;
+    canvas.drawLine(const Offset(0, 0), Offset(pageRect.right, pageRect.bottom), paint);
     // 前续页
-    paint.color = Colors.blue;
+    paint.color = CupertinoColors.systemBlue;
     final screenSize = MediaQuery.of(context).size;
-    canvas.drawLine(
-        Offset(pageRect.right, pageRect.top),
-        Offset(-(screenSize.width - pageRect.width) / 2,
-            pageRect.top + screenSize.height * 2),
-        paint);
+    canvas.drawLine(Offset(pageRect.right, pageRect.top),
+        Offset(-(screenSize.width - pageRect.width) / 2, pageRect.top + screenSize.height * 2), paint);
     // 借此可以看出PdfViewer的lazy渲染策略
   }
 

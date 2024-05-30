@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:math';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 import 'package:image/image.dart' as img;
@@ -14,16 +13,14 @@ import 'debug_util.dart' as debug;
 
 // todo: promise reject handle
 
-const _pdfPageCaptureSizeMultiple = 3;
-final _pageCapturedImageMap = LruMap<String, Tuple2<img.Image?, Future<img.Image?>?>>(maximumSize: 5);
-final _mattingDecodeResultMap = LruMap<pb.MattingResult, Tuple2<ui.Image?, Future<ui.Image?>?>>(maximumSize: 200);
+const _pdfPageCaptureSizeMultiplier = 3;
+final _pageScreenshotMap = LruMap<String, Tuple2<img.Image?, Future<img.Image?>?>>(maximumSize: 5);
+final _matteDecodeImageMap = LruMap<pb.Matte, Tuple2<ui.Image?, Future<ui.Image?>?>>(maximumSize: 200);
 
-Future<pb.MattingResult> matting(File file, PdfDocument document, int pageNumber, pb.MattingMark mark, int markId) async {
+Future<pb.Matte> performMatting(File file, PdfDocument document, int pageNumber, pb.MattingMark mark, int markId) async {
   final page = document.pages[pageNumber - 1];
-  img.Image? pageImage = await _capture(file, page);
-  if (pageImage == null) {
-    throw ("_capture fail: $file, $pageNumber, $document");
-  }
+  final pageImage = await _capture(file, page);
+  if (pageImage == null) throw ("_capture fail: $file, $pageNumber, $document");
 
   late Tuple4<int, int, int, int> xywh;
   {
@@ -49,49 +46,49 @@ Future<pb.MattingResult> matting(File file, PdfDocument document, int pageNumber
 
   final cropResult = img.copyCrop(pageImage, x: xywh.item1, y: xywh.item2, width: xywh.item3, height: xywh.item4);
   debug.saveImage(cropResult, "4.copyCrop");
-
-  // todo: background thread?
   final bytes = cropResult.buffer.asUint8List();
+  assert(cropResult.lengthInBytes == bytes.lengthInBytes);
   debug.saveBytes(bytes, "5.cropResult.buffer");
-  final compressed = const ZLibEncoder().encode(bytes, level: 6);
+  final compressed = const ZLibEncoder().encode(bytes); // todo: background thread?
   debug.saveIntList(compressed, "6.compressed");
-  final result = pb.MattingResult()
+
+  final result = pb.Matte()
     ..bookPageNumber = pageNumber
     ..bookPageMattingMarkId = markId
     ..imageWidth = xywh.item3
     ..imageHeight = xywh.item4
     ..imageData = compressed;
-  debug.saveGeneratedMessage(result, "7.MattingResult");
+  debug.saveGeneratedMessage(result, "7.Matte");
 
-  imageOfMattingResult(result, cropResult); // just trigger, no wait
+  imageOfMatte(result, cropResult); // just trigger, no wait
 
   return result;
 }
 
 /// @return: tuple.item1或item2至少一个非null
-Tuple2<ui.Image?, Future<ui.Image?>?> imageOfMattingResult(pb.MattingResult mattingResult, [img.Image? image]) {
-  final tuple = _mattingDecodeResultMap[mattingResult];
+Tuple2<ui.Image?, Future<ui.Image?>?> imageOfMatte(pb.Matte matte, [img.Image? image]) {
+  final tuple = _matteDecodeImageMap[matte];
   if (tuple != null) {
     assert(tuple.item1 != null || tuple.item2 != null);
     return tuple;
   }
 
-  logDebug("[image.convert] 1. imageOfMattingResult");
+  logDebug("[image.convert] 1. imageOfMatte");
   const paletteStep = 255 / 4.0;
   image = img.Image.fromBytes(
     bytes: image?.buffer ??
         Uint8List.fromList(() {
-          final decompressed = const ZLibDecoder().decodeBytes(mattingResult.imageData);
+          final decompressed = const ZLibDecoder().decodeBytes(matte.imageData);
           debug.saveIntList(decompressed, "8.decompressed");
           return decompressed;
         }())
             .buffer,
-    width: mattingResult.imageWidth,
-    height: mattingResult.imageHeight,
+    width: matte.imageWidth,
+    height: matte.imageHeight,
     format: img.Format.uint2,
     numChannels: 1,
 
-    // use palette to convert the 2bit(4 level) color per pixel
+    // use palette to convert 2-bit per pixel to color
     withPalette: true,
     palette: img.PaletteUint8(4, 4)
       ..setRgba(0, 0, 0, 0, 255)
@@ -102,41 +99,38 @@ Tuple2<ui.Image?, Future<ui.Image?>?> imageOfMattingResult(pb.MattingResult matt
   debug.saveImage(image, "9.image.fromBytes");
 
   final future = _convertImageToFlutterUi(image).then((uiImage) {
-    _mattingDecodeResultMap[mattingResult] = Tuple2(uiImage, null);
+    _matteDecodeImageMap[matte] = Tuple2(uiImage, null);
     debug.saveUIImage(uiImage, "11.uiImage");
     logDebug("[image.convert] 3. got uiImage");
     return uiImage;
   });
 
-  return _mattingDecodeResultMap[mattingResult] = Tuple2(null, future);
+  return _matteDecodeImageMap[matte] = Tuple2(null, future);
 }
 
 String _genKey(File file, int pageNumber) => "${file.path}:$pageNumber";
 
 Future<img.Image?> _capture(File pdfFile, PdfPage page) async {
-  final pageImageKey = _genKey(pdfFile, page.pageNumber);
-  final tuple = _pageCapturedImageMap[pageImageKey];
-  img.Image? result;
+  final key = _genKey(pdfFile, page.pageNumber);
+  final tuple = _pageScreenshotMap[key];
   if (tuple != null) {
-    result = tuple.item1;
+    img.Image? result = tuple.item1;
     result ??= await tuple.item2;
     if (result != null) {
       return result;
+    } else {
+      logWarn("last capture fail, will try again");
     }
   }
   logInfo("begin capture pdf page: $pdfFile, p${page.pageNumber}");
 
   final future = page
-      .render(fullWidth: page.width * _pdfPageCaptureSizeMultiple, fullHeight: page.height * _pdfPageCaptureSizeMultiple)
-      .then((renderResult) {
-    if (renderResult == null) {
-      throw "page.render fail: $pageImageKey";
-    }
-    debug.saveBytes(renderResult.pixels, "1.page.render");
-    return renderResult;
-  }).then((pdfImage) {
-    logDebug(
-        "_capture got pdfImage. format:${pdfImage.format} size:${pdfImage.width}*${pdfImage.height} pixels.length:${pdfImage.pixels.length}");
+      .render(fullWidth: page.width * _pdfPageCaptureSizeMultiplier, fullHeight: page.height * _pdfPageCaptureSizeMultiplier)
+      .then((pdfImage) {
+    if (pdfImage == null) throw "page.render fail: $key";
+    logDebug("got screenshot. ${pdfImage.width}*${pdfImage.height} ${pdfImage.pixels.buffer.lengthInBytes}bytes");
+    debug.saveBytes(pdfImage.pixels, "1.page.render");
+
     final image = img.Image.fromBytes(
         width: pdfImage.width,
         height: pdfImage.height,
@@ -150,94 +144,71 @@ Future<img.Image?> _capture(File pdfFile, PdfPage page) async {
         })[pdfImage.format]);
     pdfImage.dispose();
     debug.saveImage(image, "2.image.fromBytes");
-    return _encodeForMatting(image);
-  }).then((result) {
-    debug.saveImage(result, "3.encodeForMatting");
-    _pageCapturedImageMap[pageImageKey] = Tuple2(result, null);
+
+    final result = _encodeTextMatte(image);
+    debug.saveImage(result, "3.encodeTextMatte");
+    _pageScreenshotMap[key] = Tuple2(result, null);
     return result;
   }).catchError((error) {
-    _pageCapturedImageMap.remove(pageImageKey);
-    logError("_capture fail: $pageImageKey");
-    return null; // fixme
+    _pageScreenshotMap.remove(key);
+    throw error;
   });
 
-  _pageCapturedImageMap[pageImageKey] = Tuple2(null, future);
+  _pageScreenshotMap[key] = Tuple2(null, future);
   return future;
 }
 
-img.Image _encodeForMatting(img.Image src) {
+/// For lowest memory usage and no obvious jagged edges, use 2 bits per pixel (4 levels from black to white)
+img.Image _encodeTextMatte(img.Image src) {
   final ts = DateTime.now().millisecondsSinceEpoch;
-  // fixme: async, background thread?
+  // fixme: background thread?
   assert(!src.hasPalette);
   final result = img.Image(
     width: src.width,
     height: src.height,
-
-    // for lowest memory, and no obvious jagged, use 4 bit per pixel
     format: img.Format.uint2,
     numChannels: 1,
   );
   assert(src.frames.length == 1);
 
-  const thresholds = [0.4/*more black for showing text clearly*/, 0.6, 0.8, 1.0];
-  for (final p in src.frames.first) {
-    final y = 0.3 * p.rNormalized + 0.59 * p.gNormalized + 0.11 * p.bNormalized; // from [img.luminanceThreshold]
-    int y2 = thresholds.length;
+  const thresholds = [0.4 /*more black for showing text clearly*/, 0.6, 0.8, 1.0];
+  for (final pixel in src.frames.first) {
+    final luminance = 0.3 * pixel.rNormalized + 0.59 * pixel.gNormalized + 0.11 * pixel.bNormalized; // from [img.luminanceThreshold]
+    int level = thresholds.length;
     for (int i = 0; i < thresholds.length; ++i) {
-      if (y <= thresholds[i]) {
-        y2 = i;
+      if (luminance <= thresholds[i]) {
+        level = i;
         break;
       }
     }
-
-    result.getPixel(p.x, p.y).r = y2;
+    result.getPixel(pixel.x, pixel.y).r = level;
   }
 
-  logInfo("encodeForMatting cost:${DateTime.now().millisecondsSinceEpoch - ts}ms"); // (about 40ms)
+  logInfo("_encodeTextMatte cost:${DateTime.now().millisecondsSinceEpoch - ts}ms"); // (about 40ms)
   return result;
 }
 
 /// from [https://github.com/brendan-duncan/image/blob/main/doc/flutter.md]
 Future<ui.Image> _convertImageToFlutterUi(img.Image image) async {
-// /*
-  // todo: 解码结果放在本地文件缓存中，下次直接读取？，而不用从raw数据中现场解码
   if (image.format != img.Format.uint8 || image.numChannels != 4) {
+    logDebug("[image.convert] 2. begin await cmd.convert $image");
     final ts = DateTime.now().millisecondsSinceEpoch;
     final cmd = img.Command()
       ..image(image)
       ..convert(format: img.Format.uint8, numChannels: 4);
-    logDebug("[image.convert] 2. begin await cmd.convert $image");
 
     // fixme: why thread so slow? (200～300ms per interval)
     // final rgba8 = await cmd.getImageThread();
     final rgba8 = await cmd.getImage();
-    if (rgba8 != null) {
-      image = rgba8;
-    }
+    if (rgba8 != null) image = rgba8;
     logInfo("[image.convert] image.convert done: $image cost:${DateTime.now().millisecondsSinceEpoch - ts}ms");
   }
   debug.saveImage(image, "10.image.convert.4channel");
-  final bytes = image.toUint8List();
-// */
-  // final bytes = img.encodePng(image, level: Deflate.NO_COMPRESSION, singleFrame: true, filter: img.PngFilter.none);
-  // debug.savePng(bytes, "10.opt1.1.encodePng");
-  // final bytes = img.encodeBmp(image);
-  // debug.saveBytes(bytes, "10.img.encode.bmp");
-  // final bytes = img.encodeJpg(image);
-  // debug.saveBytes(bytes, "10.img.encode.jpg");
-  // final bytes = img.encodeCur(image, singleFrame: true);
-  // debug.saveBytes(bytes, "10.img.encode.jpg");
-  // final bytes = img.encodeTga(image);
-  // debug.saveBytes(bytes, "10.img.encode.jpg");
 
-  ui.ImmutableBuffer buffer = await ui.ImmutableBuffer.fromUint8List(bytes);
-
-  ui.ImageDescriptor id = ui.ImageDescriptor.raw(buffer, height: image.height, width: image.width, pixelFormat: ui.PixelFormat.rgba8888);
-
-  ui.Codec codec = await id.instantiateCodec(targetHeight: image.height, targetWidth: image.width);
-
-  ui.FrameInfo fi = await codec.getNextFrame();
-  ui.Image uiImage = fi.image;
-
+  final ui.ImmutableBuffer buffer = await ui.ImmutableBuffer.fromUint8List(image.toUint8List());
+  final ui.ImageDescriptor id = ui.ImageDescriptor.raw(buffer, height: image.height, width: image.width, pixelFormat: ui.PixelFormat.rgba8888);
+  final ui.Codec codec = await id.instantiateCodec(targetHeight: image.height, targetWidth: image.width);
+  final ui.FrameInfo fi = await codec.getNextFrame();
+  final ui.Image uiImage = fi.image;
   return uiImage;
 }
