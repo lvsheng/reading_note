@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/cupertino.dart';
+import 'package:reading_note/pen/matting_mark_generator.dart';
 import 'package:reading_note/status_manager/status_manager.dart';
 import 'package:reading_note/util/log.dart';
 import 'package:reading_note/pdf_matting_performer.dart';
@@ -10,7 +11,9 @@ import '../note_page/mark_note_page.dart';
 import '../note_page/note_page.dart';
 import 'coordinate_converter.dart';
 
-typedef _ItemPainter = int Function(Canvas canvas, pb.NotePageItem item);
+typedef _ItemPainter = int Function(Canvas canvas, pb.NotePageItem item, int index, int length);
+
+const _logging = false;
 
 class PageItemsPainter extends CustomPainter {
   @protected
@@ -38,14 +41,15 @@ class PageItemsPainter extends CustomPainter {
     int ts = DateTime.now().millisecondsSinceEpoch;
     int countPoints = 0;
 
-    page.forEachPageItem((item) {
-      _itemPainters[item.whichContent().index]!(canvas, item);
+    page.forEachPageItem((item, index, length) {
+      _itemPainters[item.whichContent().index]!(canvas, item, index, length);
     });
 
-    logInfo("[StylusGesture] _paintDrawingData end. countPoints:$countPoints cost:${DateTime.now().millisecondsSinceEpoch - ts}ms");
+    _logging &&
+        logInfo("[StylusGesture] _paintDrawingData end. countPoints:$countPoints cost:${DateTime.now().millisecondsSinceEpoch - ts}ms");
   }
 
-  int _paintPath(Canvas canvas, pb.NotePageItem item) {
+  int _paintPath(Canvas canvas, pb.NotePageItem item, int index, int length) {
     final path = item.path;
     _updatePenIfNeeded(path.penId, page.getPen(path.penId));
     final points = path.points
@@ -55,7 +59,7 @@ class PageItemsPainter extends CustomPainter {
     return points.length;
   }
 
-  int _paintMattingMark(Canvas canvas, pb.NotePageItem item) {
+  int _paintMattingMark(Canvas canvas, pb.NotePageItem item, int index, int length) {
     final mattingMark = (page as MarkNotePage).mattingMarkOfId(item.mattingMarkId);
     if (mattingMark == null) {
       logError("disappeared mattingMark ${item.mattingMarkId}");
@@ -78,17 +82,24 @@ class PageItemsPainter extends CustomPainter {
           ..color = CupertinoColors.systemYellow.withAlpha(125)
           ..style = PaintingStyle.fill);
 
-    // if (statusManager.drawingPage == page && statusManager.drawingPen.)
-    canvas.drawRect(
-        _coordinateConverter.pageRectToCanvas(rect),
-        Paint()
-          ..color = CupertinoColors.darkBackgroundGray
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = _coordinateConverter.pageWidthToCanvas(1));
+    final drawingPen = statusManager.drawingPen;
+    final ongoingTracker = drawingPen?.ongoingTracker;
+    bool notEditing = index < length - 1 ||
+        ongoingTracker is! MattingMarkGenerator ||
+        statusManager.drawingPage != page ||
+        ongoingTracker.frozen;
+    if (notEditing) {
+      canvas.drawRect(
+          _coordinateConverter.pageRectToCanvas(rect),
+          Paint()
+            ..color = CupertinoColors.darkBackgroundGray
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = _coordinateConverter.pageWidthToCanvas(0.3));
+    }
     return 1;
   }
 
-  int _paintMatte(Canvas canvas, pb.NotePageItem item) {
+  int _paintMatte(Canvas canvas, pb.NotePageItem item, int index, int length) {
     final matte = (page as IndependentNotePage).matteOfId(item.matteId);
     if (matte == null) {
       logError("disappeared matte: ${item.matteId} for $page");

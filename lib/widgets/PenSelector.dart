@@ -17,7 +17,7 @@ class PenSelectorState extends State<PenSelector> {
     //  1.只手指可交互，笔不行（以此保证对应位置笔都可以写。但其实如果不是透明，那也没意义。而且有些小icon用笔点会更合适些）
     //  2.touchstart时出现其他可选笔，移动手指选择
     return Row(
-      children: statusManager.interactingPenList.map(_buildPenItem).toList(growable: false),
+      children:statusManager.interactingPenList.map(_buildPenItem).toList(growable: false),
     );
   }
 

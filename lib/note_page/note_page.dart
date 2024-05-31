@@ -113,8 +113,11 @@ abstract class NotePage extends ChangeNotifier {
     await _file!.writeAsBytes(data.writeToBuffer());
   }
 
-  void forEachPageItem(void Function(pb.NotePageItem item) action) {
-    data.items.forEach(action);
+  void forEachPageItem(void Function(pb.NotePageItem item, int index, int length) action) {
+    final length = data.items.length;
+    for (final (index, item) in data.items.indexed) {
+      action(item, index, length);
+    }
   }
 
   int get defaultPenId => 0;

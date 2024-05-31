@@ -78,7 +78,7 @@ class StylusGestureRecognizer extends OneSequenceGestureRecognizer {
         onMove!(event.localPosition);
         lastReportedOffset = event.localPosition;
       } else {
-        logDebug("eat move event: $distanceFromLast $event");
+        // logDebug("eat move event: $distanceFromLast $event");
       }
     } else if (event is PointerUpEvent && onUp != null) {
       onUp!(event);

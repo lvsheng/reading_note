@@ -19,6 +19,7 @@ abstract class PenStrokeTracker {
 
   bool end() {
     statusManager.endDrawing();
+    pen.endPaint();
     return stop();
   }
 

@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart' as material;
 import 'package:reading_note/pen/pen.dart';
 import 'package:reading_note/widgets/PenSelector.dart';
+import 'package:reading_note/widgets/matting_control_panel.dart';
 import '../pen/matte_positioner_pen.dart';
 import '../status_manager/status_manager.dart';
 import '../note_page/note_page.dart';
@@ -12,35 +13,33 @@ class ControlPanelBuilder {
   // todo: 只允许手指交互，手写笔只用于✍️？
   static Widget build() {
     assert(statusManager.ready);
-
-    late Widget mainArea;
-    {
-      if (statusManager.drawingPen?.type == PenType.mattingMarkPen) {
-        // todo: 高度调整器
-        mainArea = Text("TODO: 高度调整器");
-      } else if (statusManager.usingPen is MattePositionerPen) {
-        mainArea = _buildOnPlacingMatte();
-      } else {
-        switch (statusManager.interactingNoteType) {
-          case NoteType.book:
-            mainArea = _buildOnReadingBook();
-            break;
-          case NoteType.note:
-            mainArea = _buildOnNoting();
-            break;
+    late Widget child;
+    if (statusManager.drawingPen?.type == PenType.mattingMarkPen) {
+      child = MattingControlPanel();
+    } else {
+      late Widget mainButton;
+      {
+        if (statusManager.usingPen is MattePositionerPen) {
+          mainButton = _buildOnPlacingMatte();
+        } else {
+          switch (statusManager.interactingNoteType) {
+            case NoteType.book:
+              mainButton = _buildOnReadingBook();
+              break;
+            case NoteType.note:
+              mainButton = _buildOnNoting();
+              break;
+          }
         }
       }
+
+      child = Column(children: [
+        PenSelector(), // fixme
+        mainButton,
+      ]);
     }
 
-    return Positioned(
-        bottom: 0,
-        left: 0,
-        child: Stack(children: [
-          Column(children: [
-            PenSelector(), // fixme
-            mainArea,
-          ])
-        ]));
+    return Positioned(bottom: 0, left: 0, child: child);
   }
 
   static Widget _buildOnReadingBook() => _buildMainButton(statusManager.switchToNote, material.Icons.edit_note_rounded, 80);

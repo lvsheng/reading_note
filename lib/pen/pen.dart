@@ -19,6 +19,7 @@ class Pen {
   PenType _type;
   Color _color;
   double _lineWidth;
+  PenStrokeTracker? _tracker;
 
   Pen(this._id, this._type, this._color, this._lineWidth);
 
@@ -45,6 +46,8 @@ class Pen {
     userPreferences.setPenLineWidthOf(_id, value);
   }
 
+  PenStrokeTracker? get ongoingTracker => _tracker;
+
   PenStrokeTracker beginPaint(pb.NotePage pbPage, Offset position, NotePage page) {
     late final PenStrokeTracker tracker;
     switch (_type) {
@@ -59,6 +62,9 @@ class Pen {
         assert(false, "Should deliver to MattePlacePen");
         break;
     }
-    return tracker;
+    assert(_tracker == null);
+    return _tracker = tracker;
   }
+
+  void endPaint() => _tracker = null;
 }
