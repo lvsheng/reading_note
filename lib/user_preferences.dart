@@ -1,8 +1,7 @@
 import 'dart:io';
 import 'dart:ui';
-
 import 'package:reading_note/file_system_proxy.dart';
-import 'package:reading_note/pen.dart';
+import 'package:reading_note/pen/pen.dart';
 import 'package:reading_note/util/log.dart';
 import 'package:reading_note/note_page/note_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -23,6 +22,7 @@ class UserPreferences {
   static const _keyPrefixPenLineWidth = "pW";
   static const _keyPenList = ["pLB", "pLI"];
   static const _keyCurrentPenId = ["cPIB", "cPII"];
+  static const _keyMatteScale = "mS";
 
   UserPreferences._() {
     readyFuture = SharedPreferences.getInstance().then((value) {
@@ -32,7 +32,7 @@ class UserPreferences {
 
   get ready => _sharedPreferences != null;
 
-  Future<File?> get lastOpenedFile async {
+  Future<File?> get readingBook async {
     await Future.wait([readyFuture, fileSystemProxy.rootDirectoryReady]);
 
     final path = _sharedPreferences!.getString(_keyLastOpenedFilePath);
@@ -49,14 +49,14 @@ class UserPreferences {
     return file;
   }
 
-  void setLastOpenedFile(File? file) async {
+  void setReadingBook(File? book) async {
     await Future.wait([readyFuture, fileSystemProxy.rootDirectoryReady]);
-    if (file == null) {
+    if (book == null) {
       _removeIfNeeded(_keyLastOpenedFilePath);
       return;
     }
 
-    final path = p.relative(file.path, from: fileSystemProxy.rootDirectory!.path);
+    final path = p.relative(book.path, from: fileSystemProxy.rootDirectory!.path);
     logInfo("[userPreferences]: $_keyLastOpenedFilePath: $path");
     if (path == _sharedPreferences!.getString(_keyLastOpenedFilePath)) {
       return;
@@ -64,31 +64,32 @@ class UserPreferences {
     _sharedPreferences!.setString(_keyLastOpenedFilePath, path);
   }
 
-  int? lastPageOf(File file) {
+  int? bookPageOf(File book) {
     if (!_allReady) return null;
-    return _sharedPreferences!.getInt(_keyOfLastPage(file));
+    return _sharedPreferences!.getInt(_keyOfBook(book, _keyPrefixLastPage));
   }
 
-  int? lastNotePageOf(File file) {
+  int? notePageOf(File book) {
     if (!_allReady) return null;
-    return _sharedPreferences!.getInt(_keyOfLastNotePage(file));
+    return _sharedPreferences!.getInt(_keyOfBook(book, _keyPrefixLastNotePage));
   }
 
-  void setLastPage(File file, int? page) {
+  void setBookPage(File book, int? page) {
     if (!_allReady) return;
-    _setInt(_keyOfLastPage(file), page);
+    _setInt(_keyOfBook(book, _keyPrefixLastPage), page);
   }
 
-  void setLastNotePage(File file, int? page) {
+  void setNotePage(File book, int? page) {
     if (!_allReady) return;
-    _setInt(_keyOfLastNotePage(file), page);
+    _setInt(_keyOfBook(book, _keyPrefixLastNotePage), page);
   }
 
   int get nextPenId => _sharedPreferences!.getInt(_keyLastPenId) ?? 0;
 
   set nextPenId(int value) => _setInt(_keyLastPenId, value);
 
-  List<int>? penListOf(NoteType noteType) => _sharedPreferences!.getStringList(_keyPenList[noteType.index])?.map((string) => int.parse(string)).toList(growable: false);
+  List<int>? penListOf(NoteType noteType) =>
+      _sharedPreferences!.getStringList(_keyPenList[noteType.index])?.map((string) => int.parse(string)).toList(growable: false);
 
   List<Pen> setPenList(NoteType noteType, List<Pen> list) {
     _sharedPreferences!.setStringList(_keyPenList[noteType.index], list.map((e) => "${e.id}").toList(growable: false));
@@ -110,6 +111,10 @@ class UserPreferences {
   int currentPenIdOf(NoteType noteType) => _sharedPreferences!.getInt(_keyCurrentPenId[noteType.index]) ?? 0;
 
   void setCurrentPen(NoteType noteType, Pen pen) => _setInt(_keyCurrentPenId[noteType.index], pen.id);
+
+  double matteScaleOf(File book) => _sharedPreferences!.getDouble(_keyOfBook(book, _keyMatteScale)) ?? 1.0;
+
+  void setMatteScale(File book, double value) => _setDouble(_keyOfBook(book, _keyMatteScale), value);
 
   void _setInt(String key, int? value) {
     if (value == _sharedPreferences!.getInt(key)) {
@@ -147,12 +152,8 @@ class UserPreferences {
     return true;
   }
 
-  /// must [_allReady] to use this
-  String _keyOfLastPage(File file) => "$_keyPrefixLastPage:${p.relative(file.path, from: fileSystemProxy.rootDirectory!.path)}";
+  String _keyOfBook(File book, String keyPrefix) => "$keyPrefix:${fileSystemProxy.localPath(book)}";
 
-  String _keyOfLastNotePage(File file) => "$_keyPrefixLastNotePage:${p.relative(file.path, from: fileSystemProxy.rootDirectory!.path)}";
-
-  /// must [readyFuture] to use this
   _removeIfNeeded(String key) {
     if (_sharedPreferences!.containsKey(key)) {
       _sharedPreferences!.remove(key);

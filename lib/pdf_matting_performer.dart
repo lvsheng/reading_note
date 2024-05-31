@@ -4,6 +4,7 @@ import 'dart:ui' as ui;
 import 'package:image/image.dart' as img;
 import 'package:pdfrx/pdfrx.dart';
 import 'package:quiver/collection.dart';
+import 'package:reading_note/file_system_proxy.dart';
 import 'package:reading_note/protobuf/note.pb.dart' as pb;
 import 'package:tuple/tuple.dart';
 import 'package:archive/archive.dart';
@@ -17,10 +18,10 @@ const _pdfPageCaptureSizeMultiplier = 3;
 final _pageScreenshotMap = LruMap<String, Tuple2<img.Image?, Future<img.Image?>?>>(maximumSize: 5);
 final _matteDecodeImageMap = LruMap<pb.Matte, Tuple2<ui.Image?, Future<ui.Image?>?>>(maximumSize: 200);
 
-Future<pb.Matte> performMatting(File file, PdfDocument document, int pageNumber, pb.MattingMark mark, int markId) async {
+Future<pb.Matte> performMatting(File book, PdfDocument document, int pageNumber, pb.MattingMark mark, int markId) async {
   final page = document.pages[pageNumber - 1];
-  final pageImage = await _capture(file, page);
-  if (pageImage == null) throw ("_capture fail: $file, $pageNumber, $document");
+  final pageImage = await _capture(book, page);
+  if (pageImage == null) throw ("_capture fail: $book, $pageNumber, $document");
 
   late Tuple4<int, int, int, int> xywh;
   {
@@ -57,7 +58,8 @@ Future<pb.Matte> performMatting(File file, PdfDocument document, int pageNumber,
     ..bookPageMattingMarkId = markId
     ..imageWidth = xywh.item3
     ..imageHeight = xywh.item4
-    ..imageData = compressed;
+    ..imageData = compressed
+    ..bookPath = fileSystemProxy.localPath(book);
   debug.saveGeneratedMessage(result, "7.Matte");
 
   imageOfMatte(result, cropResult); // just trigger, no wait
@@ -108,10 +110,10 @@ Tuple2<ui.Image?, Future<ui.Image?>?> imageOfMatte(pb.Matte matte, [img.Image? i
   return _matteDecodeImageMap[matte] = Tuple2(null, future);
 }
 
-String _genKey(File file, int pageNumber) => "${file.path}:$pageNumber";
+String _genKey(File book, int pageNumber) => "${fileSystemProxy.localPath(book)}:$pageNumber";
 
-Future<img.Image?> _capture(File pdfFile, PdfPage page) async {
-  final key = _genKey(pdfFile, page.pageNumber);
+Future<img.Image?> _capture(File book, PdfPage page) async {
+  final key = _genKey(book, page.pageNumber);
   final tuple = _pageScreenshotMap[key];
   if (tuple != null) {
     img.Image? result = tuple.item1;
@@ -122,7 +124,7 @@ Future<img.Image?> _capture(File pdfFile, PdfPage page) async {
       logWarn("last capture fail, will try again");
     }
   }
-  logInfo("begin capture pdf page: $pdfFile, p${page.pageNumber}");
+  logInfo("begin capture pdf page: $book, p${page.pageNumber}");
 
   final future = page
       .render(fullWidth: page.width * _pdfPageCaptureSizeMultiplier, fullHeight: page.height * _pdfPageCaptureSizeMultiplier)
@@ -206,7 +208,8 @@ Future<ui.Image> _convertImageToFlutterUi(img.Image image) async {
   debug.saveImage(image, "10.image.convert.4channel");
 
   final ui.ImmutableBuffer buffer = await ui.ImmutableBuffer.fromUint8List(image.toUint8List());
-  final ui.ImageDescriptor id = ui.ImageDescriptor.raw(buffer, height: image.height, width: image.width, pixelFormat: ui.PixelFormat.rgba8888);
+  final ui.ImageDescriptor id =
+      ui.ImageDescriptor.raw(buffer, height: image.height, width: image.width, pixelFormat: ui.PixelFormat.rgba8888);
   final ui.Codec codec = await id.instantiateCodec(targetHeight: image.height, targetWidth: image.width);
   final ui.FrameInfo fi = await codec.getNextFrame();
   final ui.Image uiImage = fi.image;

@@ -2,16 +2,16 @@ import 'package:flutter/cupertino.dart';
 import 'package:reading_note/status_manager/status_manager.dart';
 import 'package:reading_note/note_page/note_page.dart';
 import 'package:reading_note/user_preferences.dart';
-
-import '../pen.dart';
+import '../pen/pen.dart';
 
 /// Used by [StatusManager], initialized referring to [UserPreferences] and syncing data to [UserPreferences]
 class PenManager {
   List<List<Pen>>? _penListPair;
   List<Pen>? _currentPenPair;
+  late final Future<void> readyFuture;
 
   PenManager() {
-    _load();
+    readyFuture = _load();
   }
 
   List<Pen> penListOf(NoteType noteType) => _penListPair![noteType.index];
@@ -33,7 +33,7 @@ class PenManager {
   List<Pen> resetPenList(NoteType noteType, [bool initializingPenListPair = false]) {
     final result = userPreferences.setPenList(
         noteType,
-        noteType == NoteType.bookMarkNote
+        noteType == NoteType.book
             ? [
                 addNewPen(PenType.mattingMarkPen, CupertinoColors.systemOrange, 8),
                 addNewPen(PenType.ballPointPen, CupertinoColors.black, 1),
@@ -51,7 +51,7 @@ class PenManager {
     return result;
   }
 
-  void _load() async {
+  Future<void> _load() async {
     await userPreferences.readyFuture;
     // [userPreferences]只在初始化时读取一次，后续只读取本对象内的内存缓存、写入时再同步至[userPreferences]
     _penListPair = List.generate(2, (i) {

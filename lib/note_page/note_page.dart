@@ -1,19 +1,20 @@
 import 'dart:async';
 import 'dart:io';
-
 import 'package:flutter/cupertino.dart';
 import 'package:pdfrx/pdfrx.dart';
 import 'package:protobuf/protobuf.dart';
+import 'package:reading_note/status_manager/status_manager.dart';
 import 'package:reading_note/util/log.dart';
 import 'package:reading_note/protobuf/note.pb.dart' as pb;
-
+import '../pen/pen_stroke_tracker.dart';
 import 'independent_note_page.dart';
 import 'mark_note_page.dart';
 import 'note_book.dart';
 
 enum NoteType {
-  bookMarkNote, // = 0. DO NOT CHANGE ORDER - INDEX IS USED!
-  independentNote, // = 1. DO NOT CHANGE ORDER - INDEX IS USED!
+  // fixme: change name
+  book, // = 0. DO NOT CHANGE ORDER - INDEX IS USED!
+  note, // = 1. DO NOT CHANGE ORDER - INDEX IS USED!
 }
 
 // todo-p4: 考虑文件io失败
@@ -36,6 +37,9 @@ abstract class NotePage extends ChangeNotifier {
     if (await file.exists()) {
       // fixme: only do deepCopy when begin edit
       data = pb.NotePage.fromBuffer(await file.readAsBytes()).deepCopy();
+      assert(noteType == NoteType.book
+          ? data.whichContent() == pb.NotePage_Content.markNoteData
+          : data.whichContent() == pb.NotePage_Content.independentNoteData);
     } else {
       logError("page file disappeared: $file");
     }
@@ -54,71 +58,59 @@ abstract class NotePage extends ChangeNotifier {
       data = pb.NotePage()
         ..width = size.width
         ..height = size.height;
-      if (noteType == NoteType.bookMarkNote) {
+      if (noteType == NoteType.book) {
         data.markNoteData = pb.MarkNotePageData();
       } else {
         data.independentNoteData = pb.IndependentNotePageData();
       }
     }
 
-    if (noteType == NoteType.bookMarkNote) {
+    if (noteType == NoteType.book) {
       return MarkNotePage(pageNumber, noteBook, data, file);
     } else {
       return IndependentNotePage(pageNumber, noteBook, data, file);
     }
   }
 
-  @protected
   final NoteBook noteBook;
+
   @protected
   final pb.NotePage data;
-  @protected
   final int pageNumber;
 
   File? _file;
   bool _dataChanged = false;
-  pb.NotePageItem? _drawing;
+  PenStrokeTracker? _drawing;
 
   @protected
   NotePage(this.pageNumber, this.noteBook, this.data, File? file) : _file = file;
 
-  void startDraw(Offset positionOnPage) {
+  void penDown(Offset positionOnPage) {
     assert(_drawing == null);
-
-    const penId = 0; // todo: custom pen
-    data.penPool[penId] ??= pb.Pen()..lineWidth = 3.0;
-    data.items.add(_drawing = pb.NotePageItem()
-      ..x = positionOnPage.dx
-      ..y = positionOnPage.dy
-      ..path = (pb.Path()..penId = penId));
+    _drawing = statusManager.usingPen.beginPaint(data, positionOnPage, this);
+    triggerRepaint();
   }
 
-  bool endDraw() {
+  void penMove(Offset positionOnPage) {
     assert(_drawing != null);
-    assert(data.items.last == _drawing);
+    if (!check(positionOnPage)) return;
+    _drawing!.move(positionOnPage);
+    triggerRepaint();
+  }
 
-    bool success = _drawing!.path.points.isNotEmpty;
-    if (success) {
-      _dataChanged = true;
-    } else {
-      data.items.removeLast();
-    }
+  bool penUp() {
+    assert(_drawing != null);
+    final effective = _drawing!.end();
+    _dataChanged = _dataChanged || effective;
     _drawing = null;
-    return success;
+    return effective;
   }
 
   void saveIfNeeded() async {
     if (!_dataChanged) return;
     _dataChanged = false;
-    _file ??= await noteBook.addBookMarkPage(pageNumber);
+    _file ??= await noteBook.addNotePage(pageNumber);
     await _file!.writeAsBytes(data.writeToBuffer());
-  }
-
-  void addPoint(Offset positionOnPage) {
-    assert(_drawing != null);
-    if (!check(positionOnPage)) return;
-    _drawing!.path.points.add(pb.Point(x: positionOnPage.dx - _drawing!.x, y: positionOnPage.dy - _drawing!.y));
-    triggerRepaint();
   }
 
   void forEachPageItem(void Function(pb.NotePageItem item) action) {

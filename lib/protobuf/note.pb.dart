@@ -665,6 +665,7 @@ class Matte extends $pb.GeneratedMessage {
     $core.int? imageWidth,
     $core.int? imageHeight,
     $core.List<$core.int>? imageData,
+    $core.String? bookPath,
   }) {
     final $result = create();
     if (bookPageNumber != null) {
@@ -685,6 +686,9 @@ class Matte extends $pb.GeneratedMessage {
     if (imageData != null) {
       $result.imageData = imageData;
     }
+    if (bookPath != null) {
+      $result.bookPath = bookPath;
+    }
     return $result;
   }
   Matte._() : super();
@@ -698,6 +702,7 @@ class Matte extends $pb.GeneratedMessage {
     ..a<$core.int>(4, _omitFieldNames ? '' : 'imageWidth', $pb.PbFieldType.OU3, protoName: 'imageWidth')
     ..a<$core.int>(5, _omitFieldNames ? '' : 'imageHeight', $pb.PbFieldType.OU3, protoName: 'imageHeight')
     ..a<$core.List<$core.int>>(6, _omitFieldNames ? '' : 'imageData', $pb.PbFieldType.OY, protoName: 'imageData')
+    ..aOS(7, _omitFieldNames ? '' : 'bookPath', protoName: 'bookPath')
     ..hasRequiredFields = false
   ;
 
@@ -775,6 +780,15 @@ class Matte extends $pb.GeneratedMessage {
   $core.bool hasImageData() => $_has(5);
   @$pb.TagNumber(6)
   void clearImageData() => clearField(6);
+
+  @$pb.TagNumber(7)
+  $core.String get bookPath => $_getSZ(6);
+  @$pb.TagNumber(7)
+  set bookPath($core.String v) { $_setString(6, v); }
+  @$pb.TagNumber(7)
+  $core.bool hasBookPath() => $_has(6);
+  @$pb.TagNumber(7)
+  void clearBookPath() => clearField(7);
 }
 
 enum MattingMark_Content {

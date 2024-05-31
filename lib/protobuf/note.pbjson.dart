@@ -232,9 +232,11 @@ const Matte$json = {
     {'1': 'imageWidth', '3': 4, '4': 1, '5': 13, '10': 'imageWidth'},
     {'1': 'imageHeight', '3': 5, '4': 1, '5': 13, '10': 'imageHeight'},
     {'1': 'imageData', '3': 6, '4': 1, '5': 12, '10': 'imageData'},
+    {'1': 'bookPath', '3': 7, '4': 1, '5': 9, '9': 1, '10': 'bookPath', '17': true},
   ],
   '8': [
     {'1': '_imageType'},
+    {'1': '_bookPath'},
   ],
 };
 
@@ -244,7 +246,8 @@ final $typed_data.Uint8List matteDescriptor = $convert.base64Decode(
     'BhZ2VNYXR0aW5nTWFya0lkGAIgASgNUhVib29rUGFnZU1hdHRpbmdNYXJrSWQSLQoJaW1hZ2VU'
     'eXBlGAMgASgOMgouSW1hZ2VUeXBlSABSCWltYWdlVHlwZYgBARIeCgppbWFnZVdpZHRoGAQgAS'
     'gNUgppbWFnZVdpZHRoEiAKC2ltYWdlSGVpZ2h0GAUgASgNUgtpbWFnZUhlaWdodBIcCglpbWFn'
-    'ZURhdGEYBiABKAxSCWltYWdlRGF0YUIMCgpfaW1hZ2VUeXBl');
+    'ZURhdGEYBiABKAxSCWltYWdlRGF0YRIfCghib29rUGF0aBgHIAEoCUgBUghib29rUGF0aIgBAU'
+    'IMCgpfaW1hZ2VUeXBlQgsKCV9ib29rUGF0aA==');
 
 @$core.Deprecated('Use mattingMarkDescriptor instead')
 const MattingMark$json = {

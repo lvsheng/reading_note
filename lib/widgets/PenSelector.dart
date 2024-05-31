@@ -1,9 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart' as material;
 import 'package:reading_note/status_manager/status_manager.dart';
-
-import '../pen.dart';
-import '../status_manager/pen_manager.dart';
+import '../pen/pen.dart';
 
 class PenSelector extends StatefulWidget {
   const PenSelector({super.key});

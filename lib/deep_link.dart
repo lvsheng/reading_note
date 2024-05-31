@@ -1,5 +1,4 @@
 import 'dart:io';
-
 import 'package:reading_note/file_system_proxy.dart';
 import 'package:reading_note/util/log.dart';
 
@@ -40,7 +39,7 @@ Future<File> importFile(Uri deepLinkUri) async {
     var pieces = fileName.split(".");
     final String post = pieces.removeLast();
     final String pre = pieces.join(".");
-    destFileName = "${pre}.$post";
+    destFileName = "$pre.$post";
   }
 
   final destFile = File("${(await fileSystemProxy.rootDirectoryReady).path}$destFileName");

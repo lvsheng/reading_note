@@ -1,37 +1,31 @@
-import 'dart:io';
-
 import 'package:flutter/cupertino.dart';
 import 'package:pdfrx/pdfrx.dart';
-import 'package:quiver/collection.dart';
 import 'package:reading_note/pdf_matting_performer.dart';
 import 'package:reading_note/protobuf/note.pb.dart' as pb;
+import 'package:reading_note/status_manager/status_manager.dart';
 import 'package:tuple/tuple.dart';
 
+final mattingManager = MattingManager._();
+
 enum MattingStatus {
-  notStarted,
+  isEmpty,
   ing,
   allDone,
 }
 
 class MattingManager extends ChangeNotifier {
-  static final _instanceMap = LruMap<String, MattingManager>(maximumSize: 50);
-
-  static MattingManager instanceOf(File book) {
-    var result = _instanceMap[book.path];
-    return result ??= _instanceMap[book.path] = MattingManager._(book);
-  }
-
-  final File _book;
   Map<pb.MattingMark, Tuple2<pb.Matte?, Future<pb.Matte?>?>> _caching = {};
 
-  MattingManager._(this._book);
+  MattingManager._();
 
-  MattingStatus get status => _caching.isEmpty ? MattingStatus.notStarted : (_allDone ? MattingStatus.allDone : MattingStatus.ing);
+  bool get isNotEmpty => !isEmpty;
+  bool get isEmpty => _caching.isEmpty;
+  MattingStatus get status => isEmpty ? MattingStatus.isEmpty : (_allDone ? MattingStatus.allDone : MattingStatus.ing);
 
   void startOne(pb.MattingMark mark, int markId, PdfDocument document, int pageNumber) {
     _caching[mark] = Tuple2(
         null,
-        performMatting(_book, document, pageNumber, mark, markId).then((result) {
+        performMatting(statusManager.reading!, document, pageNumber, mark, markId).then((result) {
           _caching[mark] = Tuple2(result, null);
           notifyListeners();
           return result;

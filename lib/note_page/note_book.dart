@@ -1,11 +1,9 @@
 import 'dart:io';
 import 'dart:ui';
-
 import 'package:pdfrx/pdfrx.dart';
 import 'package:path/path.dart' as p;
 import 'package:reading_note/protobuf/note.pb.dart' as pb;
 import 'package:protobuf/protobuf.dart';
-
 import 'note_page.dart';
 
 class NoteBook {
@@ -13,7 +11,7 @@ class NoteBook {
   static final Map<String, NoteBook> _cacheForIndependent = {};
 
   static NoteBook getOrCreate(File book, NoteType type, PdfDocument document) {
-    final Map<String, NoteBook> cache = (type == NoteType.bookMarkNote) ? _cacheForBookMark : _cacheForIndependent;
+    final Map<String, NoteBook> cache = (type == NoteType.book) ? _cacheForBookMark : _cacheForIndependent;
     var result = cache[book.path];
     result ??= cache[book.path] = NoteBook._(book, type, document);
     // todo: unload file ?
@@ -28,7 +26,7 @@ class NoteBook {
 
   static String _getBaseDirectory(File book) => "${p.dirname(book.path)}/${p.basename(book.path)}.note/";
 
-  static String _getMiddleDirectory(NoteType noteType) => noteType == NoteType.bookMarkNote ? "book_mark/" : "";
+  static String _getMiddleDirectory(NoteType noteType) => noteType == NoteType.book ? "book_mark/" : "";
 
   late Future<void> ready;
   late final File book;
@@ -62,7 +60,7 @@ class NoteBook {
     return _data!.pages[pageNumber];
   }
 
-  Future<File> addBookMarkPage(int pageNumber) {
+  Future<File> addNotePage(int pageNumber) {
     int pageId = ++_data!.lastPageId;
     return _createPageFile(pageId, () => _data!.pages[pageNumber] = pageId);
   }

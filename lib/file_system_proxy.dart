@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:reading_note/util/log.dart';
-import 'package:path/path.dart' as path;
+import 'package:path/path.dart' as p;
 
 final FileSystemProxy fileSystemProxy = FileSystemProxy._();
 
@@ -11,7 +11,7 @@ class FileSystemProxy {
   static const MethodChannel _channel = MethodChannel('document_proxy');
   static const _supportedFileTypes = {".pdf"};
 
-  static bool _support(FileSystemEntity file) => file is File && _supportedFileTypes.contains(path.extension(file.path));
+  static bool _support(FileSystemEntity file) => file is File && _supportedFileTypes.contains(p.extension(file.path));
 
   late final Future<Directory> rootDirectoryReady;
   Directory? rootDirectory;
@@ -26,6 +26,8 @@ class FileSystemProxy {
     final result = (await rootDirectory!.list(recursive: true).firstWhere(_support, orElse: () => notFound)) as File;
     return result.hashCode == notFound.hashCode ? null : result;
   }
+
+  String localPath(File file) => p.relative(file.path, from: rootDirectory!.path);
 
   Future<Directory> _fetchRootDirUri() async {
     String? result;

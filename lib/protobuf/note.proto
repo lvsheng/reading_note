@@ -69,6 +69,7 @@ message Matte {
     uint32 imageWidth = 4;
     uint32 imageHeight = 5;
     bytes imageData = 6;
+    optional string bookPath = 7; // only needed when from other book
 }
 
 message MattingMark {

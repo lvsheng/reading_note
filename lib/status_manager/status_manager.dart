@@ -1,39 +1,36 @@
+import 'dart:io';
 import 'package:flutter/cupertino.dart';
+import 'package:reading_note/file_system_proxy.dart';
 import 'package:reading_note/note_page/note_page.dart';
+import 'package:reading_note/pen/matte_positioner.dart';
+import 'package:reading_note/status_manager/matting_manager.dart';
 import 'package:reading_note/status_manager/pen_manager.dart';
-
-import '../pen.dart';
+import 'package:tuple/tuple.dart';
+import '../pen/matte_positioner_pen.dart';
+import '../pen/pen.dart';
 
 final _penManager = PenManager();
 
 final statusManager = StatusManager._();
 
-enum InteractiveMode {
-  bookHandwrite, // = 0. DO NOT CHANGE ORDER - INDEX IS USED!
-  bookMatting, // = 1. DO NOT CHANGE ORDER - INDEX IS USED!
-  noteHandwrite, // = 2. DO NOT CHANGE ORDER - INDEX IS USED!
-  notePlaceMatte, // = 3. DO NOT CHANGE ORDER - INDEX IS USED!
-}
-
-enum PlaceMattePhase {
-  moveTogether,
-  moveSeparately,
-  done,
-}
-
+// todo: mixin, Note status, opening logic in main
 class StatusManager extends ChangeNotifier {
-  InteractiveMode _mode = InteractiveMode.bookHandwrite;
+  bool _ready = false;
 
-  StatusManager._();
+  NoteType _interactingNoteType = NoteType.book;
+  Tuple2<Pen, NotePage>? _drawing;
+  File? reading; // fixme
 
-  InteractiveMode get currentMode => _mode;
+  StatusManager._() {
+    Future.wait([_penManager.readyFuture, fileSystemProxy.rootDirectoryReady]).then((_) {
+      _ready = true;
+      notifyListeners();
+    });
+  }
 
-  NoteType get interactingNoteType => (const [
-        NoteType.bookMarkNote,
-        NoteType.bookMarkNote,
-        NoteType.independentNote,
-        NoteType.independentNote,
-      ])[_mode.index];
+  bool get ready => _ready;
+
+  NoteType get interactingNoteType => _interactingNoteType;
 
   List<Pen> get interactingPenList {
     final result = _penManager.penListOf(interactingNoteType);
@@ -44,26 +41,63 @@ class StatusManager extends ChangeNotifier {
     return result;
   }
 
-  Pen get usingPen => _penManager.currentPenOf(interactingNoteType);
+  bool _delayPlaceMatte = false;
 
-  void gotoIndependentNote() {
-    _mode = InteractiveMode.noteHandwrite;
+  MattePositionerPen? _mattePlacePen;
+
+  bool get mattePlacePenVisible => interactingNoteType == NoteType.note && _mattePlacePen != null;
+
+  Pen get usingPen {
+    if (!mattePlacePenVisible || _delayPlaceMatte) {
+      return _penManager.currentPenOf(interactingNoteType);
+    } else {
+      return _mattePlacePen!;
+    }
+  }
+
+  NotePage? get drawingPage => _drawing?.item2;
+
+  Pen? get drawingPen => _drawing?.item1;
+
+  void switchToNote() {
+    if (mattingManager.isNotEmpty && _mattePlacePen == null) {
+      _mattePlacePen = MattePositionerPen();
+    }
+    _interactingNoteType = NoteType.note;
     notifyListeners();
   }
 
-  void gotoBook() {
-    _mode = InteractiveMode.bookHandwrite; // todo: or matting
-    notifyListeners();
+  void finishPlaceMatte() {
+    assert(_mattePlacePen != null && _mattePlacePen == usingPen);
+    _mattePlacePen = null;
+    _delayPlaceMatte = false;
   }
 
-  List<Pen> resetPenList(NoteType noteType) {
-    final result = _penManager.resetPenList(noteType);
+  void switchToBook() {
+    _interactingNoteType = NoteType.book;
     notifyListeners();
-    return result;
   }
 
   set usingPen(Pen pen) {
-    _penManager.setCurrentPen(interactingNoteType, pen);
+    if (pen is! MattePositionerPen) {
+      _penManager.setCurrentPen(interactingNoteType, pen);
+    } else {
+      assert(_delayPlaceMatte && mattePlacePenVisible);
+      _delayPlaceMatte = false;
+      assert(usingPen is MattePositionerPen);
+    }
+
+    notifyListeners();
+  }
+
+  dynamic beginDrawing(Pen pen, NotePage page) {
+    // todo: return adjustor, 比如一边画一边调整高度
+    _drawing = Tuple2(pen, page);
+    notifyListeners();
+  }
+
+  void endDrawing() {
+    _drawing = null;
     notifyListeners();
   }
 }

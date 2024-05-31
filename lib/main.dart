@@ -2,22 +2,21 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:math';
 import 'dart:ui' as ui;
-
 import 'package:flutter/cupertino.dart';
 import 'package:app_links/app_links.dart';
-import 'package:reading_note/custom_painter.dart';
+import 'package:reading_note/custom_painter/page_items_painter.dart';
 import 'package:reading_note/file_system_proxy.dart';
 import 'package:reading_note/deep_link.dart';
 import 'package:reading_note/status_manager/status_manager.dart';
 import 'package:reading_note/note_page/note_page.dart';
 import 'package:reading_note/util/log.dart';
-import 'package:reading_note/stylus_gesture_detector.dart';
+import 'package:reading_note/widgets/stylus_gesture_detector.dart';
 import 'package:reading_note/user_preferences.dart';
 import 'package:pdfrx/pdfrx.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'package:tuple/tuple.dart';
 import 'package:visibility_detector/visibility_detector.dart';
-
+import 'custom_painter/coordinate_converter.dart';
 import 'util/debug.dart' as debug;
 import 'note_page/independent_note_page.dart';
 import 'note_page/mark_note_page.dart';
@@ -92,7 +91,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     });
 
     {
-      var file = await userPreferences.lastOpenedFile;
+      var file = await userPreferences.readingBook;
       file ??= await fileSystemProxy.firstFile;
       if (file != null) {
         open(file);
@@ -134,12 +133,12 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
 
   open(File file) {
     _saveIfNeeded();
-    userPreferences.setLastOpenedFile(file);
+    userPreferences.setReadingBook(file);
     setState(() {
       _reading = file;
-      _initialPageNumber = userPreferences.lastPageOf(_reading!) ?? 1;
+      _initialPageNumber = userPreferences.bookPageOf(_reading!) ?? 1;
       _pageNumber = _initialPageNumber;
-      _initialNotePageNumber = userPreferences.lastNotePageOf(_reading!) ?? 1;
+      _initialNotePageNumber = userPreferences.notePageOf(_reading!) ?? 1;
       _pageMarkNoteMap = {};
       _pageIndependentNoteMap = {};
       _document = null;
@@ -154,6 +153,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     });
 
     debug.setCurrentPdf(file);
+    statusManager.reading = file; // fixme
   }
 
   @override
@@ -180,7 +180,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                   onPageChanged: (int? pageNumber) {
                     if (!mounted || pageNumber == null) return;
                     setState(() => _pageNumber = pageNumber);
-                    userPreferences.setLastPage(_reading!, pageNumber);
+                    userPreferences.setBookPage(_reading!, pageNumber);
                   },
                   pagePaintCallbacks: _debugShowIndicator ? [paintPageIndicator] : const [],
 
@@ -192,7 +192,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                     if (noteTuple?.item1 == null) {
                       // if not loading, load it first
                       if (noteTuple == null) {
-                        NotePage.open(NoteType.bookMarkNote, _reading!, _document!, page.pageNumber, page.size).then((note) {
+                        NotePage.open(NoteType.book, _reading!, _document!, page.pageNumber, page.size).then((note) {
                           if (!mounted) return;
                           setState(() => _pageMarkNoteMap![page.pageNumber] = Tuple2(note as MarkNotePage, true));
                         });
@@ -209,116 +209,125 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                           child: IgnorePointer(
                               child: RepaintBoundary(
                             child: CustomPaint(
-                              painter: MarkNotePainter(pageRect, note),
+                              painter: PageItemsPainter(note, BookCoordConverter(pageRect, note)),
                               isComplex: true, // fixme
                             ),
                           ))),
                       GestureDetector(onDoubleTap: () => setState(() => _debugShowIndicator = !_debugShowIndicator)),
                       PencilGestureDetector(
                         onDown: (details) {
-                          note.startDraw(note.canvasPositionToPagePosition(details.localPosition, pageRect));
+                          note.penDown(note.canvasPositionToPagePosition(details.localPosition, pageRect));
                         },
                         onMove: (localPosition) {
-                          note.addPoint(note.canvasPositionToPagePosition(localPosition, pageRect));
+                          note.penMove(note.canvasPositionToPagePosition(localPosition, pageRect));
                         },
                         onUp: (details) {
-                          note.addPoint(note.canvasPositionToPagePosition(details.localPosition, pageRect));
-                          note.endDraw();
+                          note.penMove(note.canvasPositionToPagePosition(details.localPosition, pageRect));
+                          note.penUp();
                         },
                         onCancel: (detail) {
-                          note.endDraw();
+                          note.penUp();
                         },
                       ),
                     ];
                   }),
             )),
-          if (_reading != null && statusManager.interactingNoteType == NoteType.independentNote)
+          if (_reading != null)
             Positioned.fill(
-              child: Opacity(
-                opacity: 0.85,
-                child: DecoratedBox(
-                  decoration: const BoxDecoration(color: CupertinoColors.white),
-                  child: ScrollablePositionedList.builder(
-                    itemCount: _maxInt,
-                    initialScrollIndex: _initialNotePageNumber,
-                    itemBuilder: (BuildContext context, int index) {
-                      const margin = Size(10.0, 20.0);
-                      final size = MediaQuery.of(context).size;
-                      final noteTuple = _pageIndependentNoteMap![index];
+              child: IgnorePointer(
+                ignoring: statusManager.interactingNoteType != NoteType.note,
+                child: Opacity(
+                  opacity: statusManager.interactingNoteType == NoteType.note ? 0.85 : 0,
+                  // fixme: 是否能既用visibility代替，又完全保留状态如滚动位置等
+                  child: DecoratedBox(
+                    decoration: const BoxDecoration(color: CupertinoColors.white),
+                    child: ScrollablePositionedList.builder(
+                      itemCount: _maxInt,
+                      initialScrollIndex: _initialNotePageNumber,
+                      itemBuilder: (BuildContext context, int index) {
+                        const margin = Size(10.0, 20.0);
+                        final size = MediaQuery.of(context).size;
+                        final noteTuple = _pageIndependentNoteMap![index];
 
-                      // note not ready
-                      if (noteTuple?.item1 == null) {
-                        // if not loading, load it first
-                        if (noteTuple == null && _document != null) {
-                          NotePage.open(NoteType.independentNote, _reading!, _document!, index,
-                                  Size(size.width - margin.width * 2, max(_document!.pages.firstOrNull?.height ?? 0, size.width / 9 * 16)))
-                              .then((note) {
-                            if (!mounted) return;
-                            setState(() => _pageIndependentNoteMap![index] = Tuple2(note as IndependentNotePage, true));
-                          });
+                        // note not ready
+                        if (noteTuple?.item1 == null) {
+                          // if not loading, load it first
+                          if (noteTuple == null && _document != null) {
+                            NotePage.open(
+                                    NoteType.note,
+                                    _reading!,
+                                    _document!,
+                                    index,
+                                    Size(
+                                        size.width - margin.width * 2, max(_document!.pages.firstOrNull?.height ?? 0, size.width / 9 * 16)))
+                                .then((note) {
+                              if (!mounted) return;
+                              setState(() => _pageIndependentNoteMap![index] = Tuple2(note as IndependentNotePage, true));
+                            });
+                          }
+
+                          return SizedBox(width: size.width, height: size.height, child: const Center(child: Text("loading")));
                         }
 
-                        return SizedBox(width: size.width, height: size.height, child: const Center(child: Text("loading")));
-                      }
+                        final note = noteTuple!.item1!;
 
-                      final note = noteTuple!.item1!;
-
-                      return VisibilityDetector(
-                        key: Key(index.toString()),
-                        onVisibilityChanged: (info) {
-                          if (info.visibleFraction > 0) {
-                            assert(_reading != null);
-                            userPreferences.setLastNotePage(_reading!, index);
-                          }
-                        },
-                        child: Container(
-                          height: note.size.height,
-                          margin: EdgeInsets.only(top: MediaQuery.of(context).viewPadding.top, left: margin.width, right: margin.width),
-                          decoration: const BoxDecoration(
-                            borderRadius: BorderRadius.all(Radius.circular(8)),
-                            color: CupertinoColors.white,
-                            boxShadow: [
-                              BoxShadow(color: CupertinoColors.inactiveGray, spreadRadius: 3, blurRadius: 3),
-                            ],
+                        return VisibilityDetector(
+                          key: Key(index.toString()),
+                          onVisibilityChanged: (info) {
+                            if (info.visibleFraction > 0) {
+                              assert(_reading != null);
+                              userPreferences.setNotePage(_reading!, index);
+                            }
+                          },
+                          child: Container(
+                            height: note.size.height,
+                            margin: EdgeInsets.only(top: MediaQuery.of(context).viewPadding.top, left: margin.width, right: margin.width),
+                            decoration: const BoxDecoration(
+                              borderRadius: BorderRadius.all(Radius.circular(8)),
+                              color: CupertinoColors.white,
+                              boxShadow: [
+                                BoxShadow(color: CupertinoColors.inactiveGray, spreadRadius: 3, blurRadius: 3),
+                              ],
+                            ),
+                            child: Stack(
+                              children: [
+                                Text("第 ${index + 1} 页"),
+                                ConstrainedBox(
+                                    constraints: const BoxConstraints.expand(),
+                                    child: IgnorePointer(
+                                        child: RepaintBoundary(
+                                      child: CustomPaint(
+                                        painter: PageItemsPainter(note, NoteCoordConverter(note)),
+                                        isComplex: true, // fixme
+                                      ),
+                                    ))),
+                                GestureDetector(onDoubleTap: () => setState(() => _debugShowIndicator = !_debugShowIndicator)),
+                                PencilGestureDetector(
+                                  onDown: (details) {
+                                    note.penDown(note.canvasPositionToPage(details.localPosition, 1.0));
+                                  },
+                                  onMove: (localPosition) {
+                                    note.penMove(note.canvasPositionToPage(localPosition, 1.0));
+                                  },
+                                  onUp: (details) {
+                                    note.penMove(note.canvasPositionToPage(details.localPosition, 1.0));
+                                    note.penUp();
+                                  },
+                                  onCancel: (detail) {
+                                    note.penUp();
+                                  },
+                                ),
+                              ],
+                            ),
                           ),
-                          child: Stack(
-                            children: [
-                              Text("第 ${index + 1} 页"),
-                              ConstrainedBox(
-                                  constraints: const BoxConstraints.expand(),
-                                  child: IgnorePointer(
-                                      child: RepaintBoundary(
-                                    child: CustomPaint(
-                                      painter: IndependentNotePainter(note),
-                                      isComplex: true, // fixme
-                                    ),
-                                  ))),
-                              GestureDetector(onDoubleTap: () => setState(() => _debugShowIndicator = !_debugShowIndicator)),
-                              PencilGestureDetector(
-                                onDown: (details) {
-                                  note.startDraw(note.canvasPositionToPage(details.localPosition, 1.0));
-                                },
-                                onMove: (localPosition) {
-                                  note.addPoint(note.canvasPositionToPage(localPosition, 1.0));
-                                },
-                                onUp: (details) {
-                                  note.addPoint(note.canvasPositionToPage(details.localPosition, 1.0));
-                                  note.endDraw();
-                                },
-                                onCancel: (detail) {
-                                  note.endDraw();
-                                },
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
+                        );
+                      },
+                    ),
                   ),
                 ),
               ),
             ),
-          if (ControlPanelBuilder.ready) ControlPanelBuilder.build(),
+          if (statusManager.ready) ControlPanelBuilder.build(),
           if (_errorTip != null)
             Center(child: Text(_errorTip!, style: const TextStyle(color: CupertinoColors.destructiveRed, fontSize: 20))),
           if (_debugShowIndicator)
