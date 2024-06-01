@@ -235,9 +235,9 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
           if (_reading != null)
             Positioned.fill(
               child: IgnorePointer(
-                ignoring: statusManager.interactingNoteType != NoteType.note,
+                ignoring: statusManager.interacting != NoteType.note,
                 child: Opacity(
-                  opacity: statusManager.interactingNoteType == NoteType.note ? 0.85 : 0,
+                  opacity: statusManager.interacting == NoteType.note ? 0.85 : 0,
                   // fixme: 是否能既用visibility代替，又完全保留状态如滚动位置等
                   child: DecoratedBox(
                     decoration: const BoxDecoration(color: CupertinoColors.white),
@@ -327,7 +327,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                 ),
               ),
             ),
-          if (statusManager.ready) ControlPanelBuilder.build(),
+          if (statusManager.ready) ControlPanelBuilder.build(context),
           if (_errorTip != null)
             Center(child: Text(_errorTip!, style: const TextStyle(color: CupertinoColors.destructiveRed, fontSize: 20))),
           if (_debugShowIndicator)

@@ -6,7 +6,7 @@ message NoteBookMeta {
 }
 
 message NotePage {
-    float width = 1; // IndependentNote:可无限扩展，MarkNote:需与对应book中该页尺寸完全一致
+    float width = 1; // IndependentNote:可无限扩展，MarkNote:需与对应book中该页尺寸完全一致 todo: IndependentNote/MarkBookNote改概念?
     float height = 2; // IndependentNote:高度增加限制以构造多页效果，MarkNote:需与对应book中该页尺寸完全一致
     repeated NotePageItem items = 3;
     oneof content {

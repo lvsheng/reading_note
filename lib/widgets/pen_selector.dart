@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart' as material;
 import 'package:reading_note/status_manager/status_manager.dart';
 import '../pen/pen.dart';
+import 'common.dart' as c;
 
 class PenSelector extends StatefulWidget {
   const PenSelector({super.key});
@@ -16,8 +17,15 @@ class PenSelectorState extends State<PenSelector> {
     // todo: 理想交互：
     //  1.只手指可交互，笔不行（以此保证对应位置笔都可以写。但其实如果不是透明，那也没意义。而且有些小icon用笔点会更合适些）
     //  2.touchstart时出现其他可选笔，移动手指选择
-    return Row(
-      children:statusManager.interactingPenList.map(_buildPenItem).toList(growable: false),
+    //  其他方式：切换魔术笔🪄与普通笔在一个按钮，点击切换。横向滑动切换其他笔，向上滑动切换橡皮，向下滑动切换选择，长按时提示
+    return GestureDetector(
+      child: Container(
+        decoration: c.borderDecoration,
+        padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 5),
+        child: Column(
+          children:statusManager.interactingPenList.map(_buildPenItem).toList(growable: false),
+        ),
+      ),
     );
   }
 

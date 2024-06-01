@@ -2,6 +2,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:reading_note/status_manager/status_manager.dart';
 import 'package:reading_note/note_page/note_page.dart';
 import 'package:reading_note/user_preferences.dart';
+import 'package:reading_note/util/log.dart';
+import '../pen/matte_positioner_pen.dart';
 import '../pen/pen.dart';
 
 /// Used by [StatusManager], initialized referring to [UserPreferences] and syncing data to [UserPreferences]
@@ -14,9 +16,42 @@ class PenManager {
     readyFuture = _load();
   }
 
-  List<Pen> penListOf(NoteType noteType) => _penListPair![noteType.index];
+  /// 不包括特殊的[PenType.mattingMarkPen]和[PenType.mattePositionerPen]
+  // List<Pen> penListOf(NoteType noteType) => _penListPair![noteType.index]; // todo: 两类使用同一份penList，只是currentPen不同？
+  List<Pen> penListOf(NoteType noteType) => _penListPair![NoteType.note.index]; // todo: 两类使用同一份penList，只是currentPen不同？
 
   Pen currentPenOf(NoteType noteType) => _currentPenPair![noteType.index];
+
+  Pen? _mattingPen;
+  Pen get mattingPen {
+    // todo
+    logWarn("TODO: mattingPen");
+    return _mattingPen ??= Pen(-1, PenType.mattingMarkPen, CupertinoColors.systemYellow.withAlpha(125), 10.0);
+  }
+
+  Pen? _mattePlacePen;
+  Pen get mattePlacePen {
+    // todo
+    logWarn("TODO: mattePlacePen");
+    // return _mattePlacePen ??= Pen(-1, PenType.mattePositionerPen, const Color(0x00000000), 1.0);
+    return _mattePlacePen ??= MattePositionerPen();
+  }
+
+  bool get mattingWhenBook {
+    // todo
+    logWarn("TODO: mattingWhenBook preference");
+    return true; // todo preference
+  }
+
+  bool get puttingMatteWhenNote {
+    // todo
+    logWarn("TODO: puttingMatteWhenBook preference");
+    return true; // todo preference
+  }
+
+  set puttingMatteWhenNote(bool value) {
+    // todo
+  }
 
   void setCurrentPen(NoteType noteType, Pen pen) {
     userPreferences.setCurrentPen(noteType, _currentPenPair![noteType.index] = pen);
@@ -37,13 +72,15 @@ class PenManager {
             ? [
                 addNewPen(PenType.mattingMarkPen, CupertinoColors.systemOrange, 8),
                 addNewPen(PenType.ballPointPen, CupertinoColors.black, 1),
-                addNewPen(PenType.markPen, CupertinoColors.systemYellow, 10),
+                addNewPen(PenType.markPen, CupertinoColors.systemYellow.withAlpha(125), 10),
               ]
             : [
                 addNewPen(PenType.ballPointPen, CupertinoColors.black, 2),
                 addNewPen(PenType.ballPointPen, CupertinoColors.systemBlue, 3),
                 addNewPen(PenType.ballPointPen, CupertinoColors.systemRed, 3),
-                addNewPen(PenType.markPen, CupertinoColors.systemYellow, 10),
+                addNewPen(PenType.markPen, CupertinoColors.systemYellow.withAlpha(125), 10),
+                // addNewPen(PenType.markPen, CupertinoColors.systemYellow.withAlpha(125), 10),
+                // addNewPen(PenType.markPen, CupertinoColors.systemYellow.withAlpha(125), 10),
               ]);
     if (!initializingPenListPair) {
       _penListPair![noteType.index] = result;
@@ -59,6 +96,7 @@ class PenManager {
       final result = userPreferences
           .penListOf(noteType)
           ?.map((id) => Pen(id, userPreferences.penTypeOf(id), userPreferences.penColorOf(id), userPreferences.penLineWidthOf(id)));
+      // final result = null;
       if (result == null || result.isEmpty) return resetPenList(noteType, true);
       return result.toList(growable: false);
     });

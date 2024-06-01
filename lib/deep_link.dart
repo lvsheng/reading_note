@@ -42,7 +42,12 @@ Future<File> importFile(Uri deepLinkUri) async {
     destFileName = "$pre.$post";
   }
 
-  final destFile = File("${(await fileSystemProxy.rootDirectoryReady).path}$destFileName");
+  String rootPath = (await fileSystemProxy.rootDirectoryReady).path;
+  if (rootPath[rootPath.length - 1] != "/") {
+    logWarn("rootPath is not endwith /: $rootPath");
+    rootPath += "/";
+  }
+  final destFile = File("$rootPath$destFileName");
   if (!await destFile.exists()) {
     // todo: 由DocumentProxy通知platform后再进行创建写入等操作
     await destFile.create(recursive: true);

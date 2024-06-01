@@ -152,7 +152,7 @@ class UserPreferences {
     return true;
   }
 
-  String _keyOfBook(File book, String keyPrefix) => "$keyPrefix:${fileSystemProxy.localPath(book)}";
+  String _keyOfBook(File book, String keyPrefix) => "$keyPrefix${fileSystemProxy.localPath(book)}";
 
   _removeIfNeeded(String key) {
     if (_sharedPreferences!.containsKey(key)) {

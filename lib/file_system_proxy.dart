@@ -27,7 +27,9 @@ class FileSystemProxy {
     return result.hashCode == notFound.hashCode ? null : result;
   }
 
-  String localPath(File file) => p.relative(file.path, from: rootDirectory!.path);
+  String localPath(File file) {
+    return p.relative(file.path, from: rootDirectory!.path);
+  }
 
   Future<Directory> _fetchRootDirUri() async {
     String? result;
@@ -52,7 +54,10 @@ class FileSystemProxy {
       }
     }
 
-    logWarn("Could not get iCloud document directory, using ApplicationDocumentDirectory as fallback.");
-    return getApplicationDocumentsDirectory();
+    logWarn("Could not get iCloud document directory, using ApplicationDocumentDirectory as fallback");
+    return getApplicationDocumentsDirectory().then((result) {
+      logDebug("getApplicationDocumentsDirectory:$result");
+      return result;
+    });
   }
 }
