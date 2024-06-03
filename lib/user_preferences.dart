@@ -88,7 +88,7 @@ class UserPreferences {
 
   set nextPenId(int value) => _setInt(_keyLastPenId, value);
 
-  List<int>? penListOf(NoteType noteType) =>
+  List<int>? penListOf(NoteType noteType) => // fixme: 与PenManager一样，两种类型合一
       _sharedPreferences!.getStringList(_keyPenList[noteType.index])?.map((string) => int.parse(string)).toList(growable: false);
 
   List<Pen> setPenList(NoteType noteType, List<Pen> list) {

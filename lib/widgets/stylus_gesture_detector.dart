@@ -74,7 +74,7 @@ class StylusGestureRecognizer extends OneSequenceGestureRecognizer {
     } else if (event is PointerMoveEvent && onMove != null) {
       assert(lastReportedOffset != null);
       final distanceFromLast = (event.localPosition - lastReportedOffset!).distance;
-      if (distanceFromLast > 0.1) { // iPad Air 5上试验：典型为0.0
+      if (distanceFromLast > 0) { // iPad Air 5上试验：典型为0.0
         onMove!(event.localPosition);
         lastReportedOffset = event.localPosition;
       } else {

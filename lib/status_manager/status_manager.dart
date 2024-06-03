@@ -29,8 +29,9 @@ class StatusManager extends ChangeNotifier {
 
   NoteType get interacting => _interacting;
 
-  List<Pen> get interactingPenList {
-    final result = _penManager.penListOf(interacting);
+  List<Pen> get penList {
+    final result = [_mattingOrMattePositionerPen]; // todo: 橡皮、选择笔
+    result.addAll(_penManager.list);
     if (result.isEmpty) {
       // todo: 是否不应该此时这样做？但防止下次绘画时没有笔，还是要避免画笔列表空
       _penManager.resetPenList(interacting);
@@ -40,10 +41,12 @@ class StatusManager extends ChangeNotifier {
 
   Pen get usingPen {
     if (_mattingOrPuttingMatte) {
-      return _interacting == NoteType.note ? _penManager.mattePlacePen : _penManager.mattingPen;
+      return _mattingOrMattePositionerPen;
     }
     return _penManager.currentPenOf(interacting);
   }
+
+  Pen get _mattingOrMattePositionerPen => _interacting == NoteType.note ? _penManager.mattePlacePen : _penManager.mattingPen;
 
   NotePage? get drawingPage => _drawing?.item2;
 
@@ -67,10 +70,32 @@ class StatusManager extends ChangeNotifier {
   }
 
   set usingPen(Pen pen) {
-    assert(pen.type != PenType.mattingMarkPen);
-    assert(pen.type != PenType.mattePositionerPen);
-    _penManager.setCurrentPen(interacting, pen);
+    if (pen == usingPen) return;
+    if (pen.type == PenType.mattingMarkPen) {
+      assert(interacting == NoteType.book);
+      _mattingOrPuttingMatte = true;
+    } else if (pen.type == PenType.mattePositionerPen) {
+      assert(interacting == NoteType.note);
+      _mattingOrPuttingMatte = true;
+    } else {
+      _penManager.setCurrentPen(interacting, pen);
+      _mattingOrPuttingMatte = false;
+    }
     notifyListeners();
+  }
+
+  void nextPen() {
+    _turnPen(1);
+  }
+
+  void previousPen() {
+    _turnPen(-1);
+  }
+
+  void _turnPen(int offset) {
+    final list = penList;
+    final index = (list.indexWhere((e) => e == statusManager.usingPen) + offset) % list.length;
+    usingPen = list[index];
   }
 
   bool get mattingOrPuttingMatte => _mattingOrPuttingMatte;

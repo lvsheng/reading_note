@@ -6,8 +6,7 @@ import 'package:reading_note/widgets/matting_control_panel.dart';
 import '../pen/matte_positioner_pen.dart';
 import '../status_manager/status_manager.dart';
 import '../note_page/note_page.dart';
-
-const _iconSize = 80.0;
+import 'common.dart' as c;
 
 class ControlPanelBuilder {
   ControlPanelBuilder._();
@@ -32,26 +31,6 @@ class ControlPanelBuilder {
         break;
     }
 
-    late Widget secondButton;
-    if (statusManager.mattingOrPuttingMatte) {
-      secondButton = _buildMainButton(statusManager.switchMattingOrPuttingMatte, material.Icons.brush, 70.0);
-    } else {
-      secondButton = Stack(
-        children: [
-          Transform.flip(
-              flipX: true, child: _buildMainButton(statusManager.switchMattingOrPuttingMatte, material.Icons.auto_fix_high_outlined, 70.0)),
-          Positioned(
-              left: 18,
-              bottom: 25,
-              child: IgnorePointer(
-                  child: Icon(
-                statusManager.interacting == NoteType.note ? CupertinoIcons.paintbrush : material.Icons.format_paint_outlined,
-                size: 15,
-              )))
-        ],
-      );
-    }
-
     return Positioned(
         top: 0,
         bottom: 0,
@@ -59,26 +38,20 @@ class ControlPanelBuilder {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
               Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 mainButton,
-                secondButton
+                PenSelector() /*fixme*/
               ]),
-              PenSelector() /*fixme*/
-            ],
-          ),
           Expanded(child: Container()),
           if (bottom != null) bottom
         ]));
   }
 
-  static Widget _buildMainButton(VoidCallback onPressed, IconData icon, [double iconSize = _iconSize]) {
+  static Widget _buildMainButton(VoidCallback onPressed, IconData icon, [double iconSize = c.mainButtonSize]) {
     // return material.MaterialButton(
     return CupertinoButton(
       onPressed: onPressed,
-      child: SizedBox(width: _iconSize, height: _iconSize, child: Icon(icon, size: iconSize)),
+      child: SizedBox(width: c.mainButtonSize, height: c.mainButtonSize, child: Icon(icon, size: iconSize)),
     );
   }
 }

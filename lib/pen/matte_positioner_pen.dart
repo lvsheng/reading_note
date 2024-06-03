@@ -15,7 +15,7 @@ class MattePositionerPen extends Pen {
   late double _scale;
   MattePositioner? _mattePositioner; // generated at pen's first land on page
 
-  MattePositionerPen() : super(-1, PenType.mattePositionerPen, material.Colors.transparent, 0) {
+  MattePositionerPen() : super(-1, PenType.mattePositionerPen, material.Colors.black, 0) {
     _scale = userPreferences.matteScaleOf(statusManager.reading!);
   }
 
