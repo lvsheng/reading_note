@@ -1,9 +1,10 @@
 import 'dart:io';
-import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:reading_note/file_system_proxy.dart';
 import 'package:reading_note/note_page/note_page.dart';
+import 'package:reading_note/status_manager/matting_manager.dart';
 import 'package:reading_note/status_manager/pen_manager.dart';
+import 'package:reading_note/user_preferences.dart';
 import 'package:tuple/tuple.dart';
 import '../pen/pen.dart';
 
@@ -30,6 +31,9 @@ class StatusManager extends ChangeNotifier {
 
   NoteType get interacting => _interacting;
 
+  int get notePageIndex => userPreferences.notePageOf(reading!) ?? 0;
+  set notePageIndex(int index) => userPreferences.setNotePage(reading!, index);
+
   List<Pen> get penList {
     final result = [_mattingOrMattePositionerPen]; // todo: 橡皮、选择笔
     result.addAll(_penManager.list);
@@ -55,12 +59,12 @@ class StatusManager extends ChangeNotifier {
 
   void switchToNote() {
     _interacting = NoteType.note;
-    _mattingOrPuttingMatte = _penManager.puttingMatteWhenNote;
+    _mattingOrPuttingMatte = mattingManager.isNotEmpty;
     notifyListeners();
   }
 
   void finishPlaceMatte() {
-    _mattingOrPuttingMatte = _penManager.puttingMatteWhenNote = false;
+    _mattingOrPuttingMatte = false;
     notifyListeners();
   }
 
@@ -74,30 +78,31 @@ class StatusManager extends ChangeNotifier {
     if (pen == usingPen) return;
     if (pen.type == PenType.mattingMarkPen) {
       assert(interacting == NoteType.book);
-      _mattingOrPuttingMatte = true;
+      _mattingOrPuttingMatte = _penManager.mattingWhenBook = true;
     } else if (pen.type == PenType.mattePositionerPen) {
       assert(interacting == NoteType.note);
       _mattingOrPuttingMatte = true;
     } else {
       _penManager.setCurrentPen(interacting, pen);
       _mattingOrPuttingMatte = false;
+      if (interacting == NoteType.book) _penManager.mattingWhenBook = false;
     }
     notifyListeners();
   }
 
-  void nextPen() {
-    _turnPen(1);
+  List<Pen> _turnPenList = const [];
+  int _turnPenBaseIndex = 0;
+  void beginTurnPen() {
+    _turnPenList = penList.where((e) => e != _mattingOrMattePositionerPen).toList(growable: false);
+    _turnPenBaseIndex = _turnPenList.indexWhere((e) => e == statusManager.usingPen);
+  }
+  void turnPen(int offset) {
+    final index = (_turnPenBaseIndex + offset) % _turnPenList.length;
+    usingPen = _turnPenList[index];
   }
 
-  void previousPen() {
-    _turnPen(-1);
-  }
-
-  void _turnPen(int offset) {
-    final list = penList;
-    final index = (list.indexWhere((e) => e == statusManager.usingPen) + offset) % list.length;
-    usingPen = list[index];
-  }
+  static const int commonPenIndex = 3; // fixme
+  void useCommonPen() => usingPen = penList[commonPenIndex];
 
   bool get mattingOrPuttingMatte => _mattingOrPuttingMatte;
   void switchMattingOrPuttingMatte() {
@@ -105,8 +110,7 @@ class StatusManager extends ChangeNotifier {
     notifyListeners();
   }
 
-  dynamic beginDrawing(Pen pen, NotePage page) {
-    // todo: return adjustor, 比如一边画一边调整高度
+  void beginDrawing(Pen pen, NotePage page) {
     _drawing = Tuple2(pen, page);
     notifyListeners();
   }

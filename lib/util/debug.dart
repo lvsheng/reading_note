@@ -4,19 +4,14 @@ import 'package:flutter/foundation.dart';
 import 'package:image/image.dart' as img;
 import 'package:path/path.dart' as p;
 import 'package:protobuf/protobuf.dart';
-
-File? _pdfFile;
+import 'package:reading_note/status_manager/status_manager.dart';
 
 const _writeToFile = false;
-
-void setCurrentPdf(File? file) {
-  _pdfFile = file;
-}
 
 void saveBytes(Uint8List bytes, String name) async {
   if (!_writeToFile) return;
   if (!kDebugMode) return;
-  final file = File("${p.dirname(_pdfFile!.path)}/debug/$name");
+  final file = File("${p.dirname(statusManager.reading!.path)}/debug/$name");
   await file.create(recursive: true);
   await file.writeAsBytes(bytes);
 }

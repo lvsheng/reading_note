@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart' as material;
 import 'package:reading_note/pen/matte_positioner_pen.dart';
+import 'package:reading_note/status_manager/matting_manager.dart';
 import 'common.dart' as c;
 
 class MattePositionerPanel extends StatefulWidget {
@@ -25,7 +26,7 @@ class _MattePositionerPanelState extends State<MattePositionerPanel> {
     const paddingLarge = 20.0;
     const padding = EdgeInsets.symmetric(vertical: paddingSmall, horizontal: paddingLarge); // fixme: repeat with MattingControlPanel
     const axisShortEdge = 80.0;
-    return widget.pen.ongoingTracker?.frozen != true
+    return mattingManager.status != MattingStatus.isEmpty
         ? Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [

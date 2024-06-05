@@ -28,7 +28,7 @@ class ControlPanelBuilder {
         mainButton = _buildMainButton(statusManager.switchToNote, material.Icons.edit_note_rounded);
         break;
       case NoteType.note:
-        mainButton = _buildMainButton(statusManager.switchToBook, material.Icons.menu_book_rounded, 70.0);
+        mainButton = _buildMainButton(statusManager.switchToBook, material.Icons.menu_book_rounded);
         break;
     }
 

@@ -4,6 +4,7 @@ import 'dart:ui';
 import '../note_page/independent_note_page.dart';
 import '../note_page/mark_note_page.dart';
 import '../note_page/note_page.dart';
+import '../pdf_matting_performer.dart';
 
 abstract class CoordConverter {
   final NotePage note;
@@ -11,6 +12,8 @@ abstract class CoordConverter {
   CoordConverter(this.note);
 
   double pageWidthToCanvas(double v);
+
+  double penWidthToCanvas(double v);
 
   Offset pagePositionToCanvas(pb.Point pagePosition);
 
@@ -20,9 +23,9 @@ abstract class CoordConverter {
 }
 
 class NoteCoordConverter extends CoordConverter {
-  double _scale = 1.0;
+  double _scale;
 
-  NoteCoordConverter(super.note);
+  NoteCoordConverter(super.note, [this._scale = 1.0]);
 
   set scale(double value) => _scale = value;
 
@@ -37,6 +40,9 @@ class NoteCoordConverter extends CoordConverter {
 
   @override
   Offset pageOffsetToCanvas(Offset offset) => (note as IndependentNotePage).pageOffsetToCanvas(offset, _scale);
+
+  @override
+  double penWidthToCanvas(double v) => pageWidthToCanvas(v);
 }
 
 class BookCoordConverter extends CoordConverter {
@@ -58,4 +64,7 @@ class BookCoordConverter extends CoordConverter {
     // TODO: implement pageOffsetToCanvas
     throw UnimplementedError();
   }
+
+  @override
+  double penWidthToCanvas(double v) => pageWidthToCanvas(v) / pdfPageCaptureSizeMultiplier;
 }

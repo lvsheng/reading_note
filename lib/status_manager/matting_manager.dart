@@ -21,6 +21,8 @@ class MattingManager extends ChangeNotifier {
 
   MattingStatus get status => _caching.isEmpty ? MattingStatus.isEmpty : (_allDone ? MattingStatus.allDone : MattingStatus.ing);
 
+  bool get isNotEmpty => _caching.isNotEmpty;
+
   void startOne(pb.MattingMark mark, int markId, PdfDocument document, int pageNumber) {
     _caching[mark] = Tuple2(
         null,

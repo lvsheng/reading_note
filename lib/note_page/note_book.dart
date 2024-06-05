@@ -57,12 +57,12 @@ class NoteBook {
   }
 
   int? noteIdOf(int pageNumber) {
-    return _data!.pages[pageNumber];
+    return _data!.pages[pageNumber]?.pageId;
   }
 
   Future<File> addNotePage(int pageNumber) {
     int pageId = ++_data!.lastPageId;
-    return _createPageFile(pageId, () => _data!.pages[pageNumber] = pageId);
+    return _createPageFile(pageId, () => _data!.pages[pageNumber] = pb.PageInfo()..pageId = pageId..createTimeInMinute = (DateTime.now().millisecondsSinceEpoch / 1000 / 60).round());
   }
 
   Future<File> _createPageFile(int pageId, VoidCallback updateMeta) async {

@@ -53,7 +53,7 @@ const NoteBookMeta_PagesEntry$json = {
   '1': 'PagesEntry',
   '2': [
     {'1': 'key', '3': 1, '4': 1, '5': 13, '10': 'key'},
-    {'1': 'value', '3': 2, '4': 1, '5': 13, '10': 'value'},
+    {'1': 'value', '3': 2, '4': 1, '5': 11, '6': '.PageInfo', '10': 'value'},
   ],
   '7': {'7': true},
 };
@@ -61,8 +61,29 @@ const NoteBookMeta_PagesEntry$json = {
 /// Descriptor for `NoteBookMeta`. Decode as a `google.protobuf.DescriptorProto`.
 final $typed_data.Uint8List noteBookMetaDescriptor = $convert.base64Decode(
     'CgxOb3RlQm9va01ldGESHgoKbGFzdFBhZ2VJZBgBIAEoDVIKbGFzdFBhZ2VJZBIuCgVwYWdlcx'
-    'gCIAMoCzIYLk5vdGVCb29rTWV0YS5QYWdlc0VudHJ5UgVwYWdlcxo4CgpQYWdlc0VudHJ5EhAK'
-    'A2tleRgBIAEoDVIDa2V5EhQKBXZhbHVlGAIgASgNUgV2YWx1ZToCOAE=');
+    'gCIAMoCzIYLk5vdGVCb29rTWV0YS5QYWdlc0VudHJ5UgVwYWdlcxpDCgpQYWdlc0VudHJ5EhAK'
+    'A2tleRgBIAEoDVIDa2V5Eh8KBXZhbHVlGAIgASgLMgkuUGFnZUluZm9SBXZhbHVlOgI4AQ==');
+
+@$core.Deprecated('Use pageInfoDescriptor instead')
+const PageInfo$json = {
+  '1': 'PageInfo',
+  '2': [
+    {'1': 'pageId', '3': 1, '4': 1, '5': 13, '10': 'pageId'},
+    {'1': 'title', '3': 2, '4': 1, '5': 9, '9': 0, '10': 'title', '17': true},
+    {'1': 'createTimeInMinute', '3': 3, '4': 1, '5': 13, '10': 'createTimeInMinute'},
+    {'1': 'updateTimeInMinute', '3': 4, '4': 1, '5': 13, '10': 'updateTimeInMinute'},
+  ],
+  '8': [
+    {'1': '_title'},
+  ],
+};
+
+/// Descriptor for `PageInfo`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List pageInfoDescriptor = $convert.base64Decode(
+    'CghQYWdlSW5mbxIWCgZwYWdlSWQYASABKA1SBnBhZ2VJZBIZCgV0aXRsZRgCIAEoCUgAUgV0aX'
+    'RsZYgBARIuChJjcmVhdGVUaW1lSW5NaW51dGUYAyABKA1SEmNyZWF0ZVRpbWVJbk1pbnV0ZRIu'
+    'ChJ1cGRhdGVUaW1lSW5NaW51dGUYBCABKA1SEnVwZGF0ZVRpbWVJbk1pbnV0ZUIICgZfdGl0bG'
+    'U=');
 
 @$core.Deprecated('Use notePageDescriptor instead')
 const NotePage$json = {

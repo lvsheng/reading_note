@@ -14,7 +14,7 @@ import 'util/debug.dart' as debug;
 
 // todo: promise reject handle
 
-const _pdfPageCaptureSizeMultiplier = 3;
+const pdfPageCaptureSizeMultiplier = 3;
 final _pageScreenshotMap = LruMap<String, Tuple2<img.Image?, Future<img.Image?>?>>(maximumSize: 5);
 final _matteDecodeImageMap = LruMap<pb.Matte, Tuple2<ui.Image?, Future<ui.Image?>?>>(maximumSize: 200);
 
@@ -127,7 +127,7 @@ Future<img.Image?> _capture(File book, PdfPage page) async {
   logInfo("begin capture pdf page: $book, p${page.pageNumber}");
 
   final future = page
-      .render(fullWidth: page.width * _pdfPageCaptureSizeMultiplier, fullHeight: page.height * _pdfPageCaptureSizeMultiplier)
+      .render(fullWidth: page.width * pdfPageCaptureSizeMultiplier, fullHeight: page.height * pdfPageCaptureSizeMultiplier)
       .then((pdfImage) {
     if (pdfImage == null) throw "page.render fail: $key";
     logDebug("got screenshot. ${pdfImage.width}*${pdfImage.height} ${pdfImage.pixels.buffer.lengthInBytes}bytes");

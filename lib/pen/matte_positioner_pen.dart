@@ -111,13 +111,19 @@ class MattePositionerPen extends Pen with ChangeNotifier {
       return PositionTracker(this, position, page, null);
     }
 
+    if (_currentPage != page && _status == _PenStatus.adjusting) {
+      // remove adjusting from old page
+      for (int i = 0; i < _adjustingPageItems!.length; ++i) {
+        _removePageItem(_adjustingPageItems![i], _currentPage!.data);
+      }
+    }
+    _currentPage = page; // fixme? or keep this mode?
+
     if (_latestPageNumber != pageNumber) {
       _changeStatus(_PenStatus.recommending);
     }
     _latestPageNumber = pageNumber;
     _latestPosition = position;
-    _currentPage = page; // fixme
-    assert(_currentPage == page);
 
     switch (_status) {
       case _PenStatus.recommending:

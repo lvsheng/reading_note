@@ -20,7 +20,7 @@ export 'note.pbenum.dart';
 class NoteBookMeta extends $pb.GeneratedMessage {
   factory NoteBookMeta({
     $core.int? lastPageId,
-    $core.Map<$core.int, $core.int>? pages,
+    $core.Map<$core.int, PageInfo>? pages,
   }) {
     final $result = create();
     if (lastPageId != null) {
@@ -37,7 +37,7 @@ class NoteBookMeta extends $pb.GeneratedMessage {
 
   static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'NoteBookMeta', createEmptyInstance: create)
     ..a<$core.int>(1, _omitFieldNames ? '' : 'lastPageId', $pb.PbFieldType.OU3, protoName: 'lastPageId')
-    ..m<$core.int, $core.int>(2, _omitFieldNames ? '' : 'pages', entryClassName: 'NoteBookMeta.PagesEntry', keyFieldType: $pb.PbFieldType.OU3, valueFieldType: $pb.PbFieldType.OU3)
+    ..m<$core.int, PageInfo>(2, _omitFieldNames ? '' : 'pages', entryClassName: 'NoteBookMeta.PagesEntry', keyFieldType: $pb.PbFieldType.OU3, valueFieldType: $pb.PbFieldType.OM, valueCreator: PageInfo.create, valueDefaultOrMaker: PageInfo.getDefault)
     ..hasRequiredFields = false
   ;
 
@@ -72,7 +72,99 @@ class NoteBookMeta extends $pb.GeneratedMessage {
   void clearLastPageId() => clearField(1);
 
   @$pb.TagNumber(2)
-  $core.Map<$core.int, $core.int> get pages => $_getMap(1);
+  $core.Map<$core.int, PageInfo> get pages => $_getMap(1);
+}
+
+class PageInfo extends $pb.GeneratedMessage {
+  factory PageInfo({
+    $core.int? pageId,
+    $core.String? title,
+    $core.int? createTimeInMinute,
+    $core.int? updateTimeInMinute,
+  }) {
+    final $result = create();
+    if (pageId != null) {
+      $result.pageId = pageId;
+    }
+    if (title != null) {
+      $result.title = title;
+    }
+    if (createTimeInMinute != null) {
+      $result.createTimeInMinute = createTimeInMinute;
+    }
+    if (updateTimeInMinute != null) {
+      $result.updateTimeInMinute = updateTimeInMinute;
+    }
+    return $result;
+  }
+  PageInfo._() : super();
+  factory PageInfo.fromBuffer($core.List<$core.int> i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromBuffer(i, r);
+  factory PageInfo.fromJson($core.String i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(i, r);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'PageInfo', createEmptyInstance: create)
+    ..a<$core.int>(1, _omitFieldNames ? '' : 'pageId', $pb.PbFieldType.OU3, protoName: 'pageId')
+    ..aOS(2, _omitFieldNames ? '' : 'title')
+    ..a<$core.int>(3, _omitFieldNames ? '' : 'createTimeInMinute', $pb.PbFieldType.OU3, protoName: 'createTimeInMinute')
+    ..a<$core.int>(4, _omitFieldNames ? '' : 'updateTimeInMinute', $pb.PbFieldType.OU3, protoName: 'updateTimeInMinute')
+    ..hasRequiredFields = false
+  ;
+
+  @$core.Deprecated(
+  'Using this can add significant overhead to your binary. '
+  'Use [GeneratedMessageGenericExtensions.deepCopy] instead. '
+  'Will be removed in next major version')
+  PageInfo clone() => PageInfo()..mergeFromMessage(this);
+  @$core.Deprecated(
+  'Using this can add significant overhead to your binary. '
+  'Use [GeneratedMessageGenericExtensions.rebuild] instead. '
+  'Will be removed in next major version')
+  PageInfo copyWith(void Function(PageInfo) updates) => super.copyWith((message) => updates(message as PageInfo)) as PageInfo;
+
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static PageInfo create() => PageInfo._();
+  PageInfo createEmptyInstance() => create();
+  static $pb.PbList<PageInfo> createRepeated() => $pb.PbList<PageInfo>();
+  @$core.pragma('dart2js:noInline')
+  static PageInfo getDefault() => _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<PageInfo>(create);
+  static PageInfo? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $core.int get pageId => $_getIZ(0);
+  @$pb.TagNumber(1)
+  set pageId($core.int v) { $_setUnsignedInt32(0, v); }
+  @$pb.TagNumber(1)
+  $core.bool hasPageId() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearPageId() => clearField(1);
+
+  @$pb.TagNumber(2)
+  $core.String get title => $_getSZ(1);
+  @$pb.TagNumber(2)
+  set title($core.String v) { $_setString(1, v); }
+  @$pb.TagNumber(2)
+  $core.bool hasTitle() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearTitle() => clearField(2);
+
+  @$pb.TagNumber(3)
+  $core.int get createTimeInMinute => $_getIZ(2);
+  @$pb.TagNumber(3)
+  set createTimeInMinute($core.int v) { $_setUnsignedInt32(2, v); }
+  @$pb.TagNumber(3)
+  $core.bool hasCreateTimeInMinute() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearCreateTimeInMinute() => clearField(3);
+
+  @$pb.TagNumber(4)
+  $core.int get updateTimeInMinute => $_getIZ(3);
+  @$pb.TagNumber(4)
+  set updateTimeInMinute($core.int v) { $_setUnsignedInt32(3, v); }
+  @$pb.TagNumber(4)
+  $core.bool hasUpdateTimeInMinute() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearUpdateTimeInMinute() => clearField(4);
 }
 
 enum NotePage_Content {

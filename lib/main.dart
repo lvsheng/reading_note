@@ -1,23 +1,18 @@
 import 'dart:async';
 import 'dart:io';
-import 'dart:math';
-import 'dart:ui' as ui;
 import 'package:flutter/cupertino.dart';
 import 'package:app_links/app_links.dart';
-import 'package:reading_note/custom_painter/matte_positioner_pen_painter.dart';
 import 'package:reading_note/custom_painter/page_items_painter.dart';
 import 'package:reading_note/file_system_proxy.dart';
 import 'package:reading_note/deep_link.dart';
-import 'package:reading_note/pen/matte_positioner_pen.dart';
 import 'package:reading_note/status_manager/status_manager.dart';
 import 'package:reading_note/note_page/note_page.dart';
 import 'package:reading_note/util/log.dart';
+import 'package:reading_note/widgets/note_page_widget.dart';
 import 'package:reading_note/widgets/stylus_gesture_detector.dart';
 import 'package:reading_note/user_preferences.dart';
 import 'package:pdfrx/pdfrx.dart';
-import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'package:tuple/tuple.dart';
-import 'package:visibility_detector/visibility_detector.dart';
 import 'custom_painter/coordinate_converter.dart';
 import 'util/debug.dart' as debug;
 import 'note_page/independent_note_page.dart';
@@ -30,7 +25,7 @@ class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
   @override
-  Widget build(BuildContext context) => const CupertinoApp(title: 'Reading Note', theme: CupertinoThemeData(), home: MyHomePage());
+  Widget build(BuildContext context) => const CupertinoApp(title: 'Reading Note', theme: CupertinoThemeData(), home: MyHomePage(), debugShowCheckedModeBanner: false);
 }
 
 class MyHomePage extends StatefulWidget {
@@ -41,8 +36,6 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
-  static final int _maxInt = double.maxFinite.round();
-
   late AppLinks _appLinks;
   StreamSubscription<Uri>? _linkSubscription;
   Directory? _rootDirectory;
@@ -56,10 +49,11 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
   PdfDocument? _document;
   PdfViewerController? _controller;
   Matrix4? _transformation;
+  PageController? _pageViewController;
 
   String? _errorTip;
-  bool _debugShowIndicator = false;
   late Timer _timerSaveFile;
+  bool _enablePageViewPager = true;
 
   @override
   void initState() {
@@ -138,9 +132,10 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     userPreferences.setReadingBook(file);
     setState(() {
       _reading = file;
+      statusManager.reading = file; // fixme
       _initialPageNumber = userPreferences.bookPageOf(_reading!) ?? 1;
       _pageNumber = _initialPageNumber;
-      _initialNotePageNumber = userPreferences.notePageOf(_reading!) ?? 1;
+      _initialNotePageNumber = statusManager.notePageIndex;
       _pageMarkNoteMap = {};
       _pageIndependentNoteMap = {};
       _document = null;
@@ -152,10 +147,8 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
           });
         });
       _transformation = null;
+      _pageViewController = PageController(initialPage: _initialNotePageNumber);
     });
-
-    debug.setCurrentPdf(file);
-    statusManager.reading = file; // fixme
   }
 
   @override
@@ -165,8 +158,6 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
       child: Stack(
         children: [
           if (_reading != null)
-            // todo: 缩放
-            // todo: 可简单选笔（可加笔：颜色、粗细）
             Positioned.fill(
                 child: PdfViewer.file(
               _reading!.path,
@@ -184,7 +175,6 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                     setState(() => _pageNumber = pageNumber);
                     userPreferences.setBookPage(_reading!, pageNumber);
                   },
-                  pagePaintCallbacks: _debugShowIndicator ? [paintPageIndicator] : const [],
 
                   // page mark note
                   pageOverlaysBuilder: (context, pageRect, page) {
@@ -215,7 +205,6 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                               isComplex: true, // fixme
                             ),
                           ))),
-                      GestureDetector(onDoubleTap: () => setState(() => _debugShowIndicator = !_debugShowIndicator)),
                       PencilGestureDetector(
                         onDown: (details) {
                           note.penDown(note.canvasPositionToPagePosition(details.localPosition, pageRect));
@@ -235,7 +224,6 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                     ];
                   }),
             )),
-
           if (_reading != null)
             Positioned.fill(
               child: IgnorePointer(
@@ -245,97 +233,21 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                   // fixme: 是否能既用visibility代替，又完全保留状态如滚动位置等
                   child: DecoratedBox(
                     decoration: const BoxDecoration(color: CupertinoColors.white),
-                    child: ScrollablePositionedList.builder(
-                      itemCount: _maxInt,
-                      initialScrollIndex: _initialNotePageNumber,
-                      itemBuilder: (BuildContext context, int index) {
-                        const margin = Size(10.0, 20.0);
-                        final size = MediaQuery.of(context).size;
-                        final noteTuple = _pageIndependentNoteMap![index];
-
-                        // note not ready
-                        if (noteTuple?.item1 == null) {
-                          // if not loading, load it first
-                          if (noteTuple == null && _document != null) {
-                            NotePage.open(
-                                    NoteType.note,
-                                    _reading!,
-                                    _document!,
-                                    index,
-                                    Size(
-                                        size.width - margin.width * 2, max(_document!.pages.firstOrNull?.height ?? 0, size.width / 9 * 16)))
-                                .then((note) {
-                              if (!mounted) return;
-                              setState(() => _pageIndependentNoteMap![index] = Tuple2(note as IndependentNotePage, true));
-                            });
+                    child: PageView.builder(
+                      controller: _pageViewController,
+                      physics: _enablePageViewPager ? null : const NeverScrollableScrollPhysics(),
+                      onPageChanged: (index) => statusManager.notePageIndex = index,
+                      itemBuilder: (context, index) {
+                        return NotePageWidget(index: index, pageIndependentNoteMap: _pageIndependentNoteMap, document: _document, reading: _reading, onZoomUpdate: (cannotShrinkAnymore) {
+                          if (cannotShrinkAnymore) {
+                            if (!_enablePageViewPager) setState(() => _enablePageViewPager = true);
+                          } else {
+                            if (_enablePageViewPager) setState(() => _enablePageViewPager = false);
                           }
-
-                          return SizedBox(width: size.width, height: size.height, child: const Center(child: Text("loading")));
-                        }
-
-                        final note = noteTuple!.item1!;
-
-                        return VisibilityDetector(
-                          key: Key(index.toString()),
-                          onVisibilityChanged: (info) {
-                            if (info.visibleFraction > 0) {
-                              assert(_reading != null);
-                              userPreferences.setNotePage(_reading!, index);
-                            }
-                          },
-                          child: Container(
-                            height: note.size.height,
-                            margin: EdgeInsets.only(top: MediaQuery.of(context).viewPadding.top, left: margin.width, right: margin.width),
-                            decoration: const BoxDecoration(
-                              borderRadius: BorderRadius.all(Radius.circular(8)),
-                              color: CupertinoColors.white,
-                              boxShadow: [
-                                BoxShadow(color: CupertinoColors.inactiveGray, spreadRadius: 3, blurRadius: 3),
-                              ],
-                            ),
-                            child: Stack(
-                              children: [
-                                Text("第 ${index + 1} 页"),
-                                ConstrainedBox(
-                                    constraints: const BoxConstraints.expand(),
-                                    child: IgnorePointer(
-                                        child: RepaintBoundary(
-                                      child: CustomPaint(
-                                        painter: PageItemsPainter(note, NoteCoordConverter(note)),
-                                        isComplex: true, // fixme
-                                      ),
-                                    ))),
-                                if (statusManager.usingPen is MattePositionerPen) ConstrainedBox(
-                                    constraints: const BoxConstraints.expand(),
-                                    child: IgnorePointer(
-                                        child: RepaintBoundary(
-                                      child: CustomPaint(
-                                        painter: MattePositionerPenPainter(statusManager.usingPen as MattePositionerPen, index, NoteCoordConverter(note)),
-                                      ),
-                                    ))),
-                                GestureDetector(onDoubleTap: () => setState(() => _debugShowIndicator = !_debugShowIndicator)),
-                                PencilGestureDetector(
-                                  onDown: (details) {
-                                    note.penDown(note.canvasPositionToPage(details.localPosition, 1.0));
-                                  },
-                                  onMove: (localPosition) {
-                                    note.penMove(note.canvasPositionToPage(localPosition, 1.0));
-                                  },
-                                  onUp: (details) {
-                                    final position = note.canvasPositionToPage(details.localPosition, 1.0);
-                                    note.penMove(position);
-                                    note.penUp(position);
-                                  },
-                                  onCancel: (details) {
-                                    note.penUp(note.canvasPositionToPage(details.localPosition, 1.0));
-                                  },
-                                ),
-                              ],
-                            ),
-                          ),
-                        );
+                        }, title: "第${index + 1}章",);
                       },
                     ),
+                    // child: noteItemBuilder(context, 0),
                   ),
                 ),
               ),
@@ -343,44 +255,9 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
           if (statusManager.ready) ControlPanelBuilder.build(context),
           if (_errorTip != null)
             Center(child: Text(_errorTip!, style: const TextStyle(color: CupertinoColors.destructiveRed, fontSize: 20))),
-          if (_debugShowIndicator)
-            IgnorePointer(
-              child: Padding(
-                padding: const EdgeInsets.only(top: 20, left: 10),
-                child: Text(
-                  'root: $_rootDirectory\n'
-                  'reading: $_reading\n'
-                  'pdf               : ${_document?.sourceName}\n'
-                  'pages: ${_document?.pages.length}\n'
-                  'curPage: $_pageNumber\n'
-                  'curPageSize: ${_document?.pages[_pageNumber - 1].size}\n'
-                  'controller:\n$_transformation\n',
-                  style: const TextStyle(color: CupertinoColors.black),
-                ),
-              ),
-            ),
         ],
       ),
     );
-  }
-
-  void paintPageIndicator(ui.Canvas canvas, Rect pageRect, PdfPage page) {
-    logDebug("${page.pageNumber}: $pageRect, $page, $canvas");
-
-    final paint = Paint()..strokeWidth = 3;
-
-    // 当前页
-    paint.color = CupertinoColors.systemRed;
-    canvas.drawLine(Offset(pageRect.left, pageRect.top), Offset(pageRect.right, pageRect.bottom), paint);
-    // 后续页
-    paint.color = CupertinoColors.systemGreen;
-    canvas.drawLine(const Offset(0, 0), Offset(pageRect.right, pageRect.bottom), paint);
-    // 前续页
-    paint.color = CupertinoColors.systemBlue;
-    final screenSize = MediaQuery.of(context).size;
-    canvas.drawLine(Offset(pageRect.right, pageRect.top),
-        Offset(-(screenSize.width - pageRect.width) / 2, pageRect.top + screenSize.height * 2), paint);
-    // 借此可以看出PdfViewer的lazy渲染策略
   }
 
   @override

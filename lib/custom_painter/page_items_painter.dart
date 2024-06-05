@@ -13,7 +13,7 @@ import 'coordinate_converter.dart';
 
 typedef _ItemPainter = int Function(Canvas canvas, pb.NotePageItem item, int index, int length);
 
-const _logging = false;
+const _logging = true;
 
 class PageItemsPainter extends CustomPainter {
   @protected
@@ -42,20 +42,53 @@ class PageItemsPainter extends CustomPainter {
     int countPoints = 0;
 
     page.forEachPageItem((item, index, length) {
-      _itemPainters[item.whichContent().index]!(canvas, item, index, length);
+      countPoints += _itemPainters[item.whichContent().index]!(canvas, item, index, length);
     });
 
-    _logging &&
-        logInfo("[StylusGesture] _paintDrawingData end. countPoints:$countPoints cost:${DateTime.now().millisecondsSinceEpoch - ts}ms");
+    if (_logging) logInfo("[StylusGesture] _paintDrawingData end. countPoints:$countPoints cost:${DateTime.now().millisecondsSinceEpoch - ts}ms");
   }
 
   int _paintPath(Canvas canvas, pb.NotePageItem item, int index, int length) {
-    final path = item.path;
-    _updatePenIfNeeded(path.penId, page.getPen(path.penId));
-    final points = path.points
-        .map((point) => _coordinateConverter.pagePositionToCanvas(pb.Point(x: point.x + item.x, y: point.y + item.y)))
-        .toList(growable: false);
-    canvas.drawPoints(PointMode.polygon, points, _lastPenPaint.item2);
+    _updatePenIfNeeded(item.path.penId, page.getPen(item.path.penId));
+    return _paintPoints(canvas, item.path.points
+        .map((point) => _coordinateConverter.pagePositionToCanvas(pb.Point(x: point.x + item.x, y: point.y + item.y))).toList(growable: false));
+  }
+
+  int _paintPoints(Canvas canvas, List<Offset> points) {
+    // canvas.drawPoints(PointMode.polygon, points, _lastPenPaint.item2);
+    // return points.length;
+
+    if (points.isEmpty) {
+      return 0;
+    }
+
+    final paint = _lastPenPaint.item2;
+    // if (points.length == 1) {
+    if (points.length < 3) {
+      canvas.drawPoints(PointMode.polygon, points, paint);
+      return points.length;
+    }
+
+    final path = Path(); // TODO: Cache ui.Path for pb.Path
+    path.moveTo(points[0].dx, points[0].dy);
+    path.lineTo(points[1].dx, points[1].dy);
+
+    if (points.length > 2) {
+      path.moveTo(points[1].dx, points[1].dy);
+      final l = points.length - 1;
+      for (int i = 1; i < l; ++i) {
+        final current = points[i];
+        final next = points[i+1];
+        final centerX = (current.dx + next.dx) / 2;
+        final centerY = (current.dy + next.dy) / 2;
+        // TODO: Improve performance with large point sets. Consider using a shader to implement quadratic Bezier curves or rendering to an image like OneNote.
+        //   https://www.shadertoy.com/view/MlKcDD
+        path.quadraticBezierTo(current.dx, current.dy, centerX, centerY);
+        path.moveTo(centerX, centerY);
+      }
+      canvas.drawPath(path, paint);
+    }
+
     return points.length;
   }
 
@@ -92,7 +125,7 @@ class PageItemsPainter extends CustomPainter {
           Paint()
             ..color = CupertinoColors.darkBackgroundGray
             ..style = PaintingStyle.stroke
-            ..strokeWidth = _coordinateConverter.pageWidthToCanvas(0.3));
+            ..strokeWidth = 0);
     }
     return 1;
   }
@@ -122,7 +155,7 @@ class PageItemsPainter extends CustomPainter {
         penId,
         _lastPenPaint.item2
           ..color = Color(pen.color)
-          ..strokeWidth = _coordinateConverter.pageWidthToCanvas(pen.lineWidth));
+          ..strokeWidth = _coordinateConverter.penWidthToCanvas(pen.lineWidth));
   }
 
   @override

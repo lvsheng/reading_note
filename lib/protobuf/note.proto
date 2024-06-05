@@ -2,7 +2,14 @@ syntax = "proto3";
 
 message NoteBookMeta {
     uint32 lastPageId = 1; // pageId直接作为该page数据文件的文件名
-    map<uint32/*pageNumber*/, uint32/*pageId*/> pages = 2; // 每个int值即对应page的pageId
+    map<uint32/*pageNumber*/, PageInfo> pages = 2;
+}
+
+message PageInfo {
+    uint32 pageId = 1;
+    optional string title = 2;
+    uint32 createTimeInMinute = 3;
+    uint32 updateTimeInMinute = 4;
 }
 
 message NotePage {
