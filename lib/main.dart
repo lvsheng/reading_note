@@ -4,9 +4,11 @@ import 'dart:math';
 import 'dart:ui' as ui;
 import 'package:flutter/cupertino.dart';
 import 'package:app_links/app_links.dart';
+import 'package:reading_note/custom_painter/matte_positioner_pen_painter.dart';
 import 'package:reading_note/custom_painter/page_items_painter.dart';
 import 'package:reading_note/file_system_proxy.dart';
 import 'package:reading_note/deep_link.dart';
+import 'package:reading_note/pen/matte_positioner_pen.dart';
 import 'package:reading_note/status_manager/status_manager.dart';
 import 'package:reading_note/note_page/note_page.dart';
 import 'package:reading_note/util/log.dart';
@@ -222,16 +224,18 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                           note.penMove(note.canvasPositionToPagePosition(localPosition, pageRect));
                         },
                         onUp: (details) {
-                          note.penMove(note.canvasPositionToPagePosition(details.localPosition, pageRect));
-                          note.penUp();
+                          final position = note.canvasPositionToPagePosition(details.localPosition, pageRect);
+                          note.penMove(position);
+                          note.penUp(position);
                         },
-                        onCancel: (detail) {
-                          note.penUp();
+                        onCancel: (details) {
+                          note.penUp(note.canvasPositionToPagePosition(details.localPosition, pageRect));
                         },
                       ),
                     ];
                   }),
             )),
+
           if (_reading != null)
             Positioned.fill(
               child: IgnorePointer(
@@ -301,6 +305,14 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                                         isComplex: true, // fixme
                                       ),
                                     ))),
+                                if (statusManager.usingPen is MattePositionerPen) ConstrainedBox(
+                                    constraints: const BoxConstraints.expand(),
+                                    child: IgnorePointer(
+                                        child: RepaintBoundary(
+                                      child: CustomPaint(
+                                        painter: MattePositionerPenPainter(statusManager.usingPen as MattePositionerPen, index, NoteCoordConverter(note)),
+                                      ),
+                                    ))),
                                 GestureDetector(onDoubleTap: () => setState(() => _debugShowIndicator = !_debugShowIndicator)),
                                 PencilGestureDetector(
                                   onDown: (details) {
@@ -310,11 +322,12 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                                     note.penMove(note.canvasPositionToPage(localPosition, 1.0));
                                   },
                                   onUp: (details) {
-                                    note.penMove(note.canvasPositionToPage(details.localPosition, 1.0));
-                                    note.penUp();
+                                    final position = note.canvasPositionToPage(details.localPosition, 1.0);
+                                    note.penMove(position);
+                                    note.penUp(position);
                                   },
-                                  onCancel: (detail) {
-                                    note.penUp();
+                                  onCancel: (details) {
+                                    note.penUp(note.canvasPositionToPage(details.localPosition, 1.0));
                                   },
                                 ),
                               ],

@@ -9,17 +9,16 @@ class MattingMarkGenerator extends PenStrokeTracker {
   late final int _markId;
   late final pb.MattingMark _mark;
   late final pb.NotePageItem _drawingItem;
-  bool _frozen = false;
   Offset _latestPosition = const Offset(0, 0);
 
-  MattingMarkGenerator(super.pen, super.startPosition, super.page, super.pbPage);
+  MattingMarkGenerator(super.pen, super.startPosition, super.page);
 
   @override
   void start(Offset position) {
-    _markId = ++pbPage.markNoteData.lastMattingMarkId;
-    _mark = pbPage.markNoteData.mattingMarkPool[_markId] = pb.MattingMark()..horizontal = pb.MattingMarkHorizontal();
+    _markId = ++page.data.markNoteData.lastMattingMarkId;
+    _mark = page.data.markNoteData.mattingMarkPool[_markId] = pb.MattingMark()..horizontal = pb.MattingMarkHorizontal();
     _updateMarkPosition(position.dx, position.dx, position.dy, pen.lineWidth);
-    pbPage.items.add(_drawingItem = pb.NotePageItem()
+    page.data.items.add(_drawingItem = pb.NotePageItem()
       ..x = position.dx
       ..y = position.dy
       ..mattingMarkId = _markId);
@@ -34,7 +33,6 @@ class MattingMarkGenerator extends PenStrokeTracker {
 
   @override
   void move(Offset position) {
-    if (_frozen) return;
     double diffY = position.dy - _drawingItem.y;
     _updateMarkPosition(_drawingItem.x, position.dx, _drawingItem.y + diffY / 3, pen.lineWidth);
     _latestPosition = position;
@@ -52,7 +50,7 @@ class MattingMarkGenerator extends PenStrokeTracker {
   double? _heightAdjustingStart;
   void startAdjustHeight() => _heightAdjustingStart = _mark.horizontal.height;
   void adjustHeight(double increment) {
-    if (_frozen) return;
+    if (frozen) return;
     final h = _mark.horizontal;
     _updateMarkPosition(h.left, h.right, h.y, pen.lineWidth = _heightAdjustingStart! + increment / 10);
     page.triggerRepaint();
@@ -61,16 +59,9 @@ class MattingMarkGenerator extends PenStrokeTracker {
   double? _leftAdjustingStart;
   void startAdjustLeft() => _leftAdjustingStart = _drawingItem.x;
   void adjustLeft(double increment) {
-    if (_frozen) return;
+    if (frozen) return;
     _drawingItem.x = _leftAdjustingStart! + increment / 10;
     move(_latestPosition);
     page.triggerRepaint();
   }
-
-  void froze() {
-    _frozen = true;
-    page.triggerRepaint();
-  }
-
-  bool get frozen => _frozen;
 }

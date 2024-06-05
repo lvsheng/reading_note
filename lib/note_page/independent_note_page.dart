@@ -15,7 +15,10 @@ class IndependentNotePage extends NotePage {
 
   Offset pageOffsetToCanvas(Offset pageOffset, double scale) => pageOffset * _defaultPixelDensity * scale;
 
-  double pageWidthToCanvas(double v, double scale) => v * _defaultPixelDensity * scale;
+  double pageLengthToCanvas(double v, double scale) => v * _defaultPixelDensity * scale;
+
+  Rect pageRectToCanvas(Rect rect, double scale) => Rect.fromLTRB(pageLengthToCanvas(rect.left, scale),
+      pageLengthToCanvas(rect.top, scale), pageLengthToCanvas(rect.right, scale), pageLengthToCanvas(rect.bottom, scale));
 
   pb.Matte? matteOfId(int id) => data.independentNoteData.mattePool[id];
 

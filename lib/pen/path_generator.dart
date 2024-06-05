@@ -6,14 +6,14 @@ import 'pen_stroke_tracker.dart';
 class PathGenerator extends PenStrokeTracker {
   late final pb.NotePageItem _drawingItem;
 
-  PathGenerator(super.pen, super.startPosition, super.page, super.pbPage);
+  PathGenerator(super.pen, super.startPosition, super.page);
 
   @override
   void start(Offset position) {
-    pbPage.items.add(_drawingItem = pb.NotePageItem()
+    page.data.items.add(_drawingItem = pb.NotePageItem()
       ..x = position.dx
       ..y = position.dy
-      ..path = (pb.Path()..penId = _generatePbPenId(pen, pbPage.penPool)));
+      ..path = (pb.Path()..penId = _generatePbPenId(pen, page.data.penPool)));
   }
 
   @override
@@ -23,7 +23,7 @@ class PathGenerator extends PenStrokeTracker {
   bool stop() {
     bool success = _drawingItem.path.points.isNotEmpty;
     if (!success) {
-      pbPage.items.removeLast();
+      page.data.items.removeLast();
     }
     return success;
   }

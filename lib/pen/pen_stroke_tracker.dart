@@ -1,6 +1,5 @@
 import 'package:flutter/cupertino.dart';
 import 'package:reading_note/pen/pen.dart';
-import 'package:reading_note/protobuf/note.pb.dart' as pb;
 import 'package:reading_note/status_manager/status_manager.dart';
 
 import '../note_page/note_page.dart';
@@ -9,47 +8,46 @@ abstract class PenStrokeTracker {
   @protected
   final Pen pen;
   final NotePage page;
-  @protected
-  late pb.NotePage pbPage;
+  bool _frozen = false;
 
-  PenStrokeTracker(this.pen, Offset startPosition, this.page, this.pbPage) {
+  PenStrokeTracker(this.pen, Offset startPosition, this.page) {
     statusManager.beginDrawing(pen, page);
     start(startPosition);
   }
 
-  bool end() {
-    statusManager.endDrawing();
+  bool get frozen => _frozen;
+
+  bool end(Offset position) {
+    statusManager.endDrawing(position);
     pen.endPaint();
     return stop();
   }
 
+  void froze() {
+    _frozen = true;
+    page.triggerRepaint();
+  }
+
   @protected
-  void start(Offset position);
+  void start(Offset position) {}
 
   void move(Offset position);
 
   @protected
-  bool stop();
+  bool stop() => true;
 }
-/*
 
-class WaitingTracker extends PenStrokeTracker {
-  WaitingTracker(super.pen, super.startPosition, super.page, super.pbPage);
-
-  @override
-  void move(Offset position) {
-    // todo: paint waiting on global canvas?
-  }
+class PositionTracker extends PenStrokeTracker {
+  final void Function(Offset position)? _onNewPosition;
+  PositionTracker(super.pen, super.startPosition, super.page, this._onNewPosition);
 
   @override
   void start(Offset position) {
-    // TODO: implement start
+    if (_onNewPosition != null) _onNewPosition(position);
   }
 
   @override
-  bool stop() {
-    // TODO: implement stop
-    return false;
+  void move(Offset position) {
+    if (_onNewPosition != null) _onNewPosition(position);
   }
 }
-*/

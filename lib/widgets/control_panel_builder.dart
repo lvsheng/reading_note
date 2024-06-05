@@ -3,6 +3,7 @@ import 'package:flutter/material.dart' as material;
 import 'package:reading_note/pen/pen.dart';
 import 'package:reading_note/widgets/pen_selector.dart';
 import 'package:reading_note/widgets/matting_control_panel.dart';
+import 'package:reading_note/widgets/matte_positioner_panel.dart';
 import '../pen/matte_positioner_pen.dart';
 import '../status_manager/status_manager.dart';
 import '../note_page/note_page.dart';
@@ -18,7 +19,7 @@ class ControlPanelBuilder {
     if (statusManager.drawingPen?.type == PenType.mattingMarkPen) {
       bottom = const MattingControlPanel();
     } else if (statusManager.usingPen is MattePositionerPen) {
-      bottom = const Text("TODO: _buildOnPlacingMatte");
+      bottom = MattePositionerPanel(statusManager.usingPen as MattePositionerPen);
     }
 
     late Widget mainButton;
@@ -51,7 +52,7 @@ class ControlPanelBuilder {
     // return material.MaterialButton(
     return CupertinoButton(
       onPressed: onPressed,
-      child: SizedBox(width: c.mainButtonSize, height: c.mainButtonSize, child: Icon(icon, size: iconSize)),
+      child: SizedBox(width: c.mainButtonSize, height: c.mainButtonSize, child: Icon(icon, size: iconSize, color: CupertinoColors.black,)),
     );
   }
 }

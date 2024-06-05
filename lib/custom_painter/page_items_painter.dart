@@ -1,9 +1,9 @@
 import 'dart:ui';
 import 'package:flutter/cupertino.dart';
+import 'package:reading_note/custom_painter/paint_matte.dart';
 import 'package:reading_note/pen/matting_mark_generator.dart';
 import 'package:reading_note/status_manager/status_manager.dart';
 import 'package:reading_note/util/log.dart';
-import 'package:reading_note/pdf_matting_performer.dart';
 import 'package:reading_note/protobuf/note.pb.dart' as pb;
 import 'package:tuple/tuple.dart';
 import '../note_page/independent_note_page.dart';
@@ -84,10 +84,8 @@ class PageItemsPainter extends CustomPainter {
 
     final drawingPen = statusManager.drawingPen;
     final ongoingTracker = drawingPen?.ongoingTracker;
-    bool notEditing = index < length - 1 ||
-        ongoingTracker is! MattingMarkGenerator ||
-        statusManager.drawingPage != page ||
-        ongoingTracker.frozen;
+    bool notEditing =
+        index < length - 1 || ongoingTracker is! MattingMarkGenerator || statusManager.drawingPage != page || ongoingTracker.frozen;
     if (notEditing) {
       canvas.drawRect(
           _coordinateConverter.pageRectToCanvas(rect),
@@ -105,14 +103,13 @@ class PageItemsPainter extends CustomPainter {
       logError("disappeared matte: ${item.matteId} for $page");
       return 0;
     }
-    final tuple = imageOfMatte(matte);
-    final image = tuple.item1;
-    if (image == null) {
-      logWarn("matte image not ready, wait it");
-      tuple.item2!.then((_) => page.triggerRepaint());
-      return 0;
-    }
-    canvas.drawImage(image, _coordinateConverter.pageOffsetToCanvas(Offset(item.x, item.y)), Paint());
+
+    paintMatte(
+        canvas: canvas,
+        coordinateConverter: _coordinateConverter,
+        item: (matte: matte, status: MatteStatus.done, position: Offset(item.x, item.y), scale: item.hasScale() ? item.scale : 1.0),
+        triggerRepaint: page.triggerRepaint,
+    );
     return 1;
   }
 

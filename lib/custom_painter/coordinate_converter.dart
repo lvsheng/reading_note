@@ -30,13 +30,10 @@ class NoteCoordConverter extends CoordConverter {
   Offset pagePositionToCanvas(pb.Point pagePosition) => (note as IndependentNotePage).pagePositionToCanvas(pagePosition, _scale);
 
   @override
-  double pageWidthToCanvas(double v) => (note as IndependentNotePage).pageWidthToCanvas(v, _scale);
+  double pageWidthToCanvas(double v) => (note as IndependentNotePage).pageLengthToCanvas(v, _scale);
 
   @override
-  Rect pageRectToCanvas(Rect rect) {
-    // TODO: implement pageRectToCanvas
-    throw UnimplementedError();
-  }
+  Rect pageRectToCanvas(Rect rect) => (note as IndependentNotePage).pageRectToCanvas(rect, _scale);
 
   @override
   Offset pageOffsetToCanvas(Offset offset) => (note as IndependentNotePage).pageOffsetToCanvas(offset, _scale);

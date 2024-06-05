@@ -74,7 +74,6 @@ abstract class NotePage extends ChangeNotifier {
 
   final NoteBook noteBook;
 
-  @protected
   final pb.NotePage data;
   final int pageNumber;
 
@@ -87,22 +86,23 @@ abstract class NotePage extends ChangeNotifier {
 
   void penDown(Offset positionOnPage) {
     assert(_drawing == null);
-    _drawing = statusManager.usingPen.beginPaint(data, positionOnPage, this);
+    _drawing = statusManager.usingPen.beginPaint(positionOnPage, this, pageNumber);
     triggerRepaint();
   }
 
   void penMove(Offset positionOnPage) {
     assert(_drawing != null);
-    if (!check(positionOnPage)) return;
+    if (!check(positionOnPage) || _drawing!.frozen) return;
     _drawing!.move(positionOnPage);
     triggerRepaint();
   }
 
-  bool penUp() {
+  bool penUp(Offset position) {
     assert(_drawing != null);
-    final effective = _drawing!.end();
+    final effective = _drawing!.end(position);
     _dataChanged = _dataChanged || effective;
     _drawing = null;
+    triggerRepaint();
     return effective;
   }
 

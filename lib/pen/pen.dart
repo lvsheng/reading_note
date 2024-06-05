@@ -48,15 +48,15 @@ class Pen {
 
   PenStrokeTracker? get ongoingTracker => _tracker;
 
-  PenStrokeTracker beginPaint(pb.NotePage pbPage, Offset position, NotePage page) {
+  PenStrokeTracker beginPaint(Offset position, NotePage page, int pageNumber) {
     late final PenStrokeTracker tracker;
     switch (_type) {
       case PenType.ballPointPen:
       case PenType.markPen:
-        tracker = PathGenerator(this, position, page, pbPage);
+        tracker = PathGenerator(this, position, page);
         break;
       case PenType.mattingMarkPen:
-        tracker = MattingMarkGenerator(this, position, page, pbPage);
+        tracker = MattingMarkGenerator(this, position, page);
         break;
       case PenType.mattePositionerPen:
         assert(false, "Should deliver to MattePlacePen");

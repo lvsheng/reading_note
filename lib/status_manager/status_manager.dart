@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:reading_note/file_system_proxy.dart';
 import 'package:reading_note/note_page/note_page.dart';
@@ -110,7 +111,7 @@ class StatusManager extends ChangeNotifier {
     notifyListeners();
   }
 
-  void endDrawing() {
+  void endDrawing(Offset position) {
     _drawing = null;
     notifyListeners();
   }

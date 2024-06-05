@@ -3,6 +3,7 @@ import 'package:pdfrx/pdfrx.dart';
 import 'package:reading_note/pdf_matting_performer.dart';
 import 'package:reading_note/protobuf/note.pb.dart' as pb;
 import 'package:reading_note/status_manager/status_manager.dart';
+import 'package:reading_note/util/log.dart';
 import 'package:tuple/tuple.dart';
 
 final mattingManager = MattingManager._();
@@ -14,13 +15,11 @@ enum MattingStatus {
 }
 
 class MattingManager extends ChangeNotifier {
-  Map<pb.MattingMark, Tuple2<pb.Matte?, Future<pb.Matte?>?>> _caching = {};
+  final Map<pb.MattingMark, Tuple2<pb.Matte?, Future<pb.Matte?>?>> _caching = {};
 
   MattingManager._();
 
-  bool get isNotEmpty => !isEmpty;
-  bool get isEmpty => _caching.isEmpty;
-  MattingStatus get status => isEmpty ? MattingStatus.isEmpty : (_allDone ? MattingStatus.allDone : MattingStatus.ing);
+  MattingStatus get status => _caching.isEmpty ? MattingStatus.isEmpty : (_allDone ? MattingStatus.allDone : MattingStatus.ing);
 
   void startOne(pb.MattingMark mark, int markId, PdfDocument document, int pageNumber) {
     _caching[mark] = Tuple2(
@@ -34,16 +33,33 @@ class MattingManager extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// @return
-  ///   null: 当前无matting项，或还有未截图完成项需要等一等
-  Iterable<pb.Matte>? takeAwayResults() {
-    if (_caching.isEmpty) return null;
-    if (!_allDone) return null;
+  List<pb.Matte> getMattes() {
+    final result = _caching.values.where((each) => each.item1 != null).map((each) => each.item1);
+    return result.toList(growable: false).cast();
+  }
 
-    final result = _caching.values.map((each) => each.item1);
-    _caching = {};
+  void removeAll(List<pb.Matte> mattes) {
+    for (final matte in mattes) {
+      remove(matte, false);
+    }
     notifyListeners();
-    return result.cast();
+  }
+
+  void remove(pb.Matte matte, [bool notify = true]) {
+    pb.MattingMark? key;
+    // pb.Matte is not a valid Map key (after field change, map.contains will return false), so iterate to delete
+    for (final entry in _caching.entries) {
+      if (entry.value.item1 == matte) {
+        key = entry.key;
+        break;
+      }
+    }
+    if (key != null) {
+      _caching.remove(key);
+    } else {
+      logWarn("remove unexist matte: $matte");
+    }
+    if (notify) notifyListeners();
   }
 
   bool get _allDone => _caching.values.every((tuple) => tuple.item1 != null);

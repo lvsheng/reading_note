@@ -14,16 +14,15 @@ class MattingControlPanel extends StatefulWidget {
 class _MattingControlPanelState extends State<MattingControlPanel> {
   bool _horizontalDragging = false;
   bool _verticalDragging = false;
-
-  MattingMarkGenerator? _tracker;
   Offset? _startOffset;
 
   bool get _dragging => _horizontalDragging || _verticalDragging;
 
+  MattingMarkGenerator? _tracker;
+
   @override
   Widget build(BuildContext context) {
     const padding = EdgeInsets.symmetric(vertical: 5, horizontal: 20);
-    const size = 300.0;
     return _tracker?.frozen != true
         ? Column(children: [
             Padding(
@@ -51,8 +50,8 @@ class _MattingControlPanelState extends State<MattingControlPanel> {
                 child: Transform.scale(
                   scale: _dragging ? 1.1 : 1.0,
                   child: Container(
-                    width: size,
-                    height: size,
+                    width: c.operatingAreaSize,
+                    height: c.operatingAreaSize,
                     alignment: Alignment.center,
                     decoration: c.borderDecoration,
                     child: Icon(material.Icons.open_with, color: CupertinoColors.black, size: _dragging ? 40 : 30),
@@ -60,15 +59,8 @@ class _MattingControlPanelState extends State<MattingControlPanel> {
                 ),
               ),
             ),
-            CupertinoButton(
-              child: Container(
-                height: 150,
-                width: size,
-                decoration: c.buttonDecoration,
-                child: const Icon(material.Icons.check, color: CupertinoColors.activeBlue),
-              ),
-              onPressed: () => setState(() => (_tracker = statusManager.drawingPen!.ongoingTracker! as MattingMarkGenerator).froze()),
-            )
+            c.buildConfirmButton(
+                () => setState(() => (_tracker = statusManager.drawingPen!.ongoingTracker! as MattingMarkGenerator).froze())),
           ])
         : Container();
   }
