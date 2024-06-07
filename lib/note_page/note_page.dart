@@ -20,15 +20,15 @@ enum NoteType {
 // todo-p4: 考虑文件io失败
 /// Main data model, based above local file
 abstract class NotePage extends ChangeNotifier {
-  static Future<NotePage> open(NoteType noteType, File book, PdfDocument document, int pageNumber, Size desiredSize) async {
-    final noteBook = NoteBook.getOrCreate(book, noteType, document);
+  static Future<NotePage> open(NoteType noteType, File book, int pageNumber, Size desiredSize, PdfPage? pdfPage) async {
+    final noteBook = NoteBook.getOrCreate(book, noteType);
     await noteBook.ready;
 
     int? noteId = noteBook.noteIdOf(pageNumber);
 
     if (noteId == null) {
       // 无旧数据，暂不创建磁盘文件，必要时再创建
-      return _create(noteType: noteType, pageNumber: pageNumber, noteBook: noteBook, size: desiredSize);
+      return _create(noteType: noteType, pageNumber: pageNumber, noteBook: noteBook, size: desiredSize, pdfPage: pdfPage);
     }
 
     final file = File(noteBook.getNotePageFilePath(noteId));
@@ -44,7 +44,7 @@ abstract class NotePage extends ChangeNotifier {
       logError("page file disappeared: $file");
     }
 
-    return _create(noteType: noteType, pageNumber: pageNumber, noteBook: noteBook, size: desiredSize, data: data, file: file);
+    return _create(noteType: noteType, pageNumber: pageNumber, noteBook: noteBook, size: desiredSize, data: data, file: file, pdfPage: pdfPage);
   }
 
   static NotePage _create(
@@ -53,7 +53,8 @@ abstract class NotePage extends ChangeNotifier {
       required NoteBook noteBook,
       required Size size,
       pb.NotePage? data,
-      File? file}) {
+      File? file,
+      PdfPage? pdfPage}) {
     if (data == null) {
       data = pb.NotePage()
         ..width = size.width
@@ -66,7 +67,7 @@ abstract class NotePage extends ChangeNotifier {
     }
 
     if (noteType == NoteType.book) {
-      return MarkNotePage(pageNumber, noteBook, data, file);
+      return MarkNotePage(pageNumber, noteBook, data, file, pdfPage!);
     } else {
       return IndependentNotePage(pageNumber, noteBook, data, file);
     }

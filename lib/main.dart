@@ -14,8 +14,6 @@ import 'package:reading_note/user_preferences.dart';
 import 'package:pdfrx/pdfrx.dart';
 import 'package:tuple/tuple.dart';
 import 'custom_painter/coordinate_converter.dart';
-import 'util/debug.dart' as debug;
-import 'note_page/independent_note_page.dart';
 import 'note_page/mark_note_page.dart';
 import 'widgets/control_panel_builder.dart';
 
@@ -42,10 +40,9 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
 
   File? _reading;
   int _initialPageNumber = 1;
-  int _initialNotePageNumber = 1;
+  int _initialNotePageIndex = 1;
   int _pageNumber = 1;
   Map<int, Tuple2<MarkNotePage?, bool /*begin load*/ >>? _pageMarkNoteMap; // todo: 考虑清理不在用的文件？ todo: dispose on clean?
-  Map<int, Tuple2<IndependentNotePage?, bool /*begin load*/ >>? _pageIndependentNoteMap; // todo: map移走？
   PdfDocument? _document;
   PdfViewerController? _controller;
   Matrix4? _transformation;
@@ -70,7 +67,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
   }
 
   _saveIfNeeded() {
-    for (final group in [_pageMarkNoteMap?.values, _pageIndependentNoteMap?.values]) {
+    for (final group in [_pageMarkNoteMap?.values, statusManager.independentNotes]) {
       if (group == null) continue;
       for (final tuple in group) {
         final note = tuple.item1;
@@ -135,9 +132,8 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
       statusManager.reading = file; // fixme
       _initialPageNumber = userPreferences.bookPageOf(_reading!) ?? 1;
       _pageNumber = _initialPageNumber;
-      _initialNotePageNumber = statusManager.notePageIndex;
+      _initialNotePageIndex = statusManager.notePageIndex;
       _pageMarkNoteMap = {};
-      _pageIndependentNoteMap = {};
       _document = null;
       _controller = PdfViewerController()
         ..addListener(() {
@@ -147,7 +143,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
           });
         });
       _transformation = null;
-      _pageViewController = PageController(initialPage: _initialNotePageNumber);
+      _pageViewController = PageController(initialPage: _initialNotePageIndex);
     });
   }
 
@@ -173,7 +169,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                   onPageChanged: (int? pageNumber) {
                     if (!mounted || pageNumber == null) return;
                     setState(() => _pageNumber = pageNumber);
-                    userPreferences.setBookPage(_reading!, pageNumber);
+                    statusManager.bookPageNumber = pageNumber;
                   },
 
                   // page mark note
@@ -184,7 +180,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                     if (noteTuple?.item1 == null) {
                       // if not loading, load it first
                       if (noteTuple == null) {
-                        NotePage.open(NoteType.book, _reading!, _document!, page.pageNumber, page.size).then((note) {
+                        NotePage.open(NoteType.book, _reading!, page.pageNumber, page.size, page).then((note) {
                           if (!mounted) return;
                           setState(() => _pageMarkNoteMap![page.pageNumber] = Tuple2(note as MarkNotePage, true));
                         });
@@ -238,7 +234,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                       physics: _enablePageViewPager ? null : const NeverScrollableScrollPhysics(),
                       onPageChanged: (index) => statusManager.notePageIndex = index,
                       itemBuilder: (context, index) {
-                        return NotePageWidget(index: index, pageIndependentNoteMap: _pageIndependentNoteMap, document: _document, reading: _reading, onZoomUpdate: (cannotShrinkAnymore) {
+                        return NotePageWidget(index: index, reading: _reading, onZoomUpdate: (cannotShrinkAnymore) {
                           if (cannotShrinkAnymore) {
                             if (!_enablePageViewPager) setState(() => _enablePageViewPager = true);
                           } else {

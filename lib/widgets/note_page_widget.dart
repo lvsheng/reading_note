@@ -1,6 +1,5 @@
 import 'dart:io';
 import 'dart:math';
-import 'dart:ui';
 
 import 'package:flutter/cupertino.dart';
 import 'package:pdfrx/pdfrx.dart';
@@ -10,23 +9,18 @@ import 'package:vector_math/vector_math_64.dart';
 import '../custom_painter/coordinate_converter.dart';
 import '../custom_painter/matte_positioner_pen_painter.dart';
 import '../custom_painter/page_items_painter.dart';
-import '../note_page/independent_note_page.dart';
-import '../note_page/note_page.dart';
 import '../pen/matte_positioner_pen.dart';
 import '../status_manager/status_manager.dart';
 import '../util/log.dart';
 import 'stylus_gesture_detector.dart';
-import 'common.dart' as c;
 
 class NotePageWidget extends StatefulWidget {
   final int index;
-  final Map<int, Tuple2<IndependentNotePage?, bool /*begin load*/ >>? pageIndependentNoteMap;
-  final PdfDocument? document;
   final File? reading;
   final void Function(bool)? onZoomUpdate;
   final String? title;
 
-  const NotePageWidget({super.key, required this.index, this.pageIndependentNoteMap, this.document, this.reading, this.onZoomUpdate, this.title});
+  const NotePageWidget({super.key, required this.index, this.reading, this.onZoomUpdate, this.title});
 
   @override
   State<StatefulWidget> createState() => _NotePageState();
@@ -69,23 +63,12 @@ class _NotePageState extends State<NotePageWidget> {
   Widget build(BuildContext context) {
     final margin = Size(3.0, MediaQuery.of(context).viewPadding.top);
     final contextSize = MediaQuery.of(context).size;
-    final noteTuple = widget.pageIndependentNoteMap![widget.index];
+    final note = statusManager.getOrLoadIndependentNotePage(widget.index, Size(contextSize.width - margin.width * 2, contextSize.width / 210 * 297 /*A4 page*/));
 
-    if (noteTuple?.item1 == null) {
-      // note not ready
-      if (noteTuple == null && widget.document != null) {
-        // if not loading, load it first
-        NotePage.open(NoteType.note, widget.reading!, widget.document!, widget.index,
-                Size(contextSize.width - margin.width * 2, contextSize.width / 210 * 297))
-            .then((note) {
-          if (!mounted) return;
-          setState(() => widget.pageIndependentNoteMap![widget.index] = Tuple2(note as IndependentNotePage, true));
-        });
-      }
+    if (note == null) {
       return SizedBox(width: contextSize.width, height: contextSize.height, child: const Center(child: Text("loading")));
     }
 
-    final note = noteTuple!.item1!;
     if (_firstBuild) {
       _minimumScale = max(contextSize.width / (note.size.width + margin.width * 2), contextSize.height / (note.size.height + margin.height * 2));
       _oldScale = _minimumScale * 2;

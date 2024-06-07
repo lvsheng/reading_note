@@ -12,6 +12,7 @@ enum PenType {
   markPen, // = PT_MARK_PEN = 1, DO NOT CHANGE ORDER - INDEX IS USED!
   mattingMarkPen, // = 2, DO NOT CHANGE ORDER - INDEX IS USED!
   mattePositionerPen, // = 3, DO NOT CHANGE ORDER - INDEX IS USED!
+  selectPen,
 }
 
 class Pen {
@@ -60,6 +61,9 @@ class Pen {
         break;
       case PenType.mattePositionerPen:
         assert(false, "Should deliver to MattePlacePen");
+        break;
+      case PenType.selectPen:
+        assert(false, "Should deliver to SelectPen");
         break;
     }
     assert(_tracker == null);

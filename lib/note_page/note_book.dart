@@ -1,6 +1,5 @@
 import 'dart:io';
 import 'dart:ui';
-import 'package:pdfrx/pdfrx.dart';
 import 'package:path/path.dart' as p;
 import 'package:reading_note/protobuf/note.pb.dart' as pb;
 import 'package:protobuf/protobuf.dart';
@@ -10,10 +9,10 @@ class NoteBook {
   static final Map<String, NoteBook> _cacheForBookMark = {};
   static final Map<String, NoteBook> _cacheForIndependent = {};
 
-  static NoteBook getOrCreate(File book, NoteType type, PdfDocument document) {
+  static NoteBook getOrCreate(File book, NoteType type) {
     final Map<String, NoteBook> cache = (type == NoteType.book) ? _cacheForBookMark : _cacheForIndependent;
     var result = cache[book.path];
-    result ??= cache[book.path] = NoteBook._(book, type, document);
+    result ??= cache[book.path] = NoteBook._(book, type);
     // todo: unload file ?
     return result;
   }
@@ -30,12 +29,11 @@ class NoteBook {
 
   late Future<void> ready;
   late final File book;
-  late final PdfDocument document;
   final NoteType _noteType;
   late File _file;
   pb.NoteBookMeta? _data;
 
-  NoteBook._(this.book, this._noteType, this.document) {
+  NoteBook._(this.book, this._noteType) {
     _file = File(_getMetaFilePath(book, _noteType));
     ready = _load();
   }

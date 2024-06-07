@@ -3,8 +3,6 @@ import 'package:flutter/material.dart' as material;
 import 'package:reading_note/status_manager/status_manager.dart';
 import 'package:reading_note/note_page/note_page.dart';
 import 'package:reading_note/user_preferences.dart';
-import 'package:reading_note/util/log.dart';
-import '../pen/matte_positioner_pen.dart';
 import '../pen/pen.dart';
 
 /// Used by [StatusManager], initialized referring to [UserPreferences] and syncing data to [UserPreferences]
@@ -21,21 +19,6 @@ class PenManager {
   List<Pen> get list => _list!;
 
   Pen currentPenOf(NoteType noteType) => _currentPenPair![/*noteType.index*/0];
-
-  Pen? _mattingPen;
-  Pen get mattingPen {
-    // todo
-    logWarn("TODO: mattingPen");
-    return _mattingPen ??= Pen(-1, PenType.mattingMarkPen, CupertinoColors.systemYellow.withAlpha(125), 10.0);
-  }
-
-  Pen? _mattePlacePen;
-  Pen get mattePlacePen {
-    // todo
-    logWarn("TODO: mattePlacePen");
-    // return _mattePlacePen ??= Pen(-1, PenType.mattePositionerPen, const Color(0x00000000), 1.0);
-    return _mattePlacePen ??= MattePositionerPen();
-  }
 
   bool mattingWhenBook = true;
 

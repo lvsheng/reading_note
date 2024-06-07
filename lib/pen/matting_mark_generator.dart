@@ -27,7 +27,7 @@ class MattingMarkGenerator extends PenStrokeTracker {
 
   @override
   bool stop() {
-    mattingManager.startOne(_mark, _markId, page.noteBook.document, page.pageNumber);
+    mattingManager.startOne(_mark, _markId, page);
     return true;
   }
 

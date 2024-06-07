@@ -18,10 +18,9 @@ const pdfPageCaptureSizeMultiplier = 3;
 final _pageScreenshotMap = LruMap<String, Tuple2<img.Image?, Future<img.Image?>?>>(maximumSize: 5);
 final _matteDecodeImageMap = LruMap<pb.Matte, Tuple2<ui.Image?, Future<ui.Image?>?>>(maximumSize: 200);
 
-Future<pb.Matte> performMatting(File book, PdfDocument document, int pageNumber, pb.MattingMark mark, int markId) async {
-  final page = document.pages[pageNumber - 1];
+Future<pb.Matte> performMatting(File book, PdfPage page, pb.MattingMark mark, int markId) async {
   final pageImage = await _capture(book, page);
-  if (pageImage == null) throw ("_capture fail: $book, $pageNumber, $document");
+  if (pageImage == null) throw ("_capture fail: $book, $page");
 
   late Tuple4<int, int, int, int> xywh;
   {
@@ -54,7 +53,7 @@ Future<pb.Matte> performMatting(File book, PdfDocument document, int pageNumber,
   debug.saveIntList(compressed, "6.compressed");
 
   final result = pb.Matte()
-    ..bookPageNumber = pageNumber
+    ..bookPageNumber = page.pageNumber
     ..bookPageMattingMarkId = markId
     ..imageWidth = xywh.item3
     ..imageHeight = xywh.item4

@@ -1,5 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:pdfrx/pdfrx.dart';
+import 'package:reading_note/note_page/mark_note_page.dart';
+import 'package:reading_note/note_page/note_page.dart';
 import 'package:reading_note/pdf_matting_performer.dart';
 import 'package:reading_note/protobuf/note.pb.dart' as pb;
 import 'package:reading_note/status_manager/status_manager.dart';
@@ -23,10 +25,10 @@ class MattingManager extends ChangeNotifier {
 
   bool get isNotEmpty => _caching.isNotEmpty;
 
-  void startOne(pb.MattingMark mark, int markId, PdfDocument document, int pageNumber) {
+  void startOne(pb.MattingMark mark, int markId, NotePage page) {
     _caching[mark] = Tuple2(
         null,
-        performMatting(statusManager.reading!, document, pageNumber, mark, markId).then((result) {
+        performMatting(statusManager.reading!, (page as MarkNotePage).pdfPage, mark, markId).then((result) {
           _caching[mark] = Tuple2(result, null);
           notifyListeners();
           return result;

@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart' as material;
+import 'package:reading_note/pen/selector_pen.dart';
 import 'package:reading_note/status_manager/matting_manager.dart';
 import 'package:reading_note/status_manager/status_manager.dart';
 import '../pen/pen.dart';
@@ -15,12 +16,12 @@ class PenSelector extends StatefulWidget {
 
 class PenSelectorState extends State<PenSelector> {
   Offset _dragStart = Offset.zero;
-  bool _dragging = false;
   DateTime? _lastTapTime;
 
   @override
   Widget build(BuildContext context) {
     const dragStep = 75.0;
+    final usingPen = statusManager.usingPen;
     // todo: 理想交互：
     //  1.只手指可交互，笔不行（以此保证对应位置笔都可以写。但其实如果不是透明，那也没意义。而且有些小icon用笔点会更合适些）
     //  其他方式：切换魔术笔🪄与普通笔在一个按钮，点击切换。横向滑动切换其他笔，向上滑动切换橡皮，向下滑动切换选择，长按时提示/增删笔列表？
@@ -37,55 +38,47 @@ class PenSelectorState extends State<PenSelector> {
       },
       onVerticalDragStart: (detail) {
         _dragStart = detail.localPosition;
-        setState(() => _dragging = true);
         statusManager.beginTurnPen();
       },
-      dragStartBehavior: DragStartBehavior.down,
       onVerticalDragUpdate: (detail) {
         final diff = detail.localPosition.dy - _dragStart.dy;
-        final prev = diff < 0;
-        // if (prev) return;
-        final offset = (diff.abs() / dragStep).round();
-        statusManager.turnPen(prev ? -offset : offset);
+        final offsetAbs = (diff.abs() / dragStep).round();
+        statusManager.turnPen(diff < 0 ? -offsetAbs : offsetAbs);
       },
       onVerticalDragEnd: (detail) {
         final diff = detail.localPosition.dy - _dragStart.dy;
-        // if (diff < 0) {
-        //   statusManager.switchMattingOrPuttingMatte();
-        // } else if (diff.abs() < dragStep) {
-        //   statusManager.turnPen(1);
-        // }
-        if (diff.abs() < dragStep) {
-          if (diff > 0) {
-            statusManager.turnPen(1);
-          } else if (diff < 0) {
-            statusManager.turnPen(-1);
-          } else {
-            statusManager.switchMattingOrPuttingMatte();
-          }
-          }
-        setState(() => _dragging = false);
+        if ((diff.abs() / dragStep).round() != 0) return;
+        if (diff > 0) {
+          statusManager.turnPen(1);
+        } else if (diff < 0) {
+          statusManager.turnPen(-1);
+        }
       },
-      onVerticalDragCancel: () => setState(() => _dragging = false),
+      onHorizontalDragStart: (detail) => _dragStart = detail.localPosition,
+      onHorizontalDragEnd: (detail) {
+        final diff = detail.localPosition.dx - _dragStart.dx;
+        if (diff > 0) {
+          statusManager.toggleSelectingMode();
+        }
+      },
       behavior: HitTestBehavior.opaque,
-      child: Transform.scale(
-        origin: const Offset(-30, 0),
-        scale: _dragging ? 1.0 : 1.0,
-        child: Container(
-          constraints: const BoxConstraints(minWidth: c.mainButtonSize, maxWidth: c.mainButtonSize, minHeight: c.mainButtonSize),
-          margin: const EdgeInsets.only(left: c.panelPadding),
-          decoration: c.borderDecoration,
-          child: Wrap(
-            children: statusManager.penList.map(_buildPenItem).toList(growable: false),
-          ),
+      child: Container(
+        constraints: const BoxConstraints(minWidth: c.mainButtonSize, maxWidth: c.mainButtonSize, minHeight: 200),
+        margin: const EdgeInsets.only(left: c.panelPadding),
+        decoration: c.borderDecoration,
+        child: Wrap(
+          direction: Axis.vertical,
+          alignment: WrapAlignment.center,
+          children:
+              (usingPen is SelectPen ? [usingPen] : statusManager.penList).map((i) => _buildPenItem(i, usingPen)).toList(growable: false),
         ),
       ),
     );
   }
 
-  Widget _buildPenItem(Pen pen) {
+  Widget _buildPenItem(Pen pen, Pen usingPen) {
     return Transform.scale(
-      scale: pen == statusManager.usingPen ? 2.0 : 1.0,
+      scale: pen == usingPen ? 2.0 : 1.0,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -97,8 +90,11 @@ class PenSelectorState extends State<PenSelector> {
                 material.Icons.brush_rounded,
                 material.Icons.format_paint_outlined,
                 material.Icons.format_paint,
+                material.Icons.select_all,
               ])[pen.type.index],
-              color: pen.type != PenType.mattePositionerPen ? pen.color : (mattingManager.isNotEmpty ? pen.color : CupertinoColors.systemGrey4),
+              color: pen.type != PenType.mattePositionerPen
+                  ? pen.color
+                  : (mattingManager.isNotEmpty ? pen.color : CupertinoColors.systemGrey4),
               size: 20,
             ),
           ),

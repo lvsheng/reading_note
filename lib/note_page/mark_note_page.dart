@@ -1,9 +1,11 @@
 import 'package:flutter/cupertino.dart';
+import 'package:pdfrx/pdfrx.dart';
 import 'package:reading_note/protobuf/note.pb.dart' as pb;
 import 'note_page.dart';
 
 class MarkNotePage extends NotePage {
-  MarkNotePage(super.pageNumber, super.noteBook, super.data, super.file);
+  final PdfPage pdfPage;
+  MarkNotePage(super.pageNumber, super.noteBook, super.data, super.file, this.pdfPage);
 
   Offset canvasPositionToPagePosition(Offset localPosition, Rect pageRect) {
     Offset result = Offset(localPosition.dx / pageRect.width, localPosition.dy / pageRect.height);
