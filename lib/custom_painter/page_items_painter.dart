@@ -13,7 +13,7 @@ import 'coordinate_converter.dart';
 
 typedef _ItemPainter = int Function(Canvas canvas, pb.NotePageItem item, int index, int length);
 
-const _logging = true;
+const _logging = false;
 
 class PageItemsPainter extends CustomPainter {
   @protected

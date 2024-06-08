@@ -12,9 +12,9 @@ import 'package:reading_note/widgets/note_page_widget.dart';
 import 'package:reading_note/widgets/stylus_gesture_detector.dart';
 import 'package:reading_note/user_preferences.dart';
 import 'package:pdfrx/pdfrx.dart';
-import 'package:tuple/tuple.dart';
 import 'custom_painter/coordinate_converter.dart';
-import 'note_page/mark_note_page.dart';
+import 'custom_painter/select_pen_painter.dart';
+import 'pen/selector_pen/select_pen.dart';
 import 'widgets/control_panel_builder.dart';
 
 void main() => runApp(const MyApp());
@@ -23,7 +23,8 @@ class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
   @override
-  Widget build(BuildContext context) => const CupertinoApp(title: 'Reading Note', theme: CupertinoThemeData(), home: MyHomePage(), debugShowCheckedModeBanner: false);
+  Widget build(BuildContext context) =>
+      const CupertinoApp(title: 'Reading Note', theme: CupertinoThemeData(), home: MyHomePage(), debugShowCheckedModeBanner: false);
 }
 
 class MyHomePage extends StatefulWidget {
@@ -42,7 +43,6 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
   int _initialPageNumber = 1;
   int _initialNotePageIndex = 1;
   int _pageNumber = 1;
-  Map<int, Tuple2<MarkNotePage?, bool /*begin load*/ >>? _pageMarkNoteMap; // todo: 考虑清理不在用的文件？ todo: dispose on clean?
   PdfDocument? _document;
   PdfViewerController? _controller;
   Matrix4? _transformation;
@@ -66,16 +66,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     statusManager.addListener(_statusListener);
   }
 
-  _saveIfNeeded() {
-    for (final group in [_pageMarkNoteMap?.values, statusManager.independentNotes]) {
-      if (group == null) continue;
-      for (final tuple in group) {
-        final note = tuple.item1;
-        if (note == null) return;
-        note.saveIfNeeded();
-      }
-    }
-  }
+  _saveIfNeeded() => statusManager.saveIfNeeded();
 
   void _fetchData() async {
     final rootDirectory = await fileSystemProxy.rootDirectoryReady;
@@ -133,7 +124,6 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
       _initialPageNumber = userPreferences.bookPageOf(_reading!) ?? 1;
       _pageNumber = _initialPageNumber;
       _initialNotePageIndex = statusManager.notePageIndex;
-      _pageMarkNoteMap = {};
       _document = null;
       _controller = PdfViewerController()
         ..addListener(() {
@@ -174,33 +164,26 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
 
                   // page mark note
                   pageOverlaysBuilder: (context, pageRect, page) {
-                    final noteTuple = _pageMarkNoteMap![page.pageNumber];
-
-                    // note not ready
-                    if (noteTuple?.item1 == null) {
-                      // if not loading, load it first
-                      if (noteTuple == null) {
-                        NotePage.open(NoteType.book, _reading!, page.pageNumber, page.size, page).then((note) {
-                          if (!mounted) return;
-                          setState(() => _pageMarkNoteMap![page.pageNumber] = Tuple2(note as MarkNotePage, true));
-                        });
-                      }
-
+                    final note = statusManager.getOrLoadMarkNotePage(
+                        page.pageNumber, () => NotePage.open(NoteType.book, _reading!, page.pageNumber, page.size, page));
+                    if (note == null) {
                       return const [];
                     }
-
-                    final note = noteTuple!.item1!;
 
                     return [
                       ConstrainedBox(
                           constraints: const BoxConstraints.expand(),
                           child: IgnorePointer(
                               child: RepaintBoundary(
-                            child: CustomPaint(
-                              painter: PageItemsPainter(note, BookCoordConverter(pageRect, note)),
-                              isComplex: true, // fixme
-                            ),
-                          ))),
+                                  child: CustomPaint(painter: PageItemsPainter(note, BookCoordConverter(pageRect, note)))))),
+                      if (statusManager.interacting == NoteType.book && statusManager.usingPen is SelectPen)
+                        ConstrainedBox(
+                            constraints: const BoxConstraints.expand(),
+                            child: IgnorePointer(
+                                child: RepaintBoundary(
+                                    child: CustomPaint(
+                                        painter:
+                                            SelectPenPainter(statusManager.usingPen as SelectPen, BookCoordConverter(pageRect, note)))))),
                       PencilGestureDetector(
                         onDown: (details) {
                           note.penDown(note.canvasPositionToPagePosition(details.localPosition, pageRect));
@@ -234,13 +217,18 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                       physics: _enablePageViewPager ? null : const NeverScrollableScrollPhysics(),
                       onPageChanged: (index) => statusManager.notePageIndex = index,
                       itemBuilder: (context, index) {
-                        return NotePageWidget(index: index, reading: _reading, onZoomUpdate: (cannotShrinkAnymore) {
-                          if (cannotShrinkAnymore) {
-                            if (!_enablePageViewPager) setState(() => _enablePageViewPager = true);
-                          } else {
-                            if (_enablePageViewPager) setState(() => _enablePageViewPager = false);
-                          }
-                        }, title: "第${index + 1}章",);
+                        return NotePageWidget(
+                          index: index,
+                          reading: _reading,
+                          onZoomUpdate: (cannotShrinkAnymore) {
+                            if (cannotShrinkAnymore) {
+                              if (!_enablePageViewPager) setState(() => _enablePageViewPager = true);
+                            } else {
+                              if (_enablePageViewPager) setState(() => _enablePageViewPager = false);
+                            }
+                          },
+                          title: "第${index + 1}章",
+                        );
                       },
                     ),
                     // child: noteItemBuilder(context, 0),

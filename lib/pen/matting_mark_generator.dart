@@ -4,6 +4,7 @@ import 'package:reading_note/pen/pen_stroke_tracker.dart';
 import 'package:reading_note/protobuf/note.pb.dart' as pb;
 import 'package:reading_note/util/log.dart';
 import '../status_manager/matting_manager.dart';
+import 'selector_pen/indexable_area.dart';
 
 class MattingMarkGenerator extends PenStrokeTracker {
   late final int _markId;
@@ -28,6 +29,7 @@ class MattingMarkGenerator extends PenStrokeTracker {
   @override
   bool stop() {
     mattingManager.startOne(_mark, _markId, page);
+    IndexableArea.itemAdded(_drawingItem, page);
     return true;
   }
 

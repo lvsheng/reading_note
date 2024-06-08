@@ -29,29 +29,29 @@ class NoteBook {
 
   late Future<void> ready;
   late final File book;
+  late final File metaFile;
   final NoteType _noteType;
-  late File _file;
   pb.NoteBookMeta? _data;
 
   NoteBook._(this.book, this._noteType) {
-    _file = File(_getMetaFilePath(book, _noteType));
+    metaFile = File(_getMetaFilePath(book, _noteType));
     ready = _load();
   }
 
   _load() async {
-    if (!await _file.exists()) {
-      await _file.create(recursive: true);
+    if (!await metaFile.exists()) {
+      await metaFile.create(recursive: true);
       _data = pb.NoteBookMeta();
       _save();
       return;
     }
 
     // todo: read时保留只读，用户用笔修改时再deepCopy
-    _data = pb.NoteBookMeta.fromBuffer(await _file.readAsBytes()).deepCopy();
+    _data = pb.NoteBookMeta.fromBuffer(await metaFile.readAsBytes()).deepCopy();
   }
 
   _save() async {
-    await _file.writeAsBytes(_data!.writeToBuffer());
+    await metaFile.writeAsBytes(_data!.writeToBuffer());
   }
 
   int? noteIdOf(int pageNumber) {

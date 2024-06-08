@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'package:reading_note/protobuf/note.pb.dart' as pb;
 import 'pen.dart';
 import 'pen_stroke_tracker.dart';
+import 'selector_pen/indexable_area.dart';
 
 class PathGenerator extends PenStrokeTracker {
   late final pb.NotePageItem _drawingItem;
@@ -23,7 +24,10 @@ class PathGenerator extends PenStrokeTracker {
   bool stop() {
     bool success = _drawingItem.path.points.isNotEmpty;
     if (!success) {
+      assert(page.data.items.last == _drawingItem);
       page.data.items.removeLast();
+    } else {
+      IndexableArea.itemBeforeUpdate(_drawingItem, page);
     }
     return success;
   }

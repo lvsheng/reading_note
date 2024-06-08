@@ -17,6 +17,11 @@ class MarkNotePage extends NotePage {
     return result = Offset(result.dx * pageRect.width, result.dy * pageRect.height);
   }
 
+  Offset pageOffsetToCanvas(Offset offset, Rect pageRect) {
+    Offset result = Offset(offset.dx / data.width, offset.dy / data.height);
+    return result = Offset(result.dx * pageRect.width, result.dy * pageRect.height);
+  }
+
   double pageWidthToCanvas(double v, Rect pageRect) => v / data.width * pageRect.width;
 
   double pageHeightToCanvas(double v, Rect pageRect) => v / data.height * pageRect.height;

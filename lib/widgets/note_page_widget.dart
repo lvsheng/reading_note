@@ -3,6 +3,9 @@ import 'dart:math';
 
 import 'package:flutter/cupertino.dart';
 import 'package:pdfrx/pdfrx.dart';
+import 'package:reading_note/custom_painter/select_pen_painter.dart';
+import 'package:reading_note/note_page/note_page.dart';
+import 'package:reading_note/pen/selector_pen/select_pen.dart';
 import 'package:tuple/tuple.dart';
 import 'package:vector_math/vector_math_64.dart';
 
@@ -10,6 +13,7 @@ import '../custom_painter/coordinate_converter.dart';
 import '../custom_painter/matte_positioner_pen_painter.dart';
 import '../custom_painter/page_items_painter.dart';
 import '../pen/matte_positioner_pen.dart';
+import '../pen/selector_pen/indexable_area.dart';
 import '../status_manager/status_manager.dart';
 import '../util/log.dart';
 import 'stylus_gesture_detector.dart';
@@ -45,6 +49,7 @@ class _NotePageState extends State<NotePageWidget> {
 
   final _parentKey = GlobalKey();
   final _childKey = GlobalKey();
+
   void _onControllerChange() {
     if (widget.onZoomUpdate != null) {
       final scale = _controller.value.zoom;
@@ -63,14 +68,17 @@ class _NotePageState extends State<NotePageWidget> {
   Widget build(BuildContext context) {
     final margin = Size(3.0, MediaQuery.of(context).viewPadding.top);
     final contextSize = MediaQuery.of(context).size;
-    final note = statusManager.getOrLoadIndependentNotePage(widget.index, Size(contextSize.width - margin.width * 2, contextSize.width / 210 * 297 /*A4 page*/));
+    final note = statusManager.getOrLoadIndependentNotePage(
+        widget.index, Size(contextSize.width - margin.width * 2, contextSize.width / 210 * 297 /*A4 page*/));
 
     if (note == null) {
       return SizedBox(width: contextSize.width, height: contextSize.height, child: const Center(child: Text("loading")));
     }
+    // IndexableArea.forPage(note); // fixme: remove, for test
 
     if (_firstBuild) {
-      _minimumScale = max(contextSize.width / (note.size.width + margin.width * 2), contextSize.height / (note.size.height + margin.height * 2));
+      _minimumScale =
+          max(contextSize.width / (note.size.width + margin.width * 2), contextSize.height / (note.size.height + margin.height * 2));
       _oldScale = _minimumScale * 2;
       _controller.value.scale(_minimumScale);
       _firstBuild = false;
@@ -89,9 +97,6 @@ class _NotePageState extends State<NotePageWidget> {
         onDoubleTapDown: (detail) {
           _doubleTapOffset = Tuple2(detail.globalPosition, detail.localPosition);
           logDebug("onDoubleTapDown: $_doubleTapOffset");
-        },
-        onTertiaryTapDown: (detail) {
-
         },
         onDoubleTap: () {
           final matrix = Matrix4.copy(_controller.value);
@@ -136,12 +141,25 @@ class _NotePageState extends State<NotePageWidget> {
           ),
           child: Stack(
             children: [
-              Positioned(right: 4, top: 0, child: Text("${widget.index + 1}", style: const TextStyle(fontSize: 10, color: CupertinoColors.systemGrey),)),
-              if (widget.title != null) Positioned(left: 0, right: 0, top: 0, child: Center(child: Text("${widget.title}", style: const TextStyle(fontSize: 24, color: CupertinoColors.black, fontWeight: FontWeight.bold)))),
+              Positioned(
+                  right: 4,
+                  top: 0,
+                  child: Text(
+                    "${widget.index + 1}",
+                    style: const TextStyle(fontSize: 10, color: CupertinoColors.systemGrey),
+                  )),
+              if (widget.title != null)
+                Positioned(
+                    left: 0,
+                    right: 0,
+                    top: 0,
+                    child: Center(
+                        child: Text("${widget.title}",
+                            style: const TextStyle(fontSize: 24, color: CupertinoColors.black, fontWeight: FontWeight.bold)))),
               ConstrainedBox(
                   constraints: const BoxConstraints.expand(),
                   child:
-                  IgnorePointer(child: RepaintBoundary(child: CustomPaint(painter: PageItemsPainter(note, NoteCoordConverter(note)))))),
+                      IgnorePointer(child: RepaintBoundary(child: CustomPaint(painter: PageItemsPainter(note, NoteCoordConverter(note)))))),
               if (statusManager.usingPen is MattePositionerPen)
                 ConstrainedBox(
                     constraints: const BoxConstraints.expand(),
@@ -150,6 +168,12 @@ class _NotePageState extends State<NotePageWidget> {
                             child: CustomPaint(
                                 painter: MattePositionerPenPainter(
                                     statusManager.usingPen as MattePositionerPen, widget.index, NoteCoordConverter(note)))))),
+              if (statusManager.interacting == NoteType.note && statusManager.usingPen is SelectPen)
+                ConstrainedBox(
+                    constraints: const BoxConstraints.expand(),
+                    child: IgnorePointer(
+                        child: RepaintBoundary(
+                            child: CustomPaint(painter: SelectPenPainter(statusManager.usingPen as SelectPen, NoteCoordConverter(note)))))),
               PencilGestureDetector(
                 onDown: (details) => note.penDown(note.canvasPositionToPage(details.localPosition, 1.0)),
                 onMove: (localPosition) => note.penMove(note.canvasPositionToPage(localPosition, 1.0)),

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart' as material;
 import 'package:flutter/widgets.dart';
 import 'package:quiver/iterables.dart' as iterables;
 import 'package:reading_note/custom_painter/paint_matte.dart';
+import 'package:reading_note/pen/selector_pen/indexable_area.dart';
 import 'package:reading_note/status_manager/matting_manager.dart';
 import 'package:reading_note/status_manager/status_manager.dart';
 import 'package:reading_note/util/log.dart';
@@ -147,7 +148,7 @@ class MattePositionerPen extends Pen with ChangeNotifier {
       case _PenStatus.recommending:
         assert(_adjustingPageItems == null);
         for (final (index, matte) in handlingList.indexed) {
-          _createPageItem(matte, _currentPage!.data, positions[index]);
+          _createPageItem(matte, _currentPage!, positions[index]);
         }
         mattingManager.removeAll(handlingList);
         assert(_mattes.isEmpty || _mattes[_handlingIndex] == _handling); // updated by onMattingManagerChange from removeAll
@@ -274,8 +275,11 @@ class MattePositionerPen extends Pen with ChangeNotifier {
       final positions =
           _calculatePositions(_adjustingPageItems!.map((item) => _matteOfPageItem(item, _currentPage!.data)).toList(growable: false));
       for (final (index, item) in _adjustingPageItems!.indexed) {
+        // todo: 性能是否ok? 避免在移动中重建索引？
+        IndexableArea.itemBeforeUpdate(item, _currentPage!);
         item.x = positions[index].dx;
         item.y = positions[index].dy;
+        IndexableArea.itemUpdated(item, _currentPage!);
       }
     }
   }
@@ -299,7 +303,7 @@ class MattePositionerPen extends Pen with ChangeNotifier {
         assert(_handlingIndex == 0); // todo: 换序功能移到中转站的话，去掉_handlingIndex
         final positions = _calculatePositions(_mattes);
         for (int i = 1; i < _mattes.length; ++i) {
-          _adjustingPageItems!.add(_createPageItem(_mattes[i], _currentPage!.data, positions[i]));
+          _adjustingPageItems!.add(_createPageItem(_mattes[i], _currentPage!, positions[i]));
         }
       }
     }
@@ -326,11 +330,13 @@ class MattePositionerPen extends Pen with ChangeNotifier {
 
     if (_status == _PenStatus.adjusting) {
       for (final item in _adjustingPageItems!) {
+        IndexableArea.itemBeforeUpdate(item, _currentPage!);
         if (_scale != 1.0) {
           item.scale = _scale;
         } else {
           item.clearScale();
         }
+        IndexableArea.itemUpdated(item, _currentPage!);
       }
       _repositionAdjustingPageItems();
     }
@@ -419,12 +425,12 @@ class MattePositionerPen extends Pen with ChangeNotifier {
         assert(_currentPage != null);
         if (_oneByOne) {
           final matte = _handling!;
-          _adjustingPageItems = [_createPageItem(matte, _currentPage!.data, _latestPosition!)];
+          _adjustingPageItems = [_createPageItem(matte, _currentPage!, _latestPosition!)];
         } else {
           final positions = _calculatePositions(_mattes);
           _adjustingPageItems = [];
           for (final (index, matte) in _mattes.indexed) {
-            _adjustingPageItems!.add(_createPageItem(matte, _currentPage!.data, positions[index]));
+            _adjustingPageItems!.add(_createPageItem(matte, _currentPage!, positions[index]));
           }
         }
         break;
@@ -440,14 +446,14 @@ class MattePositionerPen extends Pen with ChangeNotifier {
     triggerRepaint();
   }
 
-  pb.NotePageItem _createPageItem(pb.Matte matte, pb.NotePage pbPage, Offset position) {
+  pb.NotePageItem _createPageItem(pb.Matte matte, NotePage page, Offset position) {
     if (matte.bookPath == fileSystemProxy.localPath(statusManager.reading!)) {
       logDebug("same book, clear: ${matte.bookPath}");
       matte.clearBookPath(); // same book, save space
     }
 
-    final id = ++pbPage.independentNoteData.lastMatteId;
-    pbPage.independentNoteData.mattePool[id] = matte;
+    final id = ++page.data.independentNoteData.lastMatteId;
+    page.data.independentNoteData.mattePool[id] = matte;
     final result = pb.NotePageItem()
       ..x = position.dx
       ..y = position.dy
@@ -455,7 +461,9 @@ class MattePositionerPen extends Pen with ChangeNotifier {
     if (_scale != 1.0) {
       result.scale = _scale;
     }
-    pbPage.items.add(result);
+    page.data.items.add(result);
+
+    IndexableArea.itemAdded(result, page);
     return result;
   }
 
@@ -465,6 +473,7 @@ class MattePositionerPen extends Pen with ChangeNotifier {
     final removed = pbPage.independentNoteData.mattePool.remove(id);
     assert(removed != null);
     final removeIdSuccess = pbPage.items.remove(item);
+    IndexableArea.itemRemoved(item, _currentPage!);
     assert(removeIdSuccess);
   }
 

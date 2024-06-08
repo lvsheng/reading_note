@@ -60,10 +60,7 @@ class BookCoordConverter extends CoordConverter {
   Rect pageRectToCanvas(Rect rect) => (note as MarkNotePage).pageRectToCanvas(rect, _pageRect);
 
   @override
-  Offset pageOffsetToCanvas(Offset offset) {
-    // TODO: implement pageOffsetToCanvas
-    throw UnimplementedError();
-  }
+  Offset pageOffsetToCanvas(Offset offset) => (note as MarkNotePage).pageOffsetToCanvas(offset, _pageRect);
 
   @override
   double penWidthToCanvas(double v) => pageWidthToCanvas(v) / pdfPageCaptureSizeMultiplier;
