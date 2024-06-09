@@ -126,6 +126,8 @@ class IndexableArea extends Rect {
   bool _itemsSorted = false;
   List /*rows*/ <List< /*columns*/ IndexableArea>>? _subAreas;
   double _subAreaWidth = 0;
+  double _subAreaRedundantRate = 0;
+  bool _doNotSplitSubAreas = false;
   _HitCacheStack? _hitCacheStack;
   bool _allSelected = false;
 
@@ -139,13 +141,14 @@ class IndexableArea extends Rect {
 
   IndexableArea(this._page, super.left, super.top, super.right, super.bottom) : super.fromLTRB();
 
-  void _addItem(ItemWrapper item) {
+  void _addItem(ItemWrapper item, [bool movedFromParentItems = false]) {
     assert(item._belongedArea == this);
     if (_logging) logDebug("_addItem ${item.boundingBox} into $this");
     if (_subAreas == null) {
       _items.add(item);
       return;
     }
+    assert(!movedFromParentItems);
     _addItemIntoSubArea(item);
   }
 
@@ -163,6 +166,7 @@ class IndexableArea extends Rect {
 
   void _splitSubAreasIfNeed() {
     if (_subAreas != null) return;
+    if (_doNotSplitSubAreas) return;
 
     final ts = DateTime.timestamp();
     final countItems = _items.length;
@@ -172,6 +176,15 @@ class IndexableArea extends Rect {
 
     _initSubAreas();
     _moveItemsIntoSubAreas();
+    const subAreaRedundantRateThreshold = 1.5;
+    if (_subAreaRedundantRate > subAreaRedundantRateThreshold) {
+      // To avoid unnecessary infinite subdivision by only looking at countItems (e.g., extreme case: numerous lines converging at a single point)
+      for (final row in _subAreas!) {
+        for (final subArea in row) {
+          subArea._doNotSplitSubAreas = true;
+        }
+      }
+    }
 
     if (_logging) {
       logInfo("$_tag _tryDivideSubAreas: countItems:$countItems cost:${DateTime.timestamp().difference(ts).inMilliseconds}ms");
@@ -197,7 +210,7 @@ class IndexableArea extends Rect {
       _subAreas!.add(columns);
     }
     if (_logging) {
-      logInfo("$_tag _initSubAreas: ${_subAreas!.length}*${_subAreas!.first.length} unit-size:$_subAreaWidth");
+      logInfo("$_tag _initSubAreas: ${_subAreas!.length}*${_subAreas!.first.length} unit-size:$_subAreaWidth this:$this width:$width");
       logDebug("  ${_subAreas!.first.first} ~ ${_subAreas!.last.last}");
     }
   }
@@ -205,53 +218,56 @@ class IndexableArea extends Rect {
   void _moveItemsIntoSubAreas() {
     assert(_subAreas != null);
     for (final item in _items) {
-      _addItemIntoSubArea(item);
+      _addItemIntoSubArea(item, true);
     }
+
+    final cItems = _items.length;
+    final cItemsInSubAreas = _countItemsInSubAreas();
+    assert(_subAreaRedundantRate == 0);
+    _subAreaRedundantRate = cItemsInSubAreas / cItems;
     if (_logging) {
-      logDebug(() {
-        final l = _items.length;
-        final c = _countItemsInSubAreas();
-        return "_moveItemsIntoSubAreas: redunt-rate:${c / l} items.length:$l subArea.itemsCount:$c";
-      }());
+      logDebug(
+          "_moveItemsIntoSubAreas: redundant-rate:${cItemsInSubAreas / cItems} items.length:$cItems subArea.itemsCount:$cItemsInSubAreas");
     }
     _items.clear();
   }
 
   int _countItemsInSubAreas() {
-    if (_subAreas == null) return _items.length;
+    // if (_subAreas == null) return _items.length;
+    assert(_subAreas != null);
     int c = 0;
     for (final row in _subAreas!) {
       for (final subArea in row) {
-        c += subArea._countItemsInSubAreas();
+        assert(subArea._subAreas == null);
+        c += subArea._items.length;
+        // c += subArea._countItemsInSubAreas();
       }
     }
     return c;
   }
 
-  void _addItemIntoSubArea(ItemWrapper item) {
+  void _addItemIntoSubArea(ItemWrapper item, [bool fromItems = false]) {
     final box = item.boundingBox;
     final intersectedSubAreas = _getIntersectedSubAreas(box);
     if (_logging) logDebug("_addItemIntoSubArea intersectedSubAreas.length: ${intersectedSubAreas.length}");
     for (final targetArea in intersectedSubAreas) {
-      targetArea._addItem(item.._belongedArea = targetArea);
+      targetArea._addItem(item.._belongedArea = targetArea, fromItems);
     }
   }
 
   Iterable<IndexableArea> _getIntersectedSubAreas(Rect target) sync* {
     assert(_subAreas != null);
     assert(target.intersect(this).width >= 0 && target.intersect(this).height >= 0);
-    if (_logging) logDebug("_getIntersectedSubAreas");
+    if (_logging) logDebug("_getIntersectedSubAreas fro $target in $this");
 
     final insideRect = Rect.fromLTWH(target.left - left, target.top - top, target.width, target.height);
     final int startColIndex = (insideRect.left / _subAreaWidth).floor();
     final int endColIndex = (insideRect.right / _subAreaWidth).floor();
     final int startRowIndex = (insideRect.top / _subAreaWidth).floor();
     final int endRowIndex = (insideRect.bottom / _subAreaWidth).floor();
-    for (int i = startRowIndex; i <= endRowIndex; ++i) {
-      if (i < 0) continue;
-      assert(i <= _subAreas!.length);
-      if (i == _subAreas!.length) break;
-
+    final int s = max(startRowIndex, 0);
+    final int e = min(endRowIndex, _subAreas!.length - 1);
+    for (int i = s; i <= e; ++i) {
       final row = _subAreas![i];
       for (int j = startColIndex; j <= endColIndex; ++j) {
         if (j < 0) continue;
@@ -259,7 +275,7 @@ class IndexableArea extends Rect {
         if (j == row.length) break;
 
         yield row[j];
-        if (_logging) logDebug("  ${row[j]}");
+        if (_logging) logDebug("  yield:${row[j]} i:$i s:$startRowIndex e:$endRowIndex j:$j s:$startColIndex e:$endColIndex from $this");
       }
     }
   }
@@ -336,7 +352,6 @@ class IndexableArea extends Rect {
 
   void _sortItemsIfNeed() {
     assert(_subAreas == null);
-    assert(_items.length < _splitThresholdForItemCount);
     if (_itemsSorted) return;
     _itemsSorted = true;
     _items.sort((a, b) => a.boundingBox.left > b.boundingBox.left ? 1 : -1);
