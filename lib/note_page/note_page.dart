@@ -131,7 +131,7 @@ abstract class NotePage extends ChangeNotifier {
     }
 
     final result = data.penPool[penId];
-    assert(result != null);
+    assert(result != null, "penId: $penId penPool:${data.penPool}");
     return result!;
   }
 

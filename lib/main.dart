@@ -176,14 +176,14 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                           child: IgnorePointer(
                               child: RepaintBoundary(
                                   child: CustomPaint(painter: PageItemsPainter(note, BookCoordConverter(pageRect, note)))))),
-                      if (statusManager.interacting == NoteType.book && statusManager.usingPen is SelectPen)
+                      if (statusManager.interacting == NoteType.book && statusManager.bookPageNumber == page.pageNumber && statusManager.usingPen is SelectPen)
                         ConstrainedBox(
                             constraints: const BoxConstraints.expand(),
                             child: IgnorePointer(
                                 child: RepaintBoundary(
                                     child: CustomPaint(
                                         painter:
-                                            SelectPenPainter(statusManager.usingPen as SelectPen, BookCoordConverter(pageRect, note)))))),
+                                            SelectPenPainter(statusManager.usingPen as SelectPen, BookCoordConverter(pageRect, note), note))))),
                       PencilGestureDetector(
                         onDown: (details) {
                           note.penDown(note.canvasPositionToPagePosition(details.localPosition, pageRect));

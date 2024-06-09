@@ -62,6 +62,13 @@ class ItemWrapper {
       maxY = max(p.y, maxY);
     }
 
+    if (item.hasScale()) {
+      minX *= item.scale;
+      maxX *= item.scale;
+      minY *= item.scale;
+      maxY *= item.scale;
+    }
+
     return Rect.fromLTRB(startX + minX, startY + minY, startX + maxX, startY + maxY);
   }
 
@@ -102,22 +109,26 @@ class IndexableArea extends Rect {
   }
 
   static void itemAdded(pb.NotePageItem item, NotePage page) {
+    if (item.whichContent() == pb.NotePageItem_Content.mattingMarkId) return;
     final pageArea = _map[page.noteBook.metaFile.path]?[page.pageNumber];
     if (pageArea == null) return;
     pageArea._addItem(ItemWrapper(item, pageArea, page.data));
   }
 
   static void itemRemoved(pb.NotePageItem item, NotePage page) {
+    if (item.whichContent() == pb.NotePageItem_Content.mattingMarkId) return;
     final pageArea = _map[page.noteBook.metaFile.path]?[page.pageNumber];
     if (pageArea == null) return;
     pageArea._removeItem(item);
   }
 
   static void itemBeforeUpdate(pb.NotePageItem item, NotePage page) {
+    if (item.whichContent() == pb.NotePageItem_Content.mattingMarkId) return;
     itemRemoved(item, page);
   }
 
   static void itemUpdated(pb.NotePageItem item, NotePage page) {
+    if (item.whichContent() == pb.NotePageItem_Content.mattingMarkId) return;
     itemAdded(item, page);
   }
 
@@ -134,7 +145,7 @@ class IndexableArea extends Rect {
   @visibleForTesting
   IndexableArea.forPage(this._page) : super.fromLTRB(0, 0, _page.data.width, _page.data.height) {
     final ts = DateTime.timestamp();
-    _items.addAll(_page.data.items.map((i) => ItemWrapper(i, this, _page.data)));
+    _items.addAll(_page.data.items.where((item) => item.whichContent() != pb.NotePageItem_Content.mattingMarkId).map((i) => ItemWrapper(i, this, _page.data)));
     logInfo("$_tag construct _items: count:${_items.length} cost:${DateTime.timestamp().difference(ts).inMilliseconds}ms");
     _splitSubAreasIfNeed();
   }

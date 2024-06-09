@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart' as material;
 import 'package:reading_note/protobuf/note.pb.dart' as pb;
 
 import '../pdf_matting_performer.dart';
@@ -19,15 +20,24 @@ void paintMatte(
     required CoordConverter coordinateConverter,
     required MattePaintItem item,
     required VoidCallback triggerRepaint,
-    bool forPenPainter = false}) {
+    bool forPenPainter = false,
+    bool isSelected = false}) {
   final position = coordinateConverter.pageOffsetToCanvas(Offset(item.position.dx, item.position.dy));
+
+  // if (isSelected) {
+  //   final rect = Rect.fromLTWH(position.dx, position.dy, item.matte.imageWidth * item.scale, item.matte.imageHeight * item.scale);
+  //   // canvas.drawRect(rect, _selectedPainter);
+  //   canvas.drawRect(rect, Paint()..color = material.Colors.grey.withAlpha(125));
+  //   return;
+  // }
+
   switch (item.status) {
     case MatteStatus.done:
-      _paintImage(canvas: canvas, matte: item.matte, position: position, triggerRepaint: triggerRepaint, scale: item.scale);
+      _paintImage(canvas: canvas, matte: item.matte, position: position, triggerRepaint: triggerRepaint, scale: item.scale, isSelected: isSelected);
       break;
     case MatteStatus.adjusting:
       if (!forPenPainter) {
-        _paintImage(canvas: canvas, matte: item.matte, position: position, triggerRepaint: triggerRepaint, scale: item.scale);
+        _paintImage(canvas: canvas, matte: item.matte, position: position, triggerRepaint: triggerRepaint, scale: item.scale, isSelected: isSelected);
       } else {
         _paintBorder(
             canvas: canvas,
@@ -38,7 +48,7 @@ void paintMatte(
       }
       break;
     case MatteStatus.recommended:
-      _paintImage(canvas: canvas, matte: item.matte, position: position, triggerRepaint: triggerRepaint, scale: item.scale, opacity: 0.5);
+      _paintImage(canvas: canvas, matte: item.matte, position: position, triggerRepaint: triggerRepaint, scale: item.scale, opacity: 0.5, isSelected: isSelected);
       _paintBorder(
           canvas: canvas,
           coordConverter: coordinateConverter,
@@ -48,7 +58,7 @@ void paintMatte(
           opacity: 0.5);
       break;
     case MatteStatus.waiting:
-      _paintImage(canvas: canvas, matte: item.matte, position: position, triggerRepaint: triggerRepaint, scale: item.scale, opacity: 0.2);
+      _paintImage(canvas: canvas, matte: item.matte, position: position, triggerRepaint: triggerRepaint, scale: item.scale, opacity: 0.2, isSelected: isSelected);
       break;
   }
 }
@@ -59,7 +69,8 @@ void _paintImage(
     required Offset position,
     required VoidCallback triggerRepaint,
     required double scale,
-    double? opacity}) {
+    double? opacity,
+    required bool isSelected}) {
   final tuple = imageOfMatte(matte);
   final image = tuple.item1;
   if (image == null) {
@@ -70,6 +81,9 @@ void _paintImage(
   }
   final paint = Paint();
   if (opacity != null) paint.color = Color.fromRGBO(0, 0, 0, opacity);
+  if (isSelected) {
+    paint.colorFilter = const ColorFilter.mode(material.Colors.grey, BlendMode.srcATop);
+  }
 
   if (scale == 1.0) {
     canvas.drawImage(image, Offset(position.dx, position.dy), paint);
@@ -80,7 +94,9 @@ void _paintImage(
         image: image,
         fit: BoxFit.fill,
         filterQuality: FilterQuality.none,
-        opacity: opacity ?? 1.0);
+        opacity: opacity ?? 1.0,
+        colorFilter: paint.colorFilter,
+    );
   }
 }
 

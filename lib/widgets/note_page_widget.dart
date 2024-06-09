@@ -99,6 +99,7 @@ class _NotePageState extends State<NotePageWidget> {
           logDebug("onDoubleTapDown: $_doubleTapOffset");
         },
         onDoubleTap: () {
+          const logging = false;
           final matrix = Matrix4.copy(_controller.value);
           assert(matrix[15] == 1.0);
           assert(matrix[0] == matrix[5] && matrix[5] == matrix[10]);
@@ -116,14 +117,14 @@ class _NotePageState extends State<NotePageWidget> {
           final localPosition = _doubleTapOffset!.item2;
           var xTranslate = globalPosition.dx - localPosition.dx * newScale;
           var yTranslate = globalPosition.dy - localPosition.dy * newScale;
-          logDebug("onDoubleTap newScale: $newScale");
-          logDebug("onDoubleTap: $xTranslate, $yTranslate");
+          if (logging) logDebug("onDoubleTap newScale: $newScale");
+          if (logging) logDebug("onDoubleTap: $xTranslate, $yTranslate");
           xTranslate = min(0, xTranslate);
           yTranslate = min(0, yTranslate);
-          logDebug("onDoubleTap: $xTranslate, $yTranslate");
+          if (logging) logDebug("onDoubleTap: $xTranslate, $yTranslate");
           xTranslate = max(-((note.size.width + margin.width * 2) * newScale - MediaQuery.of(context).size.width), xTranslate);
           yTranslate = max(-((note.size.height + margin.height * 2) * newScale - MediaQuery.of(context).size.height), yTranslate);
-          logDebug("onDoubleTap: $xTranslate, $yTranslate");
+          if (logging) logDebug("onDoubleTap: $xTranslate, $yTranslate");
 
           matrix.setDiagonal(Vector4(newScale, newScale, newScale, 1.0));
           matrix.setEntry(0, 3, xTranslate);
@@ -173,7 +174,8 @@ class _NotePageState extends State<NotePageWidget> {
                     constraints: const BoxConstraints.expand(),
                     child: IgnorePointer(
                         child: RepaintBoundary(
-                            child: CustomPaint(painter: SelectPenPainter(statusManager.usingPen as SelectPen, NoteCoordConverter(note)))))),
+                            child: CustomPaint(
+                                painter: SelectPenPainter(statusManager.usingPen as SelectPen, NoteCoordConverter(note), note))))),
               PencilGestureDetector(
                 onDown: (details) => note.penDown(note.canvasPositionToPage(details.localPosition, 1.0)),
                 onMove: (localPosition) => note.penMove(note.canvasPositionToPage(localPosition, 1.0)),

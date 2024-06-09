@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart' as material;
 import 'package:reading_note/custom_painter/paint_matte.dart';
 import 'package:reading_note/pen/matting_mark_generator.dart';
 import 'package:reading_note/status_manager/status_manager.dart';
@@ -11,7 +12,7 @@ import '../note_page/mark_note_page.dart';
 import '../note_page/note_page.dart';
 import 'coordinate_converter.dart';
 
-typedef _ItemPainter = int Function(Canvas canvas, pb.NotePageItem item, int index, int length);
+typedef _ItemPainter = int Function(Canvas canvas, pb.NotePageItem item, int index, int length, [bool isSelected]);
 
 const _logging = false;
 
@@ -45,16 +46,33 @@ class PageItemsPainter extends CustomPainter {
       countPoints += _itemPainters[item.whichContent().index]!(canvas, item, index, length);
     });
 
-    if (_logging) logInfo("[StylusGesture] _paintDrawingData end. countPoints:$countPoints cost:${DateTime.now().millisecondsSinceEpoch - ts}ms");
+    if (_logging) {
+      logInfo("[StylusGesture] _paintDrawingData end. countPoints:$countPoints cost:${DateTime.now().millisecondsSinceEpoch - ts}ms");
+    }
   }
 
-  int _paintPath(Canvas canvas, pb.NotePageItem item, int index, int length) {
+  /// for [SelectPenPainter]
+  void paintSelected(Canvas canvas, List<pb.NotePageItem> items) {
+    int ts = DateTime.now().millisecondsSinceEpoch;
+    int countPoints = 0;
+    final length = items.length;
+    for (final (index, item) in items.indexed) {
+      countPoints += _itemPainters[item.whichContent().index]!(canvas, item, index, length, true);
+    }
+    if (_logging) logInfo("paintSelected end. countPoints:$countPoints cost:${DateTime.now().millisecondsSinceEpoch - ts}ms");
+  }
+
+  int _paintPath(Canvas canvas, pb.NotePageItem item, int index, int length, [bool isSelected = false]) {
     _updatePenIfNeeded(item.path.penId, page.getPen(item.path.penId));
-    return _paintPoints(canvas, item.path.points
-        .map((point) => _coordinateConverter.pagePositionToCanvas(pb.Point(x: point.x + item.x, y: point.y + item.y))).toList(growable: false));
+    return _paintPoints(
+        canvas,
+        item.path.points
+            .map((point) => _coordinateConverter.pagePositionToCanvas(pb.Point(x: point.x + item.x, y: point.y + item.y)))
+            .toList(growable: false),
+        isSelected);
   }
 
-  int _paintPoints(Canvas canvas, List<Offset> points) {
+  int _paintPoints(Canvas canvas, List<Offset> points, bool isSelected) {
     // canvas.drawPoints(PointMode.polygon, points, _lastPenPaint.item2);
     // return points.length;
 
@@ -62,8 +80,7 @@ class PageItemsPainter extends CustomPainter {
       return 0;
     }
 
-    final paint = _lastPenPaint.item2;
-    // if (points.length == 1) {
+    final paint = _wrapSelectedPaintIfNeed(_lastPenPaint.item2, isSelected);
     if (points.length < 3) {
       canvas.drawPoints(PointMode.polygon, points, paint);
       return points.length;
@@ -78,7 +95,7 @@ class PageItemsPainter extends CustomPainter {
       final l = points.length - 1;
       for (int i = 1; i < l; ++i) {
         final current = points[i];
-        final next = points[i+1];
+        final next = points[i + 1];
         final centerX = (current.dx + next.dx) / 2;
         final centerY = (current.dy + next.dy) / 2;
         // TODO: Improve performance with large point sets. Consider using a shader to implement quadratic Bezier curves or rendering to an image like OneNote.
@@ -92,7 +109,8 @@ class PageItemsPainter extends CustomPainter {
     return points.length;
   }
 
-  int _paintMattingMark(Canvas canvas, pb.NotePageItem item, int index, int length) {
+  int _paintMattingMark(Canvas canvas, pb.NotePageItem item, int index, int length, [bool isSelected = false]) {
+    assert(isSelected == false, "matting could not be selected");
     final mattingMark = (page as MarkNotePage).mattingMarkOfId(item.mattingMarkId);
     if (mattingMark == null) {
       logError("disappeared mattingMark ${item.mattingMarkId}");
@@ -130,7 +148,7 @@ class PageItemsPainter extends CustomPainter {
     return 1;
   }
 
-  int _paintMatte(Canvas canvas, pb.NotePageItem item, int index, int length) {
+  int _paintMatte(Canvas canvas, pb.NotePageItem item, int index, int length, [bool isSelected = false]) {
     final matte = (page as IndependentNotePage).matteOfId(item.matteId);
     if (matte == null) {
       logError("disappeared matte: ${item.matteId} for $page");
@@ -138,10 +156,11 @@ class PageItemsPainter extends CustomPainter {
     }
 
     paintMatte(
-        canvas: canvas,
-        coordinateConverter: _coordinateConverter,
-        item: (matte: matte, status: MatteStatus.done, position: Offset(item.x, item.y), scale: item.hasScale() ? item.scale : 1.0),
-        triggerRepaint: page.triggerRepaint,
+      canvas: canvas,
+      coordinateConverter: _coordinateConverter,
+      item: (matte: matte, status: MatteStatus.done, position: Offset(item.x, item.y), scale: item.hasScale() ? item.scale : 1.0),
+      isSelected: isSelected,
+      triggerRepaint: page.triggerRepaint,
     );
     return 1;
   }
@@ -156,6 +175,17 @@ class PageItemsPainter extends CustomPainter {
         _lastPenPaint.item2
           ..color = Color(pen.color)
           ..strokeWidth = _coordinateConverter.penWidthToCanvas(pen.lineWidth));
+  }
+
+  Paint _wrapSelectedPaintIfNeed(Paint from, bool isSelected) {
+    if (!isSelected) return from;
+    return Paint()
+      ..strokeJoin = StrokeJoin.round
+      ..strokeCap = StrokeCap.round
+      ..style = PaintingStyle.stroke
+      ..color = from.color
+      ..strokeWidth = from.strokeWidth
+      ..colorFilter = ColorFilter.mode(material.Colors.grey.withOpacity(0.9), BlendMode.srcATop);
   }
 
   @override
