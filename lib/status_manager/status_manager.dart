@@ -148,7 +148,7 @@ class StatusManager extends ChangeNotifier {
     if (_reading != null) {
       final i = pageNumber;
       if (_selectingMode[_interacting.index][i] == true) {
-        return _selectPen[_interacting.index][i] ??= SelectPen(_interacting, i);
+        return _selectPen[_interacting.index][i] ??= SelectPen(_interacting);
       }
     }
     if (_mattingOrPuttingMatte) {

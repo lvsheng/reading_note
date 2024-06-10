@@ -1,9 +1,11 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart' as material;
 import 'package:reading_note/pen/pen.dart';
+import 'package:reading_note/pen/selector_pen/select_pen.dart';
 import 'package:reading_note/widgets/pen_selector.dart';
 import 'package:reading_note/widgets/matting_control_panel.dart';
 import 'package:reading_note/widgets/matte_positioner_panel.dart';
+import 'package:reading_note/widgets/selecting_panel.dart';
 import '../pen/matte_positioner_pen.dart';
 import '../status_manager/status_manager.dart';
 import '../note_page/note_page.dart';
@@ -18,8 +20,22 @@ class ControlPanelBuilder {
     Widget? bottom;
     if (statusManager.drawingPen?.type == PenType.mattingMarkPen) {
       bottom = const MattingControlPanel();
-    } else if (statusManager.usingPen is MattePositionerPen) {
-      bottom = MattePositionerPanel(statusManager.usingPen as MattePositionerPen);
+    } else {
+      final usingPen = statusManager.usingPen;
+      switch (usingPen.type) {
+        case PenType.ballPointPen:
+        case PenType.markPen:
+        case PenType.mattingMarkPen:
+          break;
+
+        case PenType.mattePositionerPen:
+          bottom = MattePositionerPanel(usingPen as MattePositionerPen);
+          break;
+
+        case PenType.selectPen:
+          bottom = SelectingPanel(pen: usingPen as SelectPen);
+          break;
+      }
     }
 
     late Widget mainButton;
@@ -36,13 +52,11 @@ class ControlPanelBuilder {
         top: 0,
         bottom: 0,
         left: 0,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                mainButton,
-                PenSelector() /*fixme*/
-              ]),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            mainButton,
+            PenSelector() /*fixme*/
+          ]),
           Expanded(child: Container()),
           if (bottom != null) bottom
         ]));
@@ -52,7 +66,14 @@ class ControlPanelBuilder {
     // return material.MaterialButton(
     return CupertinoButton(
       onPressed: onPressed,
-      child: SizedBox(width: c.mainButtonSize, height: c.mainButtonSize, child: Icon(icon, size: iconSize, color: CupertinoColors.black,)),
+      child: SizedBox(
+          width: c.mainButtonSize,
+          height: c.mainButtonSize,
+          child: Icon(
+            icon,
+            size: iconSize,
+            color: CupertinoColors.black,
+          )),
     );
   }
 }

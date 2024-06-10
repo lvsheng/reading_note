@@ -33,7 +33,7 @@ class _MattingControlPanelState extends State<MattingControlPanel> {
                 onHorizontalDragStart: (detail) {
                   _startOffset = detail.localPosition;
                   _tracker = statusManager.drawingPen!.ongoingTracker! as MattingMarkGenerator;
-                  _tracker!.startAdjustLeft();
+                  _tracker!.beginAdjustLeft();
                 },
                 onHorizontalDragUpdate: (detail) => _tracker!.adjustLeft((detail.localPosition - _startOffset!).dx),
                 onHorizontalDragCancel: () => setState(() => _horizontalDragging = false),
@@ -42,7 +42,7 @@ class _MattingControlPanelState extends State<MattingControlPanel> {
                 onVerticalDragStart: (detail) {
                   _startOffset = detail.localPosition;
                   _tracker = statusManager.drawingPen!.ongoingTracker! as MattingMarkGenerator;
-                  _tracker!.startAdjustHeight();
+                  _tracker!.beginAdjustHeight();
                 },
                 onVerticalDragUpdate: (detail) => _tracker!.adjustHeight((_startOffset! - detail.localPosition).dy),
                 onVerticalDragCancel: () => setState(() => _verticalDragging = false),

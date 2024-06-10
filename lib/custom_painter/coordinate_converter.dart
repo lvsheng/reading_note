@@ -20,6 +20,11 @@ abstract class CoordConverter {
   Rect pageRectToCanvas(Rect rect);
 
   Offset pageOffsetToCanvas(Offset offset);
+
+  Size pageSizeToCanvas(Size size) {
+    final result = pageOffsetToCanvas(Offset(size.width, size.height));
+    return Size(result.dx, result.dy);
+  }
 }
 
 class NoteCoordConverter extends CoordConverter {

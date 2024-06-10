@@ -25,9 +25,10 @@ class SelectPenPainter extends CustomPainter {
     var position = _pen.touchingOn;
     if (position == null) return;
     position = _coordinateConverter.pageOffsetToCanvas(position);
+    final size = _coordinateConverter.pageSizeToCanvas(_pen.size);
     final width = _coordinateConverter.penWidthToCanvas(_pen.lineWidth);
     const borderSide = BorderSide();
-    paintBorder(canvas, Rect.fromCenter(center: position, width: width, height: width),
+    paintBorder(canvas, Rect.fromCenter(center: position, width: size.width, height: size.height),
         top: borderSide, bottom: borderSide, left: borderSide, right: borderSide);
   }
 

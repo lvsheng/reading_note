@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:math';
 import 'dart:ui';
 import 'package:reading_note/file_system_proxy.dart';
 import 'package:reading_note/pen/pen.dart';
@@ -23,6 +24,8 @@ class UserPreferences {
   static const _keyPenList = ["pLB", "pLI"];
   static const _keyCurrentPenId = ["cPIB", "cPII"];
   static const _keyMatteScale = "mS";
+  static const _keySelectPenWidth = "sPW";
+  static const _keySelectPenHeight = "sPH";
 
   UserPreferences._() {
     readyFuture = SharedPreferences.getInstance().then((value) {
@@ -115,6 +118,19 @@ class UserPreferences {
   double matteScaleOf(File book) => _sharedPreferences!.getDouble(_keyOfBook(book, _keyMatteScale)) ?? 1.0;
 
   void setMatteScale(File book, double value) => _setDouble(_keyOfBook(book, _keyMatteScale), value);
+
+  Size get selectPenSize {
+    double w = _sharedPreferences!.getDouble(_keySelectPenWidth) ?? 0;
+    double h = _sharedPreferences!.getDouble(_keySelectPenHeight) ?? 0;
+    if (w.isNaN || w <= 0) w = 3.0;
+    if (h.isNaN || h <= 0) h = 3.0;
+    return Size(w, h);
+  }
+
+  set selectPenSize(Size value) {
+    _sharedPreferences!.setDouble(_keySelectPenWidth, value.width);
+    _sharedPreferences!.setDouble(_keySelectPenHeight, value.height);
+  }
 
   void _setInt(String key, int? value) {
     if (value == _sharedPreferences!.getInt(key)) {

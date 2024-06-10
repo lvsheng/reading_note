@@ -58,10 +58,10 @@ class PenManager {
     // [userPreferences]只在初始化时读取一次，后续只读取本对象内的内存缓存、写入时再同步至[userPreferences]
     var result = userPreferences
         .penListOf(NoteType.note)
-        ?.map((id) => Pen(id, userPreferences.penTypeOf(id), userPreferences.penColorOf(id), userPreferences.penLineWidthOf(id)));
+        ?.map((id) => Pen(id, userPreferences.penTypeOf(id), userPreferences.penColorOf(id), userPreferences.penLineWidthOf(id))).toList(growable: false);
     // result = null;
     if (result == null || result.isEmpty) result = resetPenList(NoteType.note, true);
-    _list = result.toList(growable: false);
+    _list = result;
     _currentPenPair = List.generate(2, (i) {
       assert(list.isNotEmpty, "_penListPair just initialized, should not empty");
       final id = userPreferences.currentPenIdOf(NoteType.values[i]);

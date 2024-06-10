@@ -50,16 +50,16 @@ class MattingMarkGenerator extends PenStrokeTracker {
 
   // for control pannel : todo: diverse the interface
   double? _heightAdjustingStart;
-  void startAdjustHeight() => _heightAdjustingStart = _mark.horizontal.height;
-  void adjustHeight(double increment) {
+  void beginAdjustHeight() => _heightAdjustingStart = _mark.horizontal.height;
+  void adjustHeight(double diff) {
     if (frozen) return;
     final h = _mark.horizontal;
-    _updateMarkPosition(h.left, h.right, h.y, pen.lineWidth = _heightAdjustingStart! + increment / 10);
+    _updateMarkPosition(h.left, h.right, h.y, pen.lineWidth = _heightAdjustingStart! + diff / 10);
     page.triggerRepaint();
   }
 
   double? _leftAdjustingStart;
-  void startAdjustLeft() => _leftAdjustingStart = _drawingItem.x;
+  void beginAdjustLeft() => _leftAdjustingStart = _drawingItem.x;
   void adjustLeft(double increment) {
     if (frozen) return;
     _drawingItem.x = _leftAdjustingStart! + increment / 10;

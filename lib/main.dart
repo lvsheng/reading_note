@@ -5,6 +5,7 @@ import 'package:app_links/app_links.dart';
 import 'package:reading_note/custom_painter/page_items_painter.dart';
 import 'package:reading_note/file_system_proxy.dart';
 import 'package:reading_note/deep_link.dart';
+import 'package:reading_note/status_manager/global_modal_manager.dart';
 import 'package:reading_note/status_manager/status_manager.dart';
 import 'package:reading_note/note_page/note_page.dart';
 import 'package:reading_note/util/log.dart';
@@ -64,6 +65,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
       _saveIfNeeded();
     });
     statusManager.addListener(_statusListener);
+    globalModalManager.addListener(_statusListener);
   }
 
   _saveIfNeeded() => statusManager.saveIfNeeded();
@@ -95,6 +97,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     _timerSaveFile.cancel();
     _saveIfNeeded();
     statusManager.removeListener(_statusListener);
+    globalModalManager.removeListener(_statusListener);
     super.dispose();
   }
 
@@ -170,12 +173,14 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                       return const [];
                     }
 
+                    final coordConverter = BookCoordConverter(pageRect, note);
+
                     return [
                       ConstrainedBox(
                           constraints: const BoxConstraints.expand(),
                           child: IgnorePointer(
                               child: RepaintBoundary(
-                                  child: CustomPaint(painter: PageItemsPainter(note, BookCoordConverter(pageRect, note)))))),
+                                  child: CustomPaint(painter: PageItemsPainter(note, coordConverter))))),
                       if (statusManager.interacting == NoteType.book && statusManager.bookPageNumber == page.pageNumber && statusManager.usingPen is SelectPen)
                         ConstrainedBox(
                             constraints: const BoxConstraints.expand(),
@@ -183,7 +188,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                                 child: RepaintBoundary(
                                     child: CustomPaint(
                                         painter:
-                                            SelectPenPainter(statusManager.usingPen as SelectPen, BookCoordConverter(pageRect, note), note))))),
+                                            SelectPenPainter(statusManager.usingPen as SelectPen, coordConverter, note))))),
                       PencilGestureDetector(
                         onDown: (details) {
                           note.penDown(note.canvasPositionToPagePosition(details.localPosition, pageRect));
@@ -237,6 +242,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
               ),
             ),
           if (statusManager.ready) ControlPanelBuilder.build(context),
+          if (globalModalManager.isNotEmpty) globalModalManager.build(),
           if (_errorTip != null)
             Center(child: Text(_errorTip!, style: const TextStyle(color: CupertinoColors.destructiveRed, fontSize: 20))),
         ],

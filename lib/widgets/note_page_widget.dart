@@ -13,7 +13,7 @@ import '../custom_painter/coordinate_converter.dart';
 import '../custom_painter/matte_positioner_pen_painter.dart';
 import '../custom_painter/page_items_painter.dart';
 import '../pen/matte_positioner_pen.dart';
-import '../pen/selector_pen/indexable_area.dart';
+import '../status_manager/global_modal_manager.dart';
 import '../status_manager/status_manager.dart';
 import '../util/log.dart';
 import 'stylus_gesture_detector.dart';
@@ -23,8 +23,9 @@ class NotePageWidget extends StatefulWidget {
   final File? reading;
   final void Function(bool)? onZoomUpdate;
   final String? title;
+  final ModalCreator? modalCreator;
 
-  const NotePageWidget({super.key, required this.index, this.reading, this.onZoomUpdate, this.title});
+  const NotePageWidget({super.key, required this.index, this.reading, this.onZoomUpdate, this.title, this.modalCreator});
 
   @override
   State<StatefulWidget> createState() => _NotePageState();
@@ -83,6 +84,8 @@ class _NotePageState extends State<NotePageWidget> {
       _controller.value.scale(_minimumScale);
       _firstBuild = false;
     }
+
+    final coordConverter = NoteCoordConverter(note);
 
     return InteractiveViewer(
       // fixme: should InteractiveViewer expose AnimationController to stop the scrolling animation when user touch?
@@ -160,7 +163,7 @@ class _NotePageState extends State<NotePageWidget> {
               ConstrainedBox(
                   constraints: const BoxConstraints.expand(),
                   child:
-                      IgnorePointer(child: RepaintBoundary(child: CustomPaint(painter: PageItemsPainter(note, NoteCoordConverter(note)))))),
+                      IgnorePointer(child: RepaintBoundary(child: CustomPaint(painter: PageItemsPainter(note, coordConverter))))),
               if (statusManager.usingPen is MattePositionerPen)
                 ConstrainedBox(
                     constraints: const BoxConstraints.expand(),
@@ -168,14 +171,14 @@ class _NotePageState extends State<NotePageWidget> {
                         child: RepaintBoundary(
                             child: CustomPaint(
                                 painter: MattePositionerPenPainter(
-                                    statusManager.usingPen as MattePositionerPen, widget.index, NoteCoordConverter(note)))))),
+                                    statusManager.usingPen as MattePositionerPen, widget.index, coordConverter))))),
               if (statusManager.interacting == NoteType.note && statusManager.usingPen is SelectPen)
                 ConstrainedBox(
                     constraints: const BoxConstraints.expand(),
                     child: IgnorePointer(
                         child: RepaintBoundary(
                             child: CustomPaint(
-                                painter: SelectPenPainter(statusManager.usingPen as SelectPen, NoteCoordConverter(note), note))))),
+                                painter: SelectPenPainter(statusManager.usingPen as SelectPen, coordConverter, note))))),
               PencilGestureDetector(
                 onDown: (details) => note.penDown(note.canvasPositionToPage(details.localPosition, 1.0)),
                 onMove: (localPosition) => note.penMove(note.canvasPositionToPage(localPosition, 1.0)),
@@ -186,6 +189,8 @@ class _NotePageState extends State<NotePageWidget> {
                 },
                 onCancel: (details) => note.penUp(note.canvasPositionToPage(details.localPosition, 1.0)),
               ),
+
+              if (globalModalManager.isNotEmpty) globalModalManager.build(),
             ],
           ),
         ),
