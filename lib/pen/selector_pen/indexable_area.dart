@@ -19,10 +19,12 @@ extension PbPoint on pb.Point {
 }
 
 class ItemWrapper {
-  bool _selected = false; // still false if ancestor area is [_allSelected]
   pb.NotePageItem item;
   late Rect boundingBox;
   IndexableArea _belongedArea;
+
+  set _selected(bool value) => item.selected = value;
+  bool get _selected => item.selected; // still false if ancestor area is [_allSelected]
 
   ItemWrapper(this.item, this._belongedArea, pb.NotePage pbPage) {
     boundingBox = boundingBoxOfItem(item, pbPage);
@@ -140,7 +142,7 @@ class IndexableArea extends Rect {
   double _subAreaRedundantRate = 0;
   bool _doNotSplitSubAreas = false;
   _HitCacheStack? _hitCacheStack;
-  bool _allSelected = false;
+  bool allSelected = false;
 
   @visibleForTesting
   IndexableArea.forPage(this._page) : super.fromLTRB(0, 0, _page.data.width, _page.data.height) {
@@ -172,8 +174,7 @@ class IndexableArea extends Rect {
     if (_logging) logDebug("todo: removeItem: $item");
   }
 
-  // static const _splitThresholdForItemCount = 100;
-  static const _splitThresholdForItemCount = 10;
+  static const _splitThresholdForItemCount = 100; // todo: choose a real value
 
   void _splitSubAreasIfNeed() {
     if (_subAreas != null) return;
@@ -291,8 +292,8 @@ class IndexableArea extends Rect {
     }
   }
 
-  Iterable<pb.NotePageItem> select(Rect targetArea, [_HitCacheStack? cache]) sync* {
-    if (_allSelected) return;
+  Iterable<Object/*pb.NotePageItem or IndexableArea*/> select(Rect targetArea, [_HitCacheStack? cache]) sync* {
+    if (allSelected) return;
 
     final ts = DateTime.timestamp();
     cache ??= _hitCacheStack ??= [];
@@ -304,7 +305,8 @@ class IndexableArea extends Rect {
     }
 
     if (effectTarget == this) {
-      yield* _selectAllItems();
+      allSelected = true;
+      yield this;
       if (_logging) logDebug("$_tag select(hit all). cost:${DateTime.timestamp().difference(ts).inMilliseconds}ms");
       return;
     }
@@ -368,10 +370,7 @@ class IndexableArea extends Rect {
     _items.sort((a, b) => a.boundingBox.left > b.boundingBox.left ? 1 : -1);
   }
 
-  Iterable<pb.NotePageItem> _selectAllItems() sync* {
-    if (_allSelected) return;
-    _allSelected = true;
-
+  Iterable<pb.NotePageItem> iterateAllItems() sync* {
     if (_subAreas == null) {
       for (final wrapper in _items) {
         yield wrapper.item;
@@ -381,7 +380,7 @@ class IndexableArea extends Rect {
 
     for (final row in _subAreas!) {
       for (final area in row) {
-        yield* area._selectAllItems();
+        yield* area.iterateAllItems();
       }
     }
   }

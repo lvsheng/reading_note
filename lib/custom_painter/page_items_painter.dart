@@ -12,7 +12,8 @@ import '../note_page/mark_note_page.dart';
 import '../note_page/note_page.dart';
 import 'coordinate_converter.dart';
 
-typedef _ItemPainter = int Function(Canvas canvas, pb.NotePageItem item, int index, int length, [bool isSelected]);
+typedef _ItemPainter = int Function(Canvas canvas, pb.NotePageItem item, int indexForMattingMark, int lengthForMattingMark,
+    [bool isSelected]);
 
 const _logging = false;
 
@@ -52,17 +53,12 @@ class PageItemsPainter extends CustomPainter {
   }
 
   /// for [SelectPenPainter]
-  void paintSelected(Canvas canvas, List<pb.NotePageItem> items) {
-    int ts = DateTime.now().millisecondsSinceEpoch;
-    int countPoints = 0;
-    final length = items.length;
-    for (final (index, item) in items.indexed) {
-      countPoints += _itemPainters[item.whichContent().index]!(canvas, item, index, length, true);
-    }
-    if (_logging) logInfo("paintSelected end. countPoints:$countPoints cost:${DateTime.now().millisecondsSinceEpoch - ts}ms");
+  void paintSelectedItem(Canvas canvas, pb.NotePageItem item) {
+    assert(item.whichContent() != pb.NotePageItem_Content.mattingMarkId);
+    _itemPainters[item.whichContent().index]!(canvas, item, 0, 0, true);
   }
 
-  int _paintPath(Canvas canvas, pb.NotePageItem item, int index, int length, [bool isSelected = false]) {
+  int _paintPath(Canvas canvas, pb.NotePageItem item, int _, int __, [bool isSelected = false]) {
     _updatePenIfNeeded(item.path.penId, page.getPen(item.path.penId));
     return _paintPoints(
         canvas,
@@ -148,7 +144,7 @@ class PageItemsPainter extends CustomPainter {
     return 1;
   }
 
-  int _paintMatte(Canvas canvas, pb.NotePageItem item, int index, int length, [bool isSelected = false]) {
+  int _paintMatte(Canvas canvas, pb.NotePageItem item, int _, int __, [bool isSelected = false]) {
     final matte = (page as IndependentNotePage).matteOfId(item.matteId);
     if (matte == null) {
       logError("disappeared matte: ${item.matteId} for $page");

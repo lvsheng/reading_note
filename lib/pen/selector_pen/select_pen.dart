@@ -2,25 +2,23 @@ import 'package:flutter/cupertino.dart';
 import 'package:reading_note/pen/pen.dart';
 import 'package:flutter/material.dart' as material;
 import 'package:reading_note/pen/selector_pen/indexable_area.dart';
+import 'package:reading_note/pen/selector_pen/selected.dart';
 import 'package:reading_note/status_manager/global_modal_manager.dart';
 import 'package:reading_note/status_manager/status_manager.dart';
 import 'package:reading_note/user_preferences.dart';
 import 'package:reading_note/util/log.dart';
 
 import '../../note_page/note_page.dart';
-import '../../protobuf/note.pb.dart' as pb;
 import '../pen_stroke_tracker.dart';
 
 /// not visible to [PenManager], added automatically by [StatusManager] if needed
 class SelectPen extends Pen with ChangeNotifier {
-  final NoteType _noteType;
   NotePage? page;
   Offset? touchingOn;
-  List<pb.NotePageItem> selected = [];
+  final selected = Selected();
   IndexableArea? _indexableArea;
 
-  // fixme: book时这个pageNumber不准。。。
-  SelectPen(this._noteType) : super(-1, PenType.selectPen, material.Colors.black, 0);
+  SelectPen() : super(-1, PenType.selectPen, material.Colors.black, 0);
 
   Size _size = userPreferences.selectPenSize;
 
@@ -143,6 +141,12 @@ class SelectPen extends Pen with ChangeNotifier {
   }
 
   set size(Size value) {
+    if (page != null) {
+      final maxWidth = page!.data.width * 2;
+      final maxHeight = page!.data.height * 2;
+      if (value.width > maxWidth) value = Size(maxWidth, value.height);
+      if (value.height > maxHeight) value = Size(value.width, maxHeight);
+    }
     _size = userPreferences.selectPenSize = value;
     if (touchingOn != null) {
       _select();
@@ -165,7 +169,7 @@ class SelectPen extends Pen with ChangeNotifier {
   }
 
   Widget _build() {
-    // CoordConverter coordConverter = NoteCoordConverter(); // todo: 拿到当前的笔记/书coordConverter
+    // CoordConverter coordConverter = NoteCoordConverter(); // todo: 拿到当前的笔记/书coordConverter，展示按当前页缩放后的结果
     // final penSize = coordConverter.pageSizeToCanvas(size);
     final penSize = size;
     return Container(
