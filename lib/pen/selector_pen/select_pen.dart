@@ -187,4 +187,24 @@ class SelectPen extends Pen with ChangeNotifier {
     refresh();
     statusManager.toggleSelectingMode();
   }
+
+  void delete() {
+    final items = selected.iterateAllItems().toList(growable: false);
+    page!.historyStack.doo(() {
+      for (final item in items) {
+        assert(!item.deleted);
+        item.deleted = true;
+      }
+      selected.clear();
+    }, () {
+      for (final item in items) {
+        assert(item.deleted);
+        item.deleted = false; // todo: remove on save disk
+      }
+      selected.addAll(items);
+    });
+    page!.markHasItemsDeleted();
+    page!.triggerRepaint();
+    _triggerRepaint();
+  }
 }

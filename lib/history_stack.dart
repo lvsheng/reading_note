@@ -1,16 +1,24 @@
 import 'dart:ui';
-import 'package:tuple/tuple.dart';
 
-typedef HistoryItem = Tuple2<VoidCallback/*do*/, VoidCallback/*undo*/>;
+typedef _HistoryItem = (
+  VoidCallback /*do*/,
+  VoidCallback /*undo*/,
+);
 
 class HistoryStack {
-  final List<HistoryItem> _doHistory = [];
-  final List<HistoryItem> _undoHistory = [];
+  final List<_HistoryItem> _doHistory = [];
+  final List<_HistoryItem> _undoHistory = [];
 
-  void doOne(HistoryItem item) {
-    item.item1();
-    _doHistory.add(item);
+  void doo(VoidCallback doo, VoidCallback undo) {
+    doo();
+    _doHistory.add((doo, undo));
     _undoHistory.clear();
+
+    const int historyLimit = 300;
+    const int removeCount = 100;
+    if (_doHistory.length > historyLimit) {
+      _doHistory.removeRange(0, removeCount);
+    }
   }
 
   bool get undoable => _doHistory.isNotEmpty;
@@ -20,14 +28,14 @@ class HistoryStack {
   void undo() {
     assert(undoable);
     final item = _doHistory.removeLast();
-    item.item2();
+    item.$2();
     _undoHistory.add(item);
   }
 
   void redo() {
     assert(redoable);
     final item = _undoHistory.removeLast();
-    item.item1();
+    item.$1();
     _doHistory.add(item);
   }
 }

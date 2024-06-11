@@ -23,6 +23,7 @@ class _SelectingPanelState extends State<SelectingPanel> {
   Widget build(BuildContext context) {
     const padding = EdgeInsets.symmetric(vertical: 5, horizontal: 20);
     return Column(children: [
+      c.buildButton(widget.pen.selected.isEmpty ? null : () => setState(() => widget.pen.delete()), material.Icons.delete_forever, CupertinoColors.systemRed),
       Padding(
         padding: padding,
         child: GestureDetector(

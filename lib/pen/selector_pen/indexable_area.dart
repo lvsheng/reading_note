@@ -113,7 +113,11 @@ class IndexableArea extends Rect {
   static void itemAdded(pb.NotePageItem item, NotePage page) {
     if (item.whichContent() == pb.NotePageItem_Content.mattingMarkId) return;
     final pageArea = _map[page.noteBook.metaFile.path]?[page.pageNumber];
-    if (pageArea == null) return;
+    if (pageArea == null) {
+      logWarn("pageArea is null: $page");
+      return;
+    }
+    logDebug("itemAdded: $item $page");
     pageArea._addItem(ItemWrapper(item, pageArea, page.data));
   }
 
@@ -326,7 +330,7 @@ class IndexableArea extends Rect {
     if (_logging) logDebug("$_tag select. sort(${_items.length}) cost:${DateTime.timestamp().difference(ts).inMilliseconds}ms");
 
     for (final wrapper in _items) {
-      if (wrapper._selected) continue;
+      if (wrapper._selected || wrapper.item.deleted) continue;
 
       final itemRect = wrapper.boundingBox;
       if (itemRect.left > effectTarget.right) break;
@@ -385,6 +389,7 @@ class IndexableArea extends Rect {
           continue;
         }
         wrapper.item.iterateId = _iterateId;
+        if (wrapper.item.deleted) continue;
         yield wrapper.item;
       }
       return;

@@ -44,6 +44,7 @@ class PageItemsPainter extends CustomPainter {
     int countPoints = 0;
 
     page.forEachPageItem((item, index, length) {
+      if (item.deleted) return;
       countPoints += _itemPainters[item.whichContent().index]!(canvas, item, index, length);
     });
 

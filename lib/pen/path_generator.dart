@@ -27,7 +27,7 @@ class PathGenerator extends PenStrokeTracker {
       assert(page.data.items.last == _drawingItem);
       page.data.items.removeLast();
     } else {
-      IndexableArea.itemBeforeUpdate(_drawingItem, page);
+      IndexableArea.itemAdded(_drawingItem, page);
     }
     return success;
   }

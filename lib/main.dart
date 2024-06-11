@@ -60,7 +60,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     WidgetsBinding.instance.addObserver(this);
     _initDeepLinks();
     _fetchData();
-    _timerSaveFile = Timer.periodic(const Duration(seconds: 3), (timer) {
+    _timerSaveFile = Timer.periodic(const Duration(seconds: 10), (timer) {
       if (!mounted) return;
       _saveIfNeeded();
     });

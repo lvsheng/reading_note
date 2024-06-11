@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:quiver/collection.dart';
 import 'package:reading_note/file_system_proxy.dart';
+import 'package:reading_note/history_stack.dart';
 import 'package:reading_note/note_page/note_page.dart';
 import 'package:reading_note/pen/selector_pen/select_pen.dart';
 import 'package:reading_note/status_manager/matting_manager.dart';

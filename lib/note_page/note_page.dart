@@ -6,6 +6,7 @@ import 'package:protobuf/protobuf.dart';
 import 'package:reading_note/status_manager/status_manager.dart';
 import 'package:reading_note/util/log.dart';
 import 'package:reading_note/protobuf/note.pb.dart' as pb;
+import '../history_stack.dart';
 import '../pen/pen_stroke_tracker.dart';
 import 'independent_note_page.dart';
 import 'mark_note_page.dart';
@@ -44,7 +45,8 @@ abstract class NotePage extends ChangeNotifier {
       logError("page file disappeared: $file");
     }
 
-    return _create(noteType: noteType, pageNumber: pageNumber, noteBook: noteBook, size: desiredSize, data: data, file: file, pdfPage: pdfPage);
+    return _create(
+        noteType: noteType, pageNumber: pageNumber, noteBook: noteBook, size: desiredSize, data: data, file: file, pdfPage: pdfPage);
   }
 
   static NotePage _create(
@@ -82,6 +84,8 @@ abstract class NotePage extends ChangeNotifier {
   bool _dataChanged = false;
   PenStrokeTracker? _drawing;
 
+  final historyStack = HistoryStack();
+
   @protected
   NotePage(this.pageNumber, this.noteBook, this.data, File? file) : _file = file;
 
@@ -107,11 +111,31 @@ abstract class NotePage extends ChangeNotifier {
     return effective;
   }
 
+  bool _hasItemsDeleted = false;
+
+  void markHasItemsDeleted() {
+    _hasItemsDeleted = true;
+    _dataChanged = true;
+  }
+
   void saveIfNeeded() async {
     if (!_dataChanged) return;
     _dataChanged = false;
     _file ??= await noteBook.addNotePage(pageNumber);
-    await _file!.writeAsBytes(data.writeToBuffer());
+
+    logDebug("saveIfNeeded");
+    var writtenData = data;
+    if (_hasItemsDeleted) {
+      writtenData = data.deepCopy();
+      for (final (index, originalItem) in data.items.indexed) {
+        // copy deleted
+        if (originalItem.deleted) writtenData.items[index].deleted = true;
+      }
+      writtenData.items.removeWhere((item) => item.deleted);
+      logDebug("ignored deleted items while writing file: ${data.items.length - writtenData.items.length}");
+      // todo: write back to data & reset _hasItemsDeleted when expired in historyStack?
+    }
+    await _file!.writeAsBytes(writtenData.writeToBuffer());
   }
 
   void forEachPageItem(void Function(pb.NotePageItem item, int index, int length) action) {
