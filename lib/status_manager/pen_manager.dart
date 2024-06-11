@@ -45,6 +45,7 @@ class PenManager {
           addNewPen(PenType.ballPointPen, CupertinoColors.systemRed, 4),
           addNewPen(PenType.ballPointPen, material.Colors.black, 4),
           addNewPen(PenType.ballPointPen, material.Colors.blue.shade800, 4),
+          addNewPen(PenType.ballPointPen, material.Colors.green, 4),
           addNewPen(PenType.markPen, CupertinoColors.systemYellow.withAlpha(150), 30),
         ]);
     if (!initializingPenListPair) {

@@ -87,9 +87,8 @@ class _ControlPanelBuilderState extends State<ControlPanelBuilder> {
                 mainButton,
                 Expanded(
                     child: Row(
-                  mainAxisAlignment: MainAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    const SizedBox(width: 100),
                     Padding(
                       padding: const EdgeInsets.all(20),
                       child: GestureDetector(
@@ -116,6 +115,7 @@ class _ControlPanelBuilderState extends State<ControlPanelBuilder> {
                             color: redoable ? CupertinoColors.black : CupertinoColors.systemGrey,
                           )),
                     ),
+                    const SizedBox(width: 30),
                   ],
                 ))
               ],

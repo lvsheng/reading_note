@@ -157,7 +157,7 @@ class StatusManager extends ChangeNotifier {
     return noteTuple?.item1;
   }
 
-  final historyStack = HistoryStack();
+  final historyStack = HistoryStack(); // todo: move to page?
 
   Pen get usingPen {
     if (_reading != null) {

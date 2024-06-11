@@ -133,7 +133,7 @@ class IndexableArea extends Rect {
     itemRemoved(item, page);
   }
 
-  static void itemUpdated(pb.NotePageItem item, NotePage page) {
+  static void itemAfterUpdated(pb.NotePageItem item, NotePage page) {
     if (item.whichContent() == pb.NotePageItem_Content.mattingMarkId) return;
     itemAdded(item, page);
   }

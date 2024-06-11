@@ -24,8 +24,17 @@ class _SelectingPanelState extends State<SelectingPanel> {
     const leftPadding = 20.0;
     const padding = EdgeInsets.symmetric(vertical: 5, horizontal: leftPadding);
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      () {
+        final enable = widget.pen.selected.isNotEmpty;
+        final moving = widget.pen.moving;
+        assert(enable || !moving);
+        return c.buildButton(enable ? () => setState(() => widget.pen.moving = !widget.pen.moving) : null,
+            moving ? material.Icons.select_all : material.Icons.open_with_sharp, CupertinoColors.activeBlue,
+            heightFactor: 0.7, padding: const EdgeInsets.only(left: leftPadding));
+      }(),
       c.buildButton(widget.pen.selected.isEmpty ? null : () => setState(() => widget.pen.delete()), material.Icons.delete_forever,
-          CupertinoColors.systemRed),
+          CupertinoColors.systemRed,
+          heightFactor: 0.2),
       Padding(
         padding: padding,
         child: GestureDetector(
@@ -78,8 +87,8 @@ class _SelectingPanelState extends State<SelectingPanel> {
         children: [
           c.buildButton(widget.pen.selected.isEmpty ? null : () => setState(() => widget.pen.refresh()), material.Icons.refresh,
               CupertinoColors.activeBlue,
-              widthFactor: 0.248, padding: const EdgeInsets.only(left: leftPadding)),
-          c.buildConfirmButton(() => setState(() => widget.pen.finish()), widthFactor: 0.7),
+              widthFactor: 0.248, heightFactor: 0.5, padding: const EdgeInsets.only(left: leftPadding)),
+          c.buildConfirmButton(() => setState(() => widget.pen.finish()), widthFactor: 0.7, heightFactor: 0.5),
         ],
       ),
     ]);

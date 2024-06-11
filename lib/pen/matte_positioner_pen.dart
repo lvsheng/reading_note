@@ -279,7 +279,7 @@ class MattePositionerPen extends Pen with ChangeNotifier {
         IndexableArea.itemBeforeUpdate(item, _currentPage!);
         item.x = positions[index].dx;
         item.y = positions[index].dy;
-        IndexableArea.itemUpdated(item, _currentPage!);
+        IndexableArea.itemAfterUpdated(item, _currentPage!);
       }
     }
   }
@@ -336,7 +336,7 @@ class MattePositionerPen extends Pen with ChangeNotifier {
         } else {
           item.clearScale();
         }
-        IndexableArea.itemUpdated(item, _currentPage!);
+        IndexableArea.itemAfterUpdated(item, _currentPage!);
       }
       _repositionAdjustingPageItems();
     }
