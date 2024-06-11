@@ -412,13 +412,14 @@ class MarkNotePageData extends $pb.GeneratedMessage {
 
 enum NotePageItem_Content {
   path, 
-  mattingMarkId,
+  mattingMarkId, 
   matteId, 
   notSet
 }
 
 class NotePageItem extends $pb.GeneratedMessage {
   var selected = false;
+  var iterateId = 0;
   factory NotePageItem({
     $core.double? x,
     $core.double? y,

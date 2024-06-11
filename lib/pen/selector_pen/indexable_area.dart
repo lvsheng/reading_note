@@ -370,9 +370,21 @@ class IndexableArea extends Rect {
     _items.sort((a, b) => a.boundingBox.left > b.boundingBox.left ? 1 : -1);
   }
 
-  Iterable<pb.NotePageItem> iterateAllItems() sync* {
+  int _iterateId = 0;
+  Iterable<pb.NotePageItem> iterateAllItems(int iterateId) sync* {
+    if (_iterateId == iterateId) {
+      if (_logging) logInfo("repeated iterate on $this, ignore it"); // todo: reproduce the issue
+      return;
+    }
+    _iterateId = iterateId;
+
     if (_subAreas == null) {
       for (final wrapper in _items) {
+        if (wrapper.item.iterateId == iterateId) {
+          if (_logging) logInfo("repeated iterate on $wrapper, ignore it"); // todo: reproduce the issue
+          continue;
+        }
+        wrapper.item.iterateId = _iterateId;
         yield wrapper.item;
       }
       return;
@@ -380,7 +392,7 @@ class IndexableArea extends Rect {
 
     for (final row in _subAreas!) {
       for (final area in row) {
-        yield* area.iterateAllItems();
+        yield* area.iterateAllItems(iterateId);
       }
     }
   }
