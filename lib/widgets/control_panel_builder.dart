@@ -11,10 +11,34 @@ import '../status_manager/status_manager.dart';
 import '../note_page/note_page.dart';
 import 'common.dart' as c;
 
-class ControlPanelBuilder {
-  ControlPanelBuilder._();
+class ControlPanelBuilder extends StatefulWidget {
+  const ControlPanelBuilder({super.key});
 
-  static Widget build(BuildContext context) {
+  @override
+  State<StatefulWidget> createState() => _ControlPanelBuilderState();
+}
+
+class _ControlPanelBuilderState extends State<ControlPanelBuilder> {
+  @override
+  void initState() {
+    statusManager.historyStack.addListener(_refresh);
+    statusManager.addListener(_refresh);
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    statusManager.historyStack.removeListener(_refresh);
+    statusManager.removeListener(_refresh);
+  }
+
+  void _refresh() {
+    setState(() {});
+  }
+
+  @override
+  Widget build(BuildContext context) {
     assert(statusManager.ready);
 
     Widget? bottom;
@@ -48,21 +72,62 @@ class ControlPanelBuilder {
         break;
     }
 
+    final undoable = statusManager.historyStack.undoable;
+    final redoable = statusManager.historyStack.redoable;
+
     return Positioned(
         top: 0,
         bottom: 0,
         left: 0,
+        right: 0,
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            mainButton,
-            PenSelector() /*fixme*/
+            Row(
+              children: [
+                mainButton,
+                Expanded(
+                    child: Row(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    const SizedBox(width: 100),
+                    Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: GestureDetector(
+                          onTap: undoable
+                              ? () {
+                                  statusManager.historyStack.undo();
+                                }
+                              : null,
+                          child: Icon(
+                            material.Icons.undo,
+                            color: undoable ? CupertinoColors.black : CupertinoColors.systemGrey,
+                          )),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: GestureDetector(
+                          onTap: redoable
+                              ? () {
+                                  statusManager.historyStack.redo();
+                                }
+                              : null,
+                          child: Icon(
+                            material.Icons.redo,
+                            color: redoable ? CupertinoColors.black : CupertinoColors.systemGrey,
+                          )),
+                    ),
+                  ],
+                ))
+              ],
+            ),
+            const PenSelector(),
           ]),
           Expanded(child: Container()),
           if (bottom != null) bottom
         ]));
   }
 
-  static Widget _buildMainButton(VoidCallback onPressed, IconData icon, [double iconSize = c.mainButtonSize]) {
+  Widget _buildMainButton(VoidCallback onPressed, IconData icon, [double iconSize = c.mainButtonSize]) {
     // return material.MaterialButton(
     return CupertinoButton(
       onPressed: onPressed,

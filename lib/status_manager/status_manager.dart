@@ -8,6 +8,7 @@ import 'package:reading_note/pen/selector_pen/select_pen.dart';
 import 'package:reading_note/status_manager/matting_manager.dart';
 import 'package:reading_note/status_manager/pen_manager.dart';
 import 'package:reading_note/user_preferences.dart';
+import 'package:reading_note/util/log.dart';
 import 'package:tuple/tuple.dart';
 import '../note_page/independent_note_page.dart';
 import '../note_page/mark_note_page.dart';
@@ -144,6 +145,19 @@ class StatusManager extends ChangeNotifier {
     }
     return result;
   }
+
+  NotePage? get currentPage {
+    if (_reading == null) {
+      logWarn("_reading == null");
+      return null;
+    }
+    final map = interacting == NoteType.note ? _pageIndependentNoteMap : _pageMarkNoteMap;
+    final i = pageNumber;
+    final noteTuple = map![i];
+    return noteTuple?.item1;
+  }
+
+  final historyStack = HistoryStack();
 
   Pen get usingPen {
     if (_reading != null) {

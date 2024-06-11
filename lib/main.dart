@@ -241,7 +241,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                 ),
               ),
             ),
-          if (statusManager.ready) ControlPanelBuilder.build(context),
+          if (statusManager.ready) const ControlPanelBuilder(),
           if (globalModalManager.isNotEmpty) globalModalManager.build(),
           if (_errorTip != null)
             Center(child: Text(_errorTip!, style: const TextStyle(color: CupertinoColors.destructiveRed, fontSize: 20))),

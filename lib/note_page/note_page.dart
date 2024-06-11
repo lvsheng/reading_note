@@ -84,8 +84,6 @@ abstract class NotePage extends ChangeNotifier {
   bool _dataChanged = false;
   PenStrokeTracker? _drawing;
 
-  final historyStack = HistoryStack();
-
   @protected
   NotePage(this.pageNumber, this.noteBook, this.data, File? file) : _file = file;
 

@@ -21,9 +21,11 @@ class _SelectingPanelState extends State<SelectingPanel> {
 
   @override
   Widget build(BuildContext context) {
-    const padding = EdgeInsets.symmetric(vertical: 5, horizontal: 20);
-    return Column(children: [
-      c.buildButton(widget.pen.selected.isEmpty ? null : () => setState(() => widget.pen.delete()), material.Icons.delete_forever, CupertinoColors.systemRed),
+    const leftPadding = 20.0;
+    const padding = EdgeInsets.symmetric(vertical: 5, horizontal: leftPadding);
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      c.buildButton(widget.pen.selected.isEmpty ? null : () => setState(() => widget.pen.delete()), material.Icons.delete_forever,
+          CupertinoColors.systemRed),
       Padding(
         padding: padding,
         child: GestureDetector(
@@ -72,7 +74,14 @@ class _SelectingPanelState extends State<SelectingPanel> {
           ),
         ),
       ),
-      c.buildConfirmButton(() => setState(() => widget.pen.finish())),
+      Row(
+        children: [
+          c.buildButton(widget.pen.selected.isEmpty ? null : () => setState(() => widget.pen.refresh()), material.Icons.refresh,
+              CupertinoColors.activeBlue,
+              widthFactor: 0.248, padding: const EdgeInsets.only(left: leftPadding)),
+          c.buildConfirmButton(() => setState(() => widget.pen.finish()), widthFactor: 0.7),
+        ],
+      ),
     ]);
   }
 }

@@ -181,6 +181,7 @@ class SelectPen extends Pen with ChangeNotifier {
 
   void refresh() {
     selected.clear();
+    _triggerRepaint();
   }
 
   void finish() {
@@ -190,21 +191,24 @@ class SelectPen extends Pen with ChangeNotifier {
 
   void delete() {
     final items = selected.iterateAllItems().toList(growable: false);
-    page!.historyStack.doo(() {
+    statusManager.historyStack.doo(() { // todo: move to page?
       for (final item in items) {
         assert(!item.deleted);
         item.deleted = true;
       }
       selected.clear();
+      page!.triggerRepaint();
+      _triggerRepaint();
     }, () {
       for (final item in items) {
         assert(item.deleted);
-        item.deleted = false; // todo: remove on save disk
+        item.deleted = false;
+        item.selected = true;
       }
       selected.addAll(items);
+      page!.triggerRepaint();
+      _triggerRepaint();
     });
     page!.markHasItemsDeleted();
-    page!.triggerRepaint();
-    _triggerRepaint();
   }
 }

@@ -19,6 +19,22 @@ class PenSelectorState extends State<PenSelector> {
   DateTime? _lastTapTime;
 
   @override
+  void initState() {
+    statusManager.addListener(_refresh);
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    statusManager.removeListener(_refresh);
+    super.dispose();
+  }
+
+  void _refresh() {
+    setState(() {});
+  }
+
+  @override
   Widget build(BuildContext context) {
     const dragStep = 75.0;
     final usingPen = statusManager.usingPen;
