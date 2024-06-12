@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:reading_note/protobuf/note.pb.dart' as pb;
+import 'package:reading_note/status_manager/status_manager.dart';
 import 'pen.dart';
 import 'pen_stroke_tracker.dart';
 import 'selector_pen/indexable_area.dart';
@@ -22,12 +23,22 @@ class PathGenerator extends PenStrokeTracker {
 
   @override
   bool stop() {
+    assert(page.data.items.last == _drawingItem);
+    page.data.items.removeLast();
+
     bool success = _drawingItem.path.points.isNotEmpty;
-    if (!success) {
-      assert(page.data.items.last == _drawingItem);
-      page.data.items.removeLast();
-    } else {
-      IndexableArea.itemAdded(_drawingItem, page);
+    if (success) {
+      final item = _drawingItem;
+      final capturedPage = page;
+      statusManager.historyStack.doo(() {
+        capturedPage.data.items.add(item);
+        capturedPage.triggerRepaint();
+        IndexableArea.itemAdded(item, page);
+      }, () {
+        capturedPage.removeItem(item); // matte will reorder in placing, so maybe is not last one.
+        capturedPage.triggerRepaint();
+        IndexableArea.itemRemoved(item, page);
+      });
     }
     return success;
   }

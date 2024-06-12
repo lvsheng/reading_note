@@ -89,7 +89,8 @@ class MattePositionerPen extends Pen with ChangeNotifier {
         return Offset(latestItem.x, latestItem.y + matte.imageHeight * scale + _padding);
       } else {
         // justify: bottom
-        return Offset(latestItem.x + matte.imageWidth * scale + _padding, latestItem.y + matte.imageHeight * scale - _handling!.imageHeight * _scale);
+        return Offset(
+            latestItem.x + matte.imageWidth * scale + _padding, latestItem.y + matte.imageHeight * scale - _handling!.imageHeight * _scale);
       }
     } else if (latestItem.whichContent() == pb.NotePageItem_Content.path) {
       final maxX = latestItem.x + iterables.max(latestItem.path.points.map((p) => p.x))!;
@@ -144,11 +145,13 @@ class MattePositionerPen extends Pen with ChangeNotifier {
   void onUserConfirm() {
     final handlingList = _oneByOne ? [_handling!] : _mattes;
     final positions = _calculatePositions(handlingList);
+    final List<pb.NotePageItem> confirmedItems = [];
     switch (_status) {
       case _PenStatus.recommending:
         assert(_adjustingPageItems == null);
         for (final (index, matte) in handlingList.indexed) {
-          _createPageItem(matte, _currentPage!, positions[index]);
+          final item = _createPageItem(matte, _currentPage!, positions[index]);
+          confirmedItems.add(item);
         }
         mattingManager.removeAll(handlingList);
         assert(_mattes.isEmpty || _mattes[_handlingIndex] == _handling); // updated by onMattingManagerChange from removeAll
@@ -160,6 +163,7 @@ class MattePositionerPen extends Pen with ChangeNotifier {
           // re-order as [latestItem] used in [_position] calculation
           _currentPage!.data.items.remove(item);
           _currentPage!.data.items.add(item);
+          confirmedItems.add(item);
         }
         _changeStatus(_PenStatus.recommending);
         mattingManager.removeAll(handlingList);
@@ -178,6 +182,26 @@ class MattePositionerPen extends Pen with ChangeNotifier {
     _latestPosition = null; // trigger [_position] calculation
     triggerRepaint();
     _currentPage!.triggerRepaint();
+
+    bool isFirst = true;
+    final capturedPage = _currentPage!;
+    statusManager.historyStack.doo(() {
+      if (isFirst) {
+        isFirst = false;
+        return;
+      }
+      // redo:
+      for (final item in confirmedItems) {
+        capturedPage.data.items.add(item);
+      }
+      capturedPage.triggerRepaint();
+    }, () {
+      // undo:
+      for (final item in confirmedItems) {
+        capturedPage.removeItem(item);
+      }
+      capturedPage.triggerRepaint();
+    });
   }
 
   bool couldConfirm() => _status != _PenStatus.nothingToDo;
@@ -272,14 +296,17 @@ class MattePositionerPen extends Pen with ChangeNotifier {
 
   void _repositionAdjustingPageItems() {
     if (_status == _PenStatus.adjusting) {
-      final positions =
-          _calculatePositions(_adjustingPageItems!.map((item) => _matteOfPageItem(item, _currentPage!.data)).toList(growable: false));
-      for (final (index, item) in _adjustingPageItems!.indexed) {
-        // todo: 性能是否ok? 避免在移动中重建索引？
-        IndexableArea.itemBeforeUpdate(item, _currentPage!);
-        item.x = positions[index].dx;
-        item.y = positions[index].dy;
-        IndexableArea.itemAfterUpdated(item, _currentPage!);
+      final items = _adjustingPageItems!;
+      // final oldPositions = items.map((item) => Offset(item.x, item.y)).toList(growable: false);
+      final positions = _calculatePositions(items.map((item) => _matteOfPageItem(item, _currentPage!.data)).toList(growable: false));
+      final page = _currentPage!;
+      for (final (index, item) in items.indexed) {
+        // assert(item.x == oldPositions[index].dx && item.y == oldPositions[index].dy);
+        final newPosition = positions[index];
+        IndexableArea.itemBeforeUpdate(item, page); // todo: 性能是否ok? 避免在移动中重建索引？
+        item.x = newPosition.dx;
+        item.y = newPosition.dy;
+        IndexableArea.itemAfterUpdated(item, page);
       }
     }
   }

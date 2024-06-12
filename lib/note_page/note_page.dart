@@ -166,4 +166,20 @@ abstract class NotePage extends ChangeNotifier {
   void triggerRepaint() {
     notifyListeners();
   }
+
+  void removeItem(pb.NotePageItem target) {
+    final items = data.items;
+    int index = -1;
+    for (int i = items.length - 1; i >= 0; ++i) {
+      if (items[i] == target) {
+        index = i;
+        break;
+      }
+    }
+    if (index == -1) {
+      logError("not found: $target in $this");
+      return;
+    }
+    items.removeAt(index);
+  }
 }

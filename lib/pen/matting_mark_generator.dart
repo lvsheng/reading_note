@@ -4,6 +4,7 @@ import 'package:reading_note/pen/pen_stroke_tracker.dart';
 import 'package:reading_note/protobuf/note.pb.dart' as pb;
 import 'package:reading_note/util/log.dart';
 import '../status_manager/matting_manager.dart';
+import '../status_manager/status_manager.dart';
 import 'selector_pen/indexable_area.dart';
 
 class MattingMarkGenerator extends PenStrokeTracker {
@@ -29,7 +30,20 @@ class MattingMarkGenerator extends PenStrokeTracker {
   @override
   bool stop() {
     mattingManager.startOne(_mark, _markId, page);
-    IndexableArea.itemAdded(_drawingItem, page);
+
+    assert(page.data.items.last == _drawingItem);
+    page.data.items.removeLast();
+
+    final item = _drawingItem;
+    final capturedPage = page;
+    statusManager.historyStack.doo(() {
+      capturedPage.data.items.add(item);
+      capturedPage.triggerRepaint();
+    }, () {
+      // todo: remove from mattingManager?
+      capturedPage.removeItem(item); // matte will reorder in placing, so maybe is not last one.
+      capturedPage.triggerRepaint();
+    });
     return true;
   }
 
@@ -48,7 +62,7 @@ class MattingMarkGenerator extends PenStrokeTracker {
       ..height = height;
   }
 
-  // for control pannel : todo: diverse the interface
+  // for control panel : todo: diverse the interface
   double? _heightAdjustingStart;
   void beginAdjustHeight() => _heightAdjustingStart = _mark.horizontal.height;
   void adjustHeight(double diff) {
