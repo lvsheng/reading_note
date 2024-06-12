@@ -14,7 +14,7 @@ class PathGenerator extends PenStrokeTracker {
     page.data.items.add(_drawingItem = pb.NotePageItem()
       ..x = position.dx
       ..y = position.dy
-      ..path = (pb.Path()..penId = _generatePbPenId(pen, page.data.penPool)));
+      ..path = (pb.Path()..penId = generatePbPenId(pen, page.data.penPool)));
   }
 
   @override
@@ -32,7 +32,7 @@ class PathGenerator extends PenStrokeTracker {
     return success;
   }
 
-  int _generatePbPenId(Pen pen, Map<int, pb.Pen> pbPenPool) {
+  static int generatePbPenId(Pen pen, Map<int, pb.Pen> pbPenPool) {
     int lastPenId = 0;
     pb.Pen? result;
 

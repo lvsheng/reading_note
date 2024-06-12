@@ -136,15 +136,9 @@ class StatusManager extends ChangeNotifier {
 
   set bookPageNumber(int pageNumber) => userPreferences.setBookPage(reading!, pageNumber);
 
-  List<Pen> get penList {
-    final result = [_mattingOrMattePositionerPen]; // todo: 橡皮、选择笔
-    result.addAll(_penManager.list);
-    if (result.isEmpty) {
-      // todo: 是否不应该此时这样做？但防止下次绘画时没有笔，还是要避免画笔列表空
-      _penManager.resetPenList(interacting);
-    }
-    return result;
-  }
+  List<Pen> get penList => [_mattingOrMattePositionerPen, ...normalPenList];
+
+  List<Pen> get normalPenList => _penManager.list;
 
   NotePage? get currentPage {
     if (_reading == null) {

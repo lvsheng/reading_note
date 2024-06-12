@@ -1,5 +1,4 @@
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart' as material;
 import 'package:reading_note/pen/selector_pen/select_pen.dart';
 import 'package:reading_note/status_manager/matting_manager.dart';
@@ -95,34 +94,38 @@ class PenSelectorState extends State<PenSelector> {
   Widget _buildPenItem(Pen pen, Pen usingPen) {
     return Transform.scale(
       scale: pen == usingPen ? 2.0 : 1.0,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            margin: const EdgeInsets.symmetric(horizontal: 3),
-            child: Icon(
-              (const [
-                CupertinoIcons.pencil,
-                material.Icons.brush_rounded,
-                material.Icons.format_paint_outlined,
-                material.Icons.format_paint,
-                material.Icons.select_all,
-              ])[pen.type.index],
-              color: pen.type != PenType.mattePositionerPen
-                  ? pen.color
-                  : (mattingManager.isNotEmpty ? pen.color : CupertinoColors.systemGrey4),
-              size: 20,
-            ),
+      child: buildPenIcon(pen),
+    );
+  }
+
+  static Widget buildPenIcon(Pen pen) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          margin: const EdgeInsets.symmetric(horizontal: 3),
+          child: Icon(
+            (const [
+              CupertinoIcons.pencil,
+              material.Icons.brush_rounded,
+              material.Icons.format_paint_outlined,
+              material.Icons.format_paint,
+              material.Icons.select_all,
+            ])[pen.type.index],
+            color: pen.type != PenType.mattePositionerPen
+                ? pen.color
+                : (mattingManager.isNotEmpty ? pen.color : CupertinoColors.systemGrey4),
+            size: 20,
           ),
-          if (pen.type == PenType.ballPointPen)
-            Transform.translate(
-                offset: const Offset(0, -3),
-                child: Container(
-                    height: pen.lineWidth,
-                    width: 15,
-                    decoration: BoxDecoration(borderRadius: BorderRadius.all(Radius.circular(pen.lineWidth)), color: pen.color))),
-        ],
-      ),
+        ),
+        if (pen.type == PenType.ballPointPen)
+          Transform.translate(
+              offset: const Offset(0, -3),
+              child: Container(
+                  height: pen.lineWidth,
+                  width: 15,
+                  decoration: BoxDecoration(borderRadius: BorderRadius.all(Radius.circular(pen.lineWidth)), color: pen.color))),
+      ],
     );
   }
 }

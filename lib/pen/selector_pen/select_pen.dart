@@ -11,6 +11,7 @@ import 'package:reading_note/user_preferences.dart';
 import 'package:reading_note/util/log.dart';
 import 'package:reading_note/protobuf/note.pb.dart' as pb;
 import '../../note_page/note_page.dart';
+import '../path_generator.dart';
 import '../pen_stroke_tracker.dart';
 
 class _ItemPosition {
@@ -35,6 +36,7 @@ class SelectPen extends Pen with ChangeNotifier {
   final selected = Selected();
   IndexableArea? _indexableArea;
   bool _moving = false;
+  bool _changingPen = false;
 
   SelectPen() : super(-1, PenType.selectPen, material.Colors.black, 0);
 
@@ -45,11 +47,17 @@ class SelectPen extends Pen with ChangeNotifier {
   final scaleCornerRadius = 5.0;
 
   bool get moving => _moving;
+  bool get changingPen => _changingPen;
 
   set moving(bool value) {
     assert(selected.isNotEmpty);
     _moving = value;
     _triggerRepaint();
+  }
+
+  set changingPen(bool value) {
+    assert(selected.isNotEmpty);
+    _changingPen = value;
   }
 
   static const _errorNotAllowed = "MattePlacePen id not allowed!"; // fixme: divorce not allowed behavior from base Pen
@@ -71,6 +79,8 @@ class SelectPen extends Pen with ChangeNotifier {
 
   @override
   PenStrokeTracker beginPaint(Offset position, NotePage page, int pageNumber) {
+    paintSelectedStatus = true;
+
     _indexableArea ??= IndexableArea.getOrCreate(this.page ??= page);
     touchingOn = position;
     _refreshGlobalModal(); // trigger remove global modal
@@ -96,6 +106,7 @@ class SelectPen extends Pen with ChangeNotifier {
       hWRate = originalDiagonalDiff.dy / originalDiagonalDiff.dx;
     }
     _movingLastPosition = touchingOn!;
+    assert(_itemsMoving == null);
     _itemsMoving = selected.iterateAllItems().toList(growable: false);
     _positionsBeforeMoving = _itemsMoving!.map((i) => _ItemPosition(i, isScale ? originalDiagonalRect! : null)).toList(growable: false);
     for (final item in _itemsMoving!) {
@@ -170,6 +181,7 @@ class SelectPen extends Pen with ChangeNotifier {
 
         page!.triggerRepaint();
         _updateSelectedBoundingBoxIfNeeded();
+        paintSelectedStatus = true;
         _triggerRepaint();
       }, () {
         for (final item in itemsMoving) {
@@ -182,6 +194,7 @@ class SelectPen extends Pen with ChangeNotifier {
 
         page!.triggerRepaint();
         _updateSelectedBoundingBoxIfNeeded();
+        paintSelectedStatus = true;
         _triggerRepaint();
       });
     }
@@ -383,6 +396,8 @@ class SelectPen extends Pen with ChangeNotifier {
   void refresh() {
     selected.clear();
     _moving = false;
+    _changingPen = false;
+    paintSelectedStatus = true;
     _triggerRepaint();
   }
 
@@ -410,8 +425,33 @@ class SelectPen extends Pen with ChangeNotifier {
       }
       page!.triggerRepaint();
       selected.addAll(items);
+      paintSelectedStatus = true;
       _triggerRepaint();
     });
     page!.markHasItemsDeleted();
+  }
+
+  bool paintSelectedStatus = true;
+  void changePen(Pen pen) {
+    final penId = PathGenerator.generatePbPenId(pen, page!.data.penPool);
+    final items = selected.iterateAllItems().where((item) => item.whichContent() == pb.NotePageItem_Content.path).toList(growable: false);
+    final List<int> oldPenIds = List.generate(items.length, (index) => items[index].path.penId);
+    statusManager.historyStack.doo(() {
+      for (final item in items) {
+        assert(!item.deleted);
+        item.path.penId = penId;
+      }
+      page!.triggerRepaint();
+      paintSelectedStatus = false;
+      _triggerRepaint();
+    }, () {
+      for (final (index, item) in items.indexed) {
+        assert(!item.deleted);
+        item.path.penId = oldPenIds[index];
+      }
+      page!.triggerRepaint();
+      paintSelectedStatus = false;
+      _triggerRepaint();
+    });
   }
 }

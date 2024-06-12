@@ -10,6 +10,8 @@ const panelPadding = 0.0;
 
 const buttonHeight = 150.0;
 
+const buttonPadding = 16.0;
+
 Widget buildConfirmButton(VoidCallback? onPressed, {double widthFactor = 1.0, double heightFactor = 1.0, EdgeInsets? padding}) =>
     buildButton(onPressed, material.Icons.check, CupertinoColors.activeBlue,
         widthFactor: widthFactor, heightFactor: heightFactor, padding: padding);

@@ -31,8 +31,10 @@ class SelectPenPainter extends CustomPainter {
       return;
     }
 
-    for (final item in _pen.selected.iterateAllItems()) {
-      _pageItemsPainter.paintSelectedItem(canvas, item);
+    if (_pen.paintSelectedStatus) {
+      for (final item in _pen.selected.iterateAllItems()) {
+        _pageItemsPainter.paintSelectedItem(canvas, item);
+      }
     }
 
     _paintOutline(canvas, _coordinateConverter.pageRectToCanvas(_pen.selectedBoundingBox!));
