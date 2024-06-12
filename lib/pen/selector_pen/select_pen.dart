@@ -14,6 +14,14 @@ import 'package:reading_note/protobuf/note.pb.dart' as pb;
 import '../../note_page/note_page.dart';
 import '../pen_stroke_tracker.dart';
 
+class _ItemPosition {
+  final double x;
+  final double y;
+  final double? scale;
+
+  _ItemPosition(pb.NotePageItem item): x = item.x, y = item.y, scale = item.hasScale() ? item.scale : null;
+}
+
 /// not visible to [PenManager], added automatically by [StatusManager] if needed
 class SelectPen extends Pen with ChangeNotifier {
   NotePage? page;
@@ -53,7 +61,7 @@ class SelectPen extends Pen with ChangeNotifier {
 
   Offset? _movingStart;
   Offset? _movingLastPosition;
-  List<pb.NotePageItem>? _itemCopyBeforeMoving;
+  List<_ItemPosition>? _positionsBeforeMoving;
   List<pb.NotePageItem>? _itemsMoving;
 
   @override
@@ -72,12 +80,8 @@ class SelectPen extends Pen with ChangeNotifier {
 
     _movingLastPosition = _movingStart = touchingOn!;
     _itemsMoving = selected.iterateAllItems().toList(growable: false);
-    _itemCopyBeforeMoving = _itemsMoving!.map((i) {
-      assert(i.selected == true);
-      assert(i.deleted == false);
-      return i.deepCopy()..selected = true;
-    }).toList(growable: false);
-    for (var item in _itemsMoving!) {
+    _positionsBeforeMoving = _itemsMoving!.map((i) => _ItemPosition(i)).toList(growable: false);
+    for (final item in _itemsMoving!) {
       IndexableArea.itemBeforeUpdate(item, page);
     }
 
@@ -110,9 +114,9 @@ class SelectPen extends Pen with ChangeNotifier {
       }
 
       final itemsMoving = _itemsMoving!;
-      final itemsCopyBeforeMoving = _itemCopyBeforeMoving!;
-      final itemsCopyAfterMoving = itemsMoving.map((i) => i.deepCopy()).toList(growable: false);
-      final closurePage = page!;
+      final positionsBeforeMoving = _positionsBeforeMoving!;
+      final positionsCopyAfterMoving = itemsMoving.map((i) => _ItemPosition(i)).toList(growable: false);
+      final capturedPage = page!;
       bool isFirstCall = true;
       statusManager.historyStack.doo(() {
         if (isFirstCall) {
@@ -121,24 +125,24 @@ class SelectPen extends Pen with ChangeNotifier {
         }
 
         // redo:
-        for (var item in itemsMoving) {
-          IndexableArea.itemBeforeUpdate(item, closurePage);
+        for (final item in itemsMoving) {
+          IndexableArea.itemBeforeUpdate(item, capturedPage);
         }
-        _copyPositionAndScale(itemsCopyAfterMoving, itemsMoving);
-        for (var item in itemsMoving) {
-          IndexableArea.itemAfterUpdated(item, closurePage);
+        _copyPositionAndScale(positionsCopyAfterMoving, itemsMoving);
+        for (final item in itemsMoving) {
+          IndexableArea.itemAfterUpdated(item, capturedPage);
         }
 
         page!.triggerRepaint();
         _updateSelectedBoundingBoxIfNeeded();
         _triggerRepaint();
       }, () {
-        for (var item in itemsMoving) {
-          IndexableArea.itemBeforeUpdate(item, closurePage);
+        for (final item in itemsMoving) {
+          IndexableArea.itemBeforeUpdate(item, capturedPage);
         }
-        _copyPositionAndScale(itemsCopyBeforeMoving, itemsMoving);
-        for (var item in itemsMoving) {
-          IndexableArea.itemAfterUpdated(item, closurePage);
+        _copyPositionAndScale(positionsBeforeMoving, itemsMoving);
+        for (final item in itemsMoving) {
+          IndexableArea.itemAfterUpdated(item, capturedPage);
         }
 
         page!.triggerRepaint();
@@ -151,7 +155,7 @@ class SelectPen extends Pen with ChangeNotifier {
     _movingStart = null;
     _movingLastPosition = null;
     _itemsMoving = null;
-    _itemCopyBeforeMoving = null;
+    _positionsBeforeMoving = null;
 
     _triggerRepaint();
     _refreshGlobalModal();
@@ -159,13 +163,13 @@ class SelectPen extends Pen with ChangeNotifier {
     super.endPaint();
   }
 
-  void _copyPositionAndScale(List<pb.NotePageItem> from, List<pb.NotePageItem> to) {
+  void _copyPositionAndScale(List<_ItemPosition> from, List<pb.NotePageItem> to) {
     assert(from.length == to.length);
     for (final (index, item) in to.indexed) {
       assert(!item.deleted);
       final fromItem = from[index];
-      if (fromItem.hasScale()) {
-        item.scale = fromItem.scale;
+      if (fromItem.scale != null) {
+        item.scale = fromItem.scale!;
       }
       item.x = fromItem.x;
       item.y = fromItem.y;

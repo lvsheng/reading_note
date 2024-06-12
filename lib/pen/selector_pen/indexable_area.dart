@@ -24,6 +24,7 @@ class ItemWrapper {
   IndexableArea _belongedArea;
 
   set _selected(bool value) => item.selected = value;
+
   bool get _selected => item.selected; // still false if ancestor area is [_allSelected]
 
   ItemWrapper(this.item, this._belongedArea, pb.NotePage pbPage) {
@@ -114,7 +115,7 @@ class IndexableArea extends Rect {
     if (item.whichContent() == pb.NotePageItem_Content.mattingMarkId) return;
     final pageArea = _map[page.noteBook.metaFile.path]?[page.pageNumber];
     if (pageArea == null) {
-      logWarn("pageArea is null: $page");
+      logDebug("pageArea not found!: $page");
       return;
     }
     logDebug("itemAdded: $item $page");
@@ -124,8 +125,11 @@ class IndexableArea extends Rect {
   static void itemRemoved(pb.NotePageItem item, NotePage page) {
     if (item.whichContent() == pb.NotePageItem_Content.mattingMarkId) return;
     final pageArea = _map[page.noteBook.metaFile.path]?[page.pageNumber];
-    if (pageArea == null) return;
-    pageArea._removeItem(item);
+    if (pageArea == null) {
+      logDebug("pageArea not found! $page");
+      return;
+    }
+    pageArea._removeItem(ItemWrapper(item, pageArea, page.data));
   }
 
   static void itemBeforeUpdate(pb.NotePageItem item, NotePage page) {
@@ -151,7 +155,9 @@ class IndexableArea extends Rect {
   @visibleForTesting
   IndexableArea.forPage(this._page) : super.fromLTRB(0, 0, _page.data.width, _page.data.height) {
     final ts = DateTime.timestamp();
-    _items.addAll(_page.data.items.where((item) => item.whichContent() != pb.NotePageItem_Content.mattingMarkId).map((i) => ItemWrapper(i, this, _page.data)));
+    _items.addAll(_page.data.items
+        .where((item) => item.whichContent() != pb.NotePageItem_Content.mattingMarkId)
+        .map((i) => ItemWrapper(i, this, _page.data)));
     logInfo("$_tag construct _items: count:${_items.length} cost:${DateTime.timestamp().difference(ts).inMilliseconds}ms");
     _splitSubAreasIfNeed();
   }
@@ -162,20 +168,30 @@ class IndexableArea extends Rect {
     assert(item._belongedArea == this);
     if (_logging) logDebug("_addItem ${item.boundingBox} into $this");
     if (_subAreas == null) {
-      _items.add(item);
+      if (_itemsSorted) {
+        int index = _items.length;
+        for (final (i, each) in _items.indexed) {
+          if (item.boundingBox.left <= each.boundingBox.left) {
+            index = i;
+            break;
+          }
+        }
+        _items.insert(index, item);
+      } else {
+        _items.add(item);
+      }
       return;
     }
     assert(!movedFromParentItems);
     _addItemIntoSubArea(item);
   }
 
-  void _removeItem(pb.NotePageItem item) {
+  void _removeItem(ItemWrapper wrapper) {
     if (_subAreas == null) {
-      _items.removeWhere((wrapper) => wrapper.item == item);
+      _items.removeWhere((each) => wrapper.item == each.item);
       return;
     }
-    // todo
-    if (_logging) logDebug("todo: removeItem: $item");
+    _removeItemFromSubArea(wrapper);
   }
 
   static const _splitThresholdForItemCount = 100; // todo: choose a real value
@@ -271,6 +287,15 @@ class IndexableArea extends Rect {
     }
   }
 
+  void _removeItemFromSubArea(ItemWrapper item) {
+    final box = item.boundingBox;
+    final intersectedSubAreas = _getIntersectedSubAreas(box);
+    if (_logging) logDebug("_removeItemFromSubArea intersectedSubAreas.length: ${intersectedSubAreas.length}");
+    for (final targetArea in intersectedSubAreas) {
+      targetArea._removeItem(item);
+    }
+  }
+
   Iterable<IndexableArea> _getIntersectedSubAreas(Rect target) sync* {
     assert(_subAreas != null);
     assert(target.intersect(this).width >= 0 && target.intersect(this).height >= 0);
@@ -296,7 +321,7 @@ class IndexableArea extends Rect {
     }
   }
 
-  Iterable<Object/*pb.NotePageItem or IndexableArea*/> select(Rect targetArea, [_HitCacheStack? cache]) sync* {
+  Iterable<Object /*pb.NotePageItem or IndexableArea*/ > select(Rect targetArea, [_HitCacheStack? cache]) sync* {
     if (allSelected) return;
 
     final ts = DateTime.timestamp();
@@ -375,6 +400,7 @@ class IndexableArea extends Rect {
   }
 
   int _iterateId = 0;
+
   Iterable<pb.NotePageItem> iterateAllItems(int iterateId) sync* {
     if (_iterateId == iterateId) {
       if (_logging) logInfo("repeated iterate on $this, ignore it"); // todo: reproduce the issue
