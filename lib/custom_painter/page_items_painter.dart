@@ -61,9 +61,16 @@ class PageItemsPainter extends CustomPainter {
 
   int _paintPath(Canvas canvas, pb.NotePageItem item, int _, int __, [bool isSelected = false]) {
     _updatePenIfNeeded(item.path.penId, page.getPen(item.path.penId));
+
+    var points = item.path.points;
+    if (item.hasScale()) {
+      final scale = item.scale;
+      points = points.map((p) => pb.Point(x: p.x * scale, y: p.y * scale)).toList(growable: false);
+    }
+
     return _paintPoints(
         canvas,
-        item.path.points
+        points
             .map((point) => _coordinateConverter.pagePositionToCanvas(pb.Point(x: point.x + item.x, y: point.y + item.y)))
             .toList(growable: false),
         isSelected);

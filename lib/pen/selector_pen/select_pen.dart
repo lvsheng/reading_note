@@ -1,7 +1,6 @@
 import 'dart:math';
 
 import 'package:flutter/cupertino.dart';
-import 'package:protobuf/protobuf.dart';
 import 'package:reading_note/pen/pen.dart';
 import 'package:flutter/material.dart' as material;
 import 'package:reading_note/pen/selector_pen/indexable_area.dart';
@@ -17,9 +16,16 @@ import '../pen_stroke_tracker.dart';
 class _ItemPosition {
   final double x;
   final double y;
+  final double? xNormalized;
+  final double? yNormalized;
   final double? scale;
 
-  _ItemPosition(pb.NotePageItem item): x = item.x, y = item.y, scale = item.hasScale() ? item.scale : null;
+  _ItemPosition(pb.NotePageItem item, [Rect? normalizeBase])
+      : x = item.x,
+        y = item.y,
+        xNormalized = normalizeBase == null ? null : (item.x - normalizeBase.left) / normalizeBase.width,
+        yNormalized = normalizeBase == null ? null : (item.y - normalizeBase.top) / normalizeBase.height,
+        scale = item.hasScale() ? item.scale : null;
 }
 
 /// not visible to [PenManager], added automatically by [StatusManager] if needed
@@ -59,7 +65,6 @@ class SelectPen extends Pen with ChangeNotifier {
   @override
   set lineWidth(double value) => throw _errorNotAllowed;
 
-  Offset? _movingStart;
   Offset? _movingLastPosition;
   List<_ItemPosition>? _positionsBeforeMoving;
   List<pb.NotePageItem>? _itemsMoving;
@@ -71,6 +76,7 @@ class SelectPen extends Pen with ChangeNotifier {
     _refreshGlobalModal(); // trigger remove global modal
 
     if (!_moving) {
+      // select more
       return PositionTracker(this, touchingOn!, page, (position) {
         touchingOn = position;
         _select();
@@ -78,18 +84,34 @@ class SelectPen extends Pen with ChangeNotifier {
       });
     }
 
-    _movingLastPosition = _movingStart = touchingOn!;
+    final scaleOriginInfo = _shouldTrackOnScale(touchingOn!);
+    final isScale = scaleOriginInfo != null;
+    Offset? originalDiagonalDiff;
+    Rect? originalDiagonalRect;
+    double? hWRate;
+    if (isScale) {
+      originalDiagonalDiff = scaleOriginInfo.$2 - scaleOriginInfo.$1;
+      assert(originalDiagonalDiff.dx.abs() == selectedBoundingBox!.width && originalDiagonalDiff.dy.abs() == selectedBoundingBox!.height);
+      originalDiagonalRect = Rect.fromLTWH(scaleOriginInfo.$1.dx, scaleOriginInfo.$1.dy, originalDiagonalDiff.dx, originalDiagonalDiff.dy);
+      hWRate = originalDiagonalDiff.dy / originalDiagonalDiff.dx;
+    }
+    _movingLastPosition = touchingOn!;
     _itemsMoving = selected.iterateAllItems().toList(growable: false);
-    _positionsBeforeMoving = _itemsMoving!.map((i) => _ItemPosition(i)).toList(growable: false);
+    _positionsBeforeMoving = _itemsMoving!.map((i) => _ItemPosition(i, isScale ? originalDiagonalRect! : null)).toList(growable: false);
     for (final item in _itemsMoving!) {
       IndexableArea.itemBeforeUpdate(item, page);
     }
 
-    final scaleOrigin = _shouldTrackOnScale(touchingOn!);
-
     return PositionTracker(this, touchingOn!, page, (position) {
       touchingOn = position;
-      _updateMove(position);
+      if (isScale) {
+        // scale
+        _updateScale(position, scaleOriginInfo.$1, originalDiagonalDiff!, hWRate!);
+      } else {
+        // move
+        _updateMove(position);
+      }
+
       _triggerRepaint();
       _updateSelectedBoundingBoxIfNeeded();
       _movingLastPosition = position;
@@ -104,7 +126,20 @@ class SelectPen extends Pen with ChangeNotifier {
     }
   }
 
-  void _updateScale(Offset position) {}
+  void _updateScale(Offset current, Offset origin, Offset originalDiagonalDiff, double hWRate) {
+    final currentRelativeX = current.dx - origin.dx;
+    final currentDiagonalDiff = Offset(currentRelativeX, hWRate * currentRelativeX); // ignore current y, keep hWRate
+    final scale = currentDiagonalDiff.dx / originalDiagonalDiff.dx;
+    for (final (index, item) in _itemsMoving!.indexed) {
+      final originalPosition = _positionsBeforeMoving![index];
+      final originalScale = originalPosition.scale ?? 1.0;
+      item.scale = originalScale * scale;
+      if (item.scale == 1.0) item.clearScale();
+
+      item.x = originalPosition.xNormalized! * currentDiagonalDiff.dx + origin.dx;
+      item.y = originalPosition.yNormalized! * currentDiagonalDiff.dy + origin.dy;
+    }
+  }
 
   @override
   void endPaint() {
@@ -152,7 +187,6 @@ class SelectPen extends Pen with ChangeNotifier {
     }
 
     touchingOn = null;
-    _movingStart = null;
     _movingLastPosition = null;
     _itemsMoving = null;
     _positionsBeforeMoving = null;
@@ -204,17 +238,17 @@ class SelectPen extends Pen with ChangeNotifier {
   }
 
   /// @return: scale origin
-  Offset? _shouldTrackOnScale(Offset position) {
-    for (final corner in [
-      selectedBoundingBox!.topLeft,
-      selectedBoundingBox!.topRight,
-      selectedBoundingBox!.bottomLeft,
-      selectedBoundingBox!.bottomRight
+  (Offset/*origin*/, Offset/*diagonal*/)? _shouldTrackOnScale(Offset position) {
+    for (final pair in [
+      (selectedBoundingBox!.topLeft, selectedBoundingBox!.bottomRight),
+      (selectedBoundingBox!.topRight, selectedBoundingBox!.bottomLeft),
+      (selectedBoundingBox!.bottomLeft, selectedBoundingBox!.topRight),
+      (selectedBoundingBox!.bottomRight, selectedBoundingBox!.topLeft),
     ]) {
-      final diff = position - corner;
+      final diff = position - pair.$2;
       final threshold = scaleCornerRadius * 1.5;
       if (diff.distance < threshold) {
-        return corner;
+        return pair;
       }
     }
     return null;

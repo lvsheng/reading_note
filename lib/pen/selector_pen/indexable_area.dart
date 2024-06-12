@@ -47,11 +47,6 @@ class ItemWrapper {
       case pb.NotePageItem_Content.notSet:
         assert(false);
     }
-
-    if (item.hasScale()) {
-      result = Rect.fromLTWH(result.left, result.top, result.width * item.scale, result.height * item.scale);
-      if (_logging) logDebug("item.hasScale: $item");
-    }
     return result;
   }
 
@@ -76,6 +71,7 @@ class ItemWrapper {
   }
 
   static Rect _rectOfMatting(pb.NotePageItem item, pb.NotePage pbPage) {
+    assert(!item.hasScale());
     final mattingMark = pbPage.markNoteData.mattingMarkPool[item.mattingMarkId]!;
     switch (mattingMark.whichContent()) {
       case pb.MattingMark_Content.horizontal:
@@ -94,7 +90,12 @@ class ItemWrapper {
 
   static Rect _rectOfMatte(pb.NotePageItem item, pb.NotePage pbPage) {
     final matte = pbPage.independentNoteData.mattePool[item.matteId]!;
-    return Rect.fromLTWH(item.x, item.y, matte.imageWidth.toDouble(), matte.imageHeight.toDouble());
+    Rect result = Rect.fromLTWH(item.x, item.y, matte.imageWidth.toDouble(), matte.imageHeight.toDouble());
+    if (item.hasScale()) {
+      result = Rect.fromLTWH(result.left, result.top, result.width * item.scale, result.height * item.scale);
+      if (_logging) logDebug("item.hasScale: $item");
+    }
+    return result;
   }
 }
 
@@ -367,7 +368,11 @@ class IndexableArea extends Rect {
       bool hit = false;
       switch (item.whichContent()) {
         case pb.NotePageItem_Content.path:
-          for (final point in item.path.points) {
+          for (var point in item.path.points) {
+            if (item.hasScale()) {
+              final scale = item.scale;
+              point = pb.Point(x: point.x * scale, y: point.y * scale);
+            }
             if (point.insideRect(effectTarget, item.x, item.y)) {
               hit = true;
               break;
