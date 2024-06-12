@@ -12,6 +12,7 @@ import 'package:reading_note/util/log.dart';
 import 'package:tuple/tuple.dart';
 import '../note_page/independent_note_page.dart';
 import '../note_page/mark_note_page.dart';
+import '../note_page/note_book.dart';
 import '../pen/matte_positioner_pen.dart';
 import '../pen/pen.dart';
 
@@ -247,5 +248,11 @@ class StatusManager extends ChangeNotifier {
   void endDrawing(Offset position) {
     _drawing = null;
     notifyListeners();
+  }
+
+  String updateCurrentPageTitle(String title) {
+    NoteBook.getOrCreate(reading!, interacting).setTitleOf(pageNumber, title);
+    notifyListeners();
+    return title;
   }
 }

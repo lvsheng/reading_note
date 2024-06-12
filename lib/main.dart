@@ -15,6 +15,7 @@ import 'package:reading_note/user_preferences.dart';
 import 'package:pdfrx/pdfrx.dart';
 import 'custom_painter/coordinate_converter.dart';
 import 'custom_painter/select_pen_painter.dart';
+import 'note_page/note_book.dart';
 import 'pen/selector_pen/select_pen.dart';
 import 'widgets/control_panel_builder.dart';
 
@@ -232,7 +233,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                               if (_enablePageViewPager) setState(() => _enablePageViewPager = false);
                             }
                           },
-                          title: "第${index + 1}章",
+                          title: NoteBook.getOrCreate(_reading!, NoteType.note).getTitleOf(index),
                         );
                       },
                     ),

@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:path/path.dart' as p;
 import 'package:reading_note/protobuf/note.pb.dart' as pb;
 import 'package:protobuf/protobuf.dart';
+import 'package:reading_note/util/log.dart';
 import 'note_page.dart';
 
 class NoteBook {
@@ -60,7 +61,29 @@ class NoteBook {
 
   Future<File> addNotePage(int pageNumber) {
     int pageId = ++_data!.lastPageId;
-    return _createPageFile(pageId, () => _data!.pages[pageNumber] = pb.PageInfo()..pageId = pageId..createTimeInMinute = (DateTime.now().millisecondsSinceEpoch / 1000 / 60).round());
+    return _createPageFile(
+        pageId,
+        () => _data!.pages[pageNumber] = pb.PageInfo()
+          ..pageId = pageId
+          ..createTimeInMinute = (DateTime.now().millisecondsSinceEpoch / 1000 / 60).round());
+  }
+
+  String getTitleOf(int pageNumber) => _data!.pages[pageNumber]?.title ?? "";
+
+  String setTitleOf(int pageNumber, String title) {
+    final page = _data!.pages[pageNumber];
+    if (page == null) {
+      logError("can't get page: $page");
+      return "";
+    }
+
+    if (title == page.title) {
+      return title;
+    }
+
+    page.title = title;
+    _save();
+    return title;
   }
 
   Future<File> _createPageFile(int pageId, VoidCallback updateMeta) async {

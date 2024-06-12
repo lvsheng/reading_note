@@ -10,6 +10,7 @@ import '../pen/matte_positioner_pen.dart';
 import '../status_manager/status_manager.dart';
 import '../note_page/note_page.dart';
 import 'common.dart' as c;
+import 'menu.dart';
 
 class ControlPanelBuilder extends StatefulWidget {
   const ControlPanelBuilder({super.key});
@@ -19,6 +20,8 @@ class ControlPanelBuilder extends StatefulWidget {
 }
 
 class _ControlPanelBuilderState extends State<ControlPanelBuilder> {
+  bool showingMenu = false;
+
   @override
   void initState() {
     statusManager.historyStack.addListener(_refresh);
@@ -115,6 +118,17 @@ class _ControlPanelBuilderState extends State<ControlPanelBuilder> {
                             color: redoable ? CupertinoColors.black : CupertinoColors.systemGrey,
                           )),
                     ),
+                    if (showingMenu)
+                      Menu(
+                        pageNumber: statusManager.pageNumber,
+                        type: statusManager.interacting,
+                        dismiss: () => setState(() => showingMenu = false),
+                      ),
+                    if (!showingMenu)
+                      GestureDetector(
+                        onTap: () => setState(() => showingMenu = true),
+                        child: const Icon(material.Icons.more_horiz),
+                      ),
                     const SizedBox(width: 30),
                   ],
                 ))
