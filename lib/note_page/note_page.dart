@@ -170,7 +170,7 @@ abstract class NotePage extends ChangeNotifier {
   void removeItem(pb.NotePageItem target) {
     final items = data.items;
     int index = -1;
-    for (int i = items.length - 1; i >= 0; ++i) {
+    for (int i = items.length - 1; i >= 0; --i) {
       if (items[i] == target) {
         index = i;
         break;

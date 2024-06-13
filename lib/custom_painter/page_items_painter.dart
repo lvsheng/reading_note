@@ -43,13 +43,20 @@ class PageItemsPainter extends CustomPainter {
     int ts = DateTime.now().millisecondsSinceEpoch;
     int countPoints = 0;
 
+    final List<pb.NotePageItem> failedItems = [];
     page.forEachPageItem((item, index, length) {
       if (item.deleted) return;
-      countPoints += _itemPainters[item.whichContent().index]!(canvas, item, index, length);
+      final painted = _itemPainters[item.whichContent().index]!(canvas, item, index, length);
+      if (painted == 0) failedItems.add(item);
+      countPoints += painted;
     });
 
     if (_logging) {
       logInfo("[StylusGesture] _paintDrawingData end. countPoints:$countPoints cost:${DateTime.now().millisecondsSinceEpoch - ts}ms");
+    }
+    if (failedItems.isNotEmpty) {
+      logError("failedItems: $failedItems", false);
+      // failedItems.forEach(page.removeItem); // just used to clean dirty data. will remove just-start-painting items, don't de-comment it
     }
   }
 
@@ -155,7 +162,7 @@ class PageItemsPainter extends CustomPainter {
   int _paintMatte(Canvas canvas, pb.NotePageItem item, int _, int __, [bool isSelected = false]) {
     final matte = (page as IndependentNotePage).matteOfId(item.matteId);
     if (matte == null) {
-      logError("disappeared matte: ${item.matteId} for $page");
+      logError("disappeared matte: ${item.matteId} for $page", false);
       return 0;
     }
 

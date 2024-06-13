@@ -68,7 +68,7 @@ class NoteBook {
           ..createTimeInMinute = (DateTime.now().millisecondsSinceEpoch / 1000 / 60).round());
   }
 
-  String getTitleOf(int pageNumber) => _data!.pages[pageNumber]?.title ?? "";
+  String getTitleOf(int pageNumber) => _data?.pages[pageNumber]?.title ?? "";
 
   String setTitleOf(int pageNumber, String title) {
     final page = _data!.pages[pageNumber];

@@ -89,7 +89,12 @@ class ItemWrapper {
   }
 
   static Rect _rectOfMatte(pb.NotePageItem item, pb.NotePage pbPage) {
-    final matte = pbPage.independentNoteData.mattePool[item.matteId]!;
+    final matte = pbPage.independentNoteData.mattePool[item.matteId];
+    if (matte == null) {
+      logError("disappeared matte: $item");
+      return Rect.fromLTWH(item.x, item.y, 30, 30);
+    }
+
     Rect result = Rect.fromLTWH(item.x, item.y, matte.imageWidth.toDouble(), matte.imageHeight.toDouble());
     if (item.hasScale()) {
       result = Rect.fromLTWH(result.left, result.top, result.width * item.scale, result.height * item.scale);

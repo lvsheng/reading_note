@@ -17,8 +17,8 @@ class PencilGestureDetector extends StatelessWidget {
     final DeviceGestureSettings? gestureSettings = MediaQuery.maybeGestureSettingsOf(context);
 
     gestures[StylusGestureRecognizer] = GestureRecognizerFactoryWithHandlers<StylusGestureRecognizer>(
-          () => StylusGestureRecognizer(),
-          (StylusGestureRecognizer instance) {
+      () => StylusGestureRecognizer(),
+      (StylusGestureRecognizer instance) {
         instance
           ..onDown = onDown
           ..onMove = onMove
@@ -48,13 +48,13 @@ class StylusGestureRecognizer extends OneSequenceGestureRecognizer {
   GesturePencilDrawMoveCallback? onMove;
   GesturePencilDrawUpCallback? onUp;
   GesturePencilDrawCancelCallback? onCancel;
-  int? trackingStylusPointer;
+  int? _trackingStylusPointer;
   Offset? lastReportedOffset;
 
   @override
   String get debugDescription => "PencilDrawGestureRecognizer";
 
-  StylusGestureRecognizer(): super();
+  StylusGestureRecognizer() : super();
 
   @override
   void didStopTrackingLastPointer(int pointer) {
@@ -63,9 +63,11 @@ class StylusGestureRecognizer extends OneSequenceGestureRecognizer {
 
   @override
   void handleEvent(PointerEvent event) {
-    if (event.pointer != trackingStylusPointer) {
-      logDebug(
-          "[StylusGesture] non-tracking pointer event, ignore: $event event.pointer:${event.pointer} trackingStylusPointer:$trackingStylusPointer");
+    if (event.pointer != _trackingStylusPointer) {
+      if (_trackingStylusPointer != null) {
+        logDebug(
+          "[StylusGesture] non-tracking pointer event, ignore: $event event.pointer:${event.pointer} trackingStylusPointer:$_trackingStylusPointer");
+      }
       return;
     }
     if (event is PointerDownEvent && onDown != null) {
@@ -74,7 +76,8 @@ class StylusGestureRecognizer extends OneSequenceGestureRecognizer {
     } else if (event is PointerMoveEvent && onMove != null) {
       assert(lastReportedOffset != null);
       final distanceFromLast = (event.localPosition - lastReportedOffset!).distance;
-      if (distanceFromLast > 0) { // iPad Air 5上试验：典型为0.0
+      if (distanceFromLast > 0) {
+        // iPad Air 5上试验：典型为0.0
         onMove!(event.localPosition);
         lastReportedOffset = event.localPosition;
       } else {
@@ -82,11 +85,11 @@ class StylusGestureRecognizer extends OneSequenceGestureRecognizer {
       }
     } else if (event is PointerUpEvent && onUp != null) {
       onUp!(event);
-      trackingStylusPointer = null;
+      _trackingStylusPointer = null;
       lastReportedOffset = null;
     } else if (event is PointerCancelEvent && onCancel != null) {
       onCancel!(event);
-      trackingStylusPointer = null;
+      _trackingStylusPointer = null;
       lastReportedOffset = null;
     }
   }
@@ -95,10 +98,10 @@ class StylusGestureRecognizer extends OneSequenceGestureRecognizer {
   void addAllowedPointer(PointerDownEvent event) {
     super.addAllowedPointer(event);
     if (event.kind == PointerDeviceKind.stylus) {
-      assert(trackingStylusPointer == null, '[StylusGesture] TODO: Support multi-stylus');
-      trackingStylusPointer = event.pointer;
+      if (_trackingStylusPointer != null) logError('[StylusGesture] TODO: Support multi-stylus', false);
+      _trackingStylusPointer = event.pointer;
       resolve(GestureDisposition.accepted);
-    } else if (trackingStylusPointer != null) {
+    } else if (_trackingStylusPointer != null) {
       logDebug("[StylusGesture] Eat other pointer event when tracking stylus pointer");
       resolve(GestureDisposition.accepted);
     }

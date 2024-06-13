@@ -497,10 +497,10 @@ class MattePositionerPen extends Pen with ChangeNotifier {
   void _removePageItem(pb.NotePageItem item, pb.NotePage pbPage) {
     assert(item.whichContent() == pb.NotePageItem_Content.matteId);
     int id = item.matteId;
+    IndexableArea.itemRemoved(item, _currentPage!); //  must before mattePool.remove, otherwise cannot construct boundingBoxOfItem
     final removed = pbPage.independentNoteData.mattePool.remove(id);
     assert(removed != null);
     final removeIdSuccess = pbPage.items.remove(item);
-    IndexableArea.itemRemoved(item, _currentPage!);
     assert(removeIdSuccess);
   }
 
