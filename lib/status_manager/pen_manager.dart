@@ -34,19 +34,22 @@ class PenManager {
     return pen;
   }
 
+  static const int commonPenIndex = 3; // fixme
+
   List<Pen> resetPenList(NoteType noteType, [bool initializingPenListPair = false]) {
     final result = userPreferences.setPenList(
         noteType,
         [
           addNewPen(PenType.ballPointPen, CupertinoColors.black, 0),
+          addNewPen(PenType.ballPointPen, material.Colors.blueAccent.shade100, 1),
           addNewPen(PenType.ballPointPen, CupertinoColors.systemRed, 1),
-          addNewPen(PenType.ballPointPen, CupertinoColors.black, 2),
+          addNewPen(PenType.ballPointPen, CupertinoColors.black, 1.5),
           addNewPen(PenType.ballPointPen, material.Colors.blueAccent.shade100, 2),
           addNewPen(PenType.ballPointPen, CupertinoColors.systemRed, 4),
           addNewPen(PenType.ballPointPen, material.Colors.black, 4),
           addNewPen(PenType.ballPointPen, material.Colors.blue.shade800, 4),
-          addNewPen(PenType.ballPointPen, material.Colors.green, 4),
-          addNewPen(PenType.markPen, CupertinoColors.systemYellow.withAlpha(150), 30),
+          addNewPen(PenType.markPen, material.Colors.green.withAlpha(110), 15),
+          addNewPen(PenType.markPen, CupertinoColors.systemYellow.withAlpha(110), 15),
         ]);
     if (!initializingPenListPair) {
       _list = result;
@@ -66,7 +69,7 @@ class PenManager {
     _currentPenPair = List.generate(2, (i) {
       assert(list.isNotEmpty, "_penListPair just initialized, should not empty");
       final id = userPreferences.currentPenIdOf(NoteType.values[i]);
-      return list.firstWhere((e) => e.id == id, orElse: () => list.first);
+      return list.firstWhere((e) => e.id == id, orElse: () => list[PenManager.commonPenIndex]);
     });
   }
 }

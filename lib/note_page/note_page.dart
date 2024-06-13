@@ -121,7 +121,7 @@ abstract class NotePage extends ChangeNotifier {
     _dataChanged = false;
     _file ??= await noteBook.addNotePage(pageNumber);
 
-    logDebug("saveIfNeeded");
+    logDebug("Page.saveIfNeeded");
     var writtenData = data;
     if (_hasItemsDeleted) {
       writtenData = data.deepCopy();

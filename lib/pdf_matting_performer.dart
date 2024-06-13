@@ -16,7 +16,7 @@ import 'util/debug.dart' as debug;
 
 const pdfPageCaptureSizeMultiplier = 3;
 final _pageScreenshotMap = LruMap<String, Tuple2<img.Image?, Future<img.Image?>?>>(maximumSize: 5);
-final _matteDecodeImageMap = LruMap<pb.Matte, Tuple2<ui.Image?, Future<ui.Image?>?>>(maximumSize: 200);
+final _matteDecodeImageMap = LruMap<pb.Matte, Tuple2<ui.Image?, Future<ui.Image?>?>>(maximumSize: 5000);
 
 Future<pb.Matte> performMatting(File book, PdfPage page, pb.MattingMark mark, int markId) async {
   final pageImage = await _capture(book, page);

@@ -37,7 +37,9 @@ class SelectPenPainter extends CustomPainter {
       }
     }
 
-    _paintOutline(canvas, _coordinateConverter.pageRectToCanvas(_pen.selectedBoundingBox!));
+    if (_pen.paintOutline) {
+      _paintOutline(canvas, _coordinateConverter.pageRectToCanvas(_pen.selectedBoundingBox!));
+    }
     if (_logging) logInfo("paintSelected end. cost:${DateTime.now().millisecondsSinceEpoch - ts}ms");
   }
 

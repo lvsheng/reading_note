@@ -37,6 +37,8 @@ class SelectPen extends Pen with ChangeNotifier {
   IndexableArea? _indexableArea;
   bool _moving = false;
   bool _changingPen = false;
+  bool paintSelectedStatus = true;
+  bool paintOutline = true;
 
   SelectPen() : super(-1, PenType.selectPen, material.Colors.black, 0);
 
@@ -86,7 +88,7 @@ class SelectPen extends Pen with ChangeNotifier {
     _refreshGlobalModal(); // trigger remove global modal
 
     if (!_moving) {
-      // select more
+      // select more mode
       return PositionTracker(this, touchingOn!, page, (position) {
         touchingOn = position;
         _select();
@@ -94,6 +96,7 @@ class SelectPen extends Pen with ChangeNotifier {
       });
     }
 
+    // move or scale mode
     final scaleOriginInfo = _shouldTrackOnScale(touchingOn!);
     final isScale = scaleOriginInfo != null;
     Offset? originalDiagonalDiff;
@@ -116,13 +119,14 @@ class SelectPen extends Pen with ChangeNotifier {
     return PositionTracker(this, touchingOn!, page, (position) {
       touchingOn = position;
       if (isScale) {
-        // scale
+        // scale mode
         _updateScale(position, scaleOriginInfo.$1, originalDiagonalDiff!, hWRate!);
       } else {
-        // move
+        // move mode
         _updateMove(position);
       }
 
+      paintOutline = false;
       _triggerRepaint();
       _updateSelectedBoundingBoxIfNeeded();
       _movingLastPosition = position;
@@ -155,6 +159,7 @@ class SelectPen extends Pen with ChangeNotifier {
   @override
   void endPaint() {
     if (_itemsMoving != null) {
+      paintOutline = true;
       for (final item in _itemsMoving!) {
         IndexableArea.itemAfterUpdated(item, page!);
       }
@@ -398,6 +403,7 @@ class SelectPen extends Pen with ChangeNotifier {
     _moving = false;
     _changingPen = false;
     paintSelectedStatus = true;
+    paintOutline = true;
     _triggerRepaint();
   }
 
@@ -431,7 +437,6 @@ class SelectPen extends Pen with ChangeNotifier {
     page!.markHasItemsDeleted();
   }
 
-  bool paintSelectedStatus = true;
   void changePen(Pen pen) {
     final penId = PathGenerator.generatePbPenId(pen, page!.data.penPool);
     final items = selected.iterateAllItems().where((item) => item.whichContent() == pb.NotePageItem_Content.path).toList(growable: false);

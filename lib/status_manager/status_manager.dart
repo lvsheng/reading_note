@@ -230,8 +230,7 @@ class StatusManager extends ChangeNotifier {
     usingPen = _turnPenList[index];
   }
 
-  static const int commonPenIndex = 3; // fixme
-  void useCommonPen() => usingPen = penList[commonPenIndex];
+  void useCommonPen() => usingPen = normalPenList[PenManager.commonPenIndex];
 
   bool get mattingOrPuttingMatte => _mattingOrPuttingMatte;
 

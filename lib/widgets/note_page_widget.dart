@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:math';
+import 'dart:ui';
 
 import 'package:flutter/cupertino.dart';
 import 'package:pdfrx/pdfrx.dart';
@@ -12,6 +13,7 @@ import 'package:vector_math/vector_math_64.dart';
 import '../custom_painter/coordinate_converter.dart';
 import '../custom_painter/matte_positioner_pen_painter.dart';
 import '../custom_painter/page_items_painter.dart';
+import '../note_page/independent_note_page.dart';
 import '../pen/matte_positioner_pen.dart';
 import '../status_manager/global_modal_manager.dart';
 import '../status_manager/status_manager.dart';
@@ -34,6 +36,7 @@ class NotePageWidget extends StatefulWidget {
 class _NotePageState extends State<NotePageWidget> {
   final _controller = TransformationController();
   bool _firstBuild = true;
+  bool _needRefreshMinimumScale = true;
   late double _minimumScale;
 
   @override
@@ -77,11 +80,14 @@ class _NotePageState extends State<NotePageWidget> {
     }
     // IndexableArea.forPage(note); // fixme: remove, for test
 
-    if (_firstBuild) {
+    if (_needRefreshMinimumScale) {
       _minimumScale =
           max(contextSize.width / (note.size.width + margin.width * 2), contextSize.height / (note.size.height + margin.height * 2));
+      _controller.value = Matrix4.copy(_controller.value)..scale(_minimumScale);
+      _needRefreshMinimumScale = false;
+    }
+    if (_firstBuild) {
       _oldScale = _minimumScale * 2;
-      _controller.value.scale(_minimumScale);
       _firstBuild = false;
     }
 
@@ -162,8 +168,7 @@ class _NotePageState extends State<NotePageWidget> {
                             style: const TextStyle(fontSize: 24, color: CupertinoColors.black, fontWeight: FontWeight.bold)))),
               ConstrainedBox(
                   constraints: const BoxConstraints.expand(),
-                  child:
-                      IgnorePointer(child: RepaintBoundary(child: CustomPaint(painter: PageItemsPainter(note, coordConverter))))),
+                  child: IgnorePointer(child: RepaintBoundary(child: CustomPaint(painter: PageItemsPainter(note, coordConverter))))),
               if (statusManager.usingPen is MattePositionerPen)
                 ConstrainedBox(
                     constraints: const BoxConstraints.expand(),
@@ -177,8 +182,7 @@ class _NotePageState extends State<NotePageWidget> {
                     constraints: const BoxConstraints.expand(),
                     child: IgnorePointer(
                         child: RepaintBoundary(
-                            child: CustomPaint(
-                                painter: SelectPenPainter(statusManager.usingPen as SelectPen, coordConverter, note))))),
+                            child: CustomPaint(painter: SelectPenPainter(statusManager.usingPen as SelectPen, coordConverter, note))))),
               PencilGestureDetector(
                 onDown: (details) => note.penDown(note.canvasPositionToPage(details.localPosition, 1.0)),
                 onMove: (localPosition) => note.penMove(note.canvasPositionToPage(localPosition, 1.0)),
@@ -189,12 +193,58 @@ class _NotePageState extends State<NotePageWidget> {
                 },
                 onCancel: (details) => note.penUp(note.canvasPositionToPage(details.localPosition, 1.0)),
               ),
-
+              Positioned(
+                right: 0,
+                top: 0,
+                bottom: 0,
+                child: GestureDetector(
+                  supportedDevices: const {PointerDeviceKind.touch},
+                  onLongPress: () => _expand(note, false),
+                  behavior: HitTestBehavior.translucent,
+                  child: Container(
+                    width: 20,
+                    // color: CupertinoColors.activeOrange,
+                  ),
+                ),
+              ),
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 0,
+                child: GestureDetector(
+                  supportedDevices: const {PointerDeviceKind.touch},
+                  onLongPress: () => _expand(note, true),
+                  behavior: HitTestBehavior.translucent,
+                  child: Container(
+                    height: 20,
+                    // color: CupertinoColors.activeOrange,
+                  ),
+                ),
+              ),
               if (globalModalManager.isNotEmpty) globalModalManager.build(),
             ],
           ),
         ),
       ),
     );
+  }
+
+  void _expand(IndependentNotePage capturedNote, bool isHeightNotWidth) {
+    final oldValue = isHeightNotWidth ? capturedNote.data.height : capturedNote.data.width;
+    final newValue = oldValue * 1.5;
+    update(double value) {
+      if (isHeightNotWidth) {
+        capturedNote.data.height = value;
+      } else {
+        capturedNote.data.width = value;
+      }
+      if (mounted) {
+        setState(() {
+          _needRefreshMinimumScale = true;
+        });
+      }
+    }
+
+    statusManager.historyStack.doo(() => update(newValue), () => update(oldValue));
   }
 }

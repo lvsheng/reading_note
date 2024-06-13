@@ -124,7 +124,7 @@ class IndexableArea extends Rect {
       logDebug("pageArea not found!: $page");
       return;
     }
-    logDebug("itemAdded: $item $page");
+    if (_logging) logDebug("itemAdded: ${item.x},${item.y} to page:${page.pageNumber}");
     pageArea._addItem(ItemWrapper(item, pageArea, page.data));
   }
 

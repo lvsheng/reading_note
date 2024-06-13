@@ -54,10 +54,10 @@ class PageItemsPainter extends CustomPainter {
     if (_logging) {
       logInfo("[StylusGesture] _paintDrawingData end. countPoints:$countPoints cost:${DateTime.now().millisecondsSinceEpoch - ts}ms");
     }
-    if (failedItems.isNotEmpty) {
-      logError("failedItems: $failedItems", false);
+    // if (failedItems.isNotEmpty) {
+    //   logError("failedItems: $failedItems", false);
       // failedItems.forEach(page.removeItem); // just used to clean dirty data. will remove just-start-painting items, don't de-comment it
-    }
+    // }
   }
 
   /// for [SelectPenPainter]

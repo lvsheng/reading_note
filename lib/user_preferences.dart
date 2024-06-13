@@ -3,6 +3,7 @@ import 'dart:math';
 import 'dart:ui';
 import 'package:reading_note/file_system_proxy.dart';
 import 'package:reading_note/pen/pen.dart';
+import 'package:reading_note/status_manager/pen_manager.dart';
 import 'package:reading_note/util/log.dart';
 import 'package:reading_note/note_page/note_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -111,7 +112,7 @@ class UserPreferences {
 
   void setPenLineWidthOf(int id, double value) => _setDouble("$_keyPrefixPenLineWidth$id", value);
 
-  int currentPenIdOf(NoteType noteType) => _sharedPreferences!.getInt(_keyCurrentPenId[noteType.index]) ?? 0;
+  int currentPenIdOf(NoteType noteType) => _sharedPreferences!.getInt(_keyCurrentPenId[noteType.index]) ?? PenManager.commonPenIndex;
 
   void setCurrentPen(NoteType noteType, Pen pen) => _setInt(_keyCurrentPenId[noteType.index], pen.id);
 
