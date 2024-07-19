@@ -56,7 +56,7 @@ class PageItemsPainter extends CustomPainter {
     }
     // if (failedItems.isNotEmpty) {
     //   logError("failedItems: $failedItems", false);
-      // failedItems.forEach(page.removeItem); // just used to clean dirty data. will remove just-start-painting items, don't de-comment it
+    // failedItems.forEach(page.removeItem); // just used to clean dirty data. will remove just-start-painting items, don't de-comment it
     // }
   }
 
@@ -121,12 +121,19 @@ class PageItemsPainter extends CustomPainter {
   }
 
   int _paintMattingMark(Canvas canvas, pb.NotePageItem item, int index, int length, [bool isSelected = false]) {
+    final drawingPen = statusManager.drawingPen;
+    final ongoingTracker = drawingPen?.ongoingTracker;
+    bool editing =
+        index == length - 1 && ongoingTracker is MattingMarkGenerator && statusManager.drawingPage == page && !ongoingTracker.frozen;
+    if (!editing) return 0;
+
     assert(isSelected == false, "matting could not be selected");
     final mattingMark = (page as MarkNotePage).mattingMarkOfId(item.mattingMarkId);
     if (mattingMark == null) {
       logError("disappeared mattingMark ${item.mattingMarkId}");
       return 0;
     }
+
     late Rect rect;
     switch (mattingMark.whichContent()) {
       case pb.MattingMark_Content.horizontal:
@@ -138,17 +145,15 @@ class PageItemsPainter extends CustomPainter {
         throw "TODO";
     }
 
+    // draw fill
     canvas.drawRect(
         _coordinateConverter.pageRectToCanvas(rect),
         Paint()
           ..color = CupertinoColors.systemYellow.withAlpha(125)
           ..style = PaintingStyle.fill);
 
-    final drawingPen = statusManager.drawingPen;
-    final ongoingTracker = drawingPen?.ongoingTracker;
-    bool notEditing =
-        index < length - 1 || ongoingTracker is! MattingMarkGenerator || statusManager.drawingPage != page || ongoingTracker.frozen;
-    if (notEditing) {
+    // draw border
+    if (editing) {
       canvas.drawRect(
           _coordinateConverter.pageRectToCanvas(rect),
           Paint()
