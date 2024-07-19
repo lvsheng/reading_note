@@ -131,7 +131,16 @@ Iterable<(int/*l*/, int/*r*/)> _wordsOfLine(img.Image image, int l, int t, int r
     if (l < 0) break;
 
     int rContent = _leftOfWhiteColumn(image, l, t, r, b);
-    if (rContent < 0) rContent = r;
+    if (rContent < 0) {
+      rContent = r;
+    } else {
+      // include next whitespace, to enable background continuous
+      int lNextContent = _leftOfContent(image, rContent, t, r, b);
+      if (lNextContent >= 0) {
+        rContent = lNextContent;
+      }
+    }
+
     words.add((l, rContent));
     l = rContent;
 

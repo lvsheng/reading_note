@@ -37,6 +37,7 @@ class SelectPen extends Pen with ChangeNotifier {
   IndexableArea? _indexableArea;
   bool _moving = false;
   bool _changingPen = false;
+  bool _changingDecoration = false;
   bool paintSelectedStatus = true;
   bool paintOutline = true;
 
@@ -49,7 +50,10 @@ class SelectPen extends Pen with ChangeNotifier {
   final scaleCornerRadius = 5.0;
 
   bool get moving => _moving;
+
   bool get changingPen => _changingPen;
+
+  bool get changingDecoration => _changingDecoration;
 
   set moving(bool value) {
     assert(selected.isNotEmpty);
@@ -60,6 +64,11 @@ class SelectPen extends Pen with ChangeNotifier {
   set changingPen(bool value) {
     assert(selected.isNotEmpty);
     _changingPen = value;
+  }
+
+  set changingDecoration(bool value) {
+    assert(selected.isNotEmpty);
+    _changingDecoration = value;
   }
 
   static const _errorNotAllowed = "MattePlacePen id not allowed!"; // fixme: divorce not allowed behavior from base Pen
@@ -256,7 +265,11 @@ class SelectPen extends Pen with ChangeNotifier {
   }
 
   /// @return: scale origin
-  (Offset/*origin*/, Offset/*diagonal*/)? _shouldTrackOnScale(Offset position) {
+  (
+    Offset /*origin*/,
+    Offset
+    /*diagonal*/
+  )? _shouldTrackOnScale(Offset position) {
     for (final pair in [
       (selectedBoundingBox!.topLeft, selectedBoundingBox!.bottomRight),
       (selectedBoundingBox!.topRight, selectedBoundingBox!.bottomLeft),
@@ -347,7 +360,7 @@ class SelectPen extends Pen with ChangeNotifier {
     _refreshGlobalModal();
   }
 
-  static const _defaultSize = Size(20.0, 20.0);
+  static const _defaultSize = Size(10.0, 10.0);
 
   void resetSize() {
     _heightAdjustingStart = size.height;
@@ -453,6 +466,39 @@ class SelectPen extends Pen with ChangeNotifier {
       for (final (index, item) in items.indexed) {
         assert(!item.deleted);
         item.path.penId = oldPenIds[index];
+      }
+      page!.triggerRepaint();
+      paintSelectedStatus = false;
+      _triggerRepaint();
+    });
+  }
+
+  void changeDecoration(pb.DecorationType? decoration) {
+    final mattes = selected
+        .iterateAllItems()
+        .where((item) => item.whichContent() == pb.NotePageItem_Content.matteId)
+        .map((item) => page!.data.independentNoteData.mattePool[item.matteId]!)
+        .toList(growable: false);
+    final oldDecorations = mattes.map((matte) => matte.hasDecoration() ? matte.decoration : null).toList(growable: false);
+    statusManager.historyStack.doo(() {
+      for (final matte in mattes) {
+        if (decoration == null) {
+          matte.clearDecoration();
+        } else {
+          matte.decoration = decoration;
+        }
+      }
+      page!.triggerRepaint();
+      paintSelectedStatus = false;
+      _triggerRepaint();
+    }, () {
+      for (final (index, matte) in mattes.indexed) {
+        final decoration = oldDecorations[index];
+        if (decoration == null) {
+          matte.clearDecoration();
+        } else {
+          matte.decoration = decoration;
+        }
       }
       page!.triggerRepaint();
       paintSelectedStatus = false;

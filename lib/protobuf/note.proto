@@ -69,6 +69,26 @@ enum ImageType {
     IT_2BIT_1CHANNEL = 0;
 }
 
+enum DecorationType {
+    DT_BG_RED = 0;
+    DT_BG_PURPLE = 1;
+    DT_BG_BLUE = 2;
+    DT_BG_GREEN = 3;
+    DT_BG_YELLOW = 4;
+
+    DT_UNDERLINE_RED = 10;
+    DT_UNDERLINE_PURPLE = 11;
+    DT_UNDERLINE_BLUE = 12;
+    DT_UNDERLINE_GREEN = 13;
+    DT_UNDERLINE_YELLOW = 14;
+
+    DT_TILDE_RED = 20;
+    DT_TILDE_PURPLE = 21;
+    DT_TILDE_BLUE = 22;
+    DT_TILDE_GREEN = 23;
+    DT_TILDE_YELLOW = 24;
+}
+
 message Matte {
     uint32 bookPageNumber = 1;
     uint32 bookPageMattingMarkId = 2;
@@ -77,6 +97,7 @@ message Matte {
     uint32 imageHeight = 5;
     bytes imageData = 6;
     optional string bookPath = 7; // only needed when from other book
+    optional DecorationType decoration = 8;
 }
 
 message MattingMark {

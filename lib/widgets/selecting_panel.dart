@@ -1,5 +1,7 @@
 import 'package:flutter/cupertino.dart';
+import 'package:reading_note/protobuf/note.pb.dart' as pb;
 import 'package:reading_note/status_manager/status_manager.dart';
+import 'package:reading_note/user_preferences.dart';
 import 'package:reading_note/widgets/pen_selector.dart';
 import '../pen/selector_pen/select_pen.dart';
 import 'common.dart' as c;
@@ -12,6 +14,70 @@ class SelectingPanel extends StatefulWidget {
 
   @override
   State<StatefulWidget> createState() => _SelectingPanelState();
+}
+
+Color decorationColor(pb.DecorationType type) {
+  const opacity = 0.7;
+  switch (type) {
+    case pb.DecorationType.DT_BG_BLUE:
+    case pb.DecorationType.DT_TILDE_BLUE:
+    case pb.DecorationType.DT_UNDERLINE_BLUE:
+      return material.Colors.blue.withOpacity(opacity);
+      break;
+
+    case pb.DecorationType.DT_BG_GREEN:
+    case pb.DecorationType.DT_TILDE_GREEN:
+    case pb.DecorationType.DT_UNDERLINE_GREEN:
+      return material.Colors.green.withOpacity(opacity);
+      break;
+
+    case pb.DecorationType.DT_BG_PURPLE:
+    case pb.DecorationType.DT_TILDE_PURPLE:
+    case pb.DecorationType.DT_UNDERLINE_PURPLE:
+      return material.Colors.purple.withOpacity(opacity);
+      break;
+
+    case pb.DecorationType.DT_BG_RED:
+    case pb.DecorationType.DT_TILDE_RED:
+    case pb.DecorationType.DT_UNDERLINE_RED:
+      return material.Colors.red.withOpacity(opacity);
+      break;
+
+    case pb.DecorationType.DT_BG_YELLOW:
+    case pb.DecorationType.DT_TILDE_YELLOW:
+    case pb.DecorationType.DT_UNDERLINE_YELLOW:
+      return material.Colors.yellow.shade700.withOpacity(opacity);
+      break;
+  }
+
+  throw "wrong decoration type $type";
+}
+
+IconData decorationIcon(pb.DecorationType type) {
+  switch (type) {
+    case pb.DecorationType.DT_BG_BLUE:
+    case pb.DecorationType.DT_BG_GREEN:
+    case pb.DecorationType.DT_BG_PURPLE:
+    case pb.DecorationType.DT_BG_RED:
+    case pb.DecorationType.DT_BG_YELLOW:
+      return material.Icons.texture;
+
+    case pb.DecorationType.DT_TILDE_BLUE:
+    case pb.DecorationType.DT_TILDE_GREEN:
+    case pb.DecorationType.DT_TILDE_PURPLE:
+    case pb.DecorationType.DT_TILDE_RED:
+    case pb.DecorationType.DT_TILDE_YELLOW:
+      return material.Icons.waves;
+
+    case pb.DecorationType.DT_UNDERLINE_BLUE:
+    case pb.DecorationType.DT_UNDERLINE_GREEN:
+    case pb.DecorationType.DT_UNDERLINE_PURPLE:
+    case pb.DecorationType.DT_UNDERLINE_RED:
+    case pb.DecorationType.DT_UNDERLINE_YELLOW:
+      return material.Icons.text_format;
+  }
+
+  throw "wrong decoration type $type";
 }
 
 class _SelectingPanelState extends State<SelectingPanel> {
@@ -70,6 +136,57 @@ class _SelectingPanelState extends State<SelectingPanel> {
             : c.buildButton(isNotEmpty ? () => setState(() => widget.pen.changingPen = true) : null, CupertinoIcons.pencil_circle_fill,
                 CupertinoColors.systemYellow,
                 heightFactor: buttonHeightFactor);
+      }(),
+      () {
+        final changingDecoration = widget.pen.changingDecoration;
+        const buttonHeightFactor = 0.5;
+        const penButtonMargin = 3.0;
+
+        return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          if (changingDecoration)
+            Padding(
+                padding: const EdgeInsets.only(left: leftPadding),
+                child: Row(
+                  children: pb.DecorationType.values.where((type) => type.value < 20).map((type) {
+                    bool isRed = type.value % 5 == 0;
+                    bool isBg = type.value < 10;
+                    return GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: () => widget.pen.changeDecoration(type),
+                      child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 5),
+                          margin: EdgeInsets.only(right: 2, top: penButtonMargin, left: isRed && type.value > 0 ? 15 : 0),
+                          decoration:
+                              BoxDecoration(color: isBg ? decorationColor(type) : material.Colors.black.withOpacity(0.1), borderRadius: const BorderRadius.all(Radius.circular(10))),
+                          child: Center(
+                              child: Container(
+                            margin: const EdgeInsets.symmetric(horizontal: 3),
+                            child: Icon(
+                              decorationIcon(type),
+                              color: isBg ? material.Colors.black : decorationColor(type),
+                              // color: material.Colors.black,
+                              size: 30,
+                            ),
+                          ))),
+                    ) as Widget;
+                  }).toList(growable: false),
+                )),
+          c.buildButton(
+              isNotEmpty
+                  ? () => setState(() {
+                        if (!widget.pen.changingDecoration) {
+                          widget.pen.changingDecoration = true;
+                          widget.pen.changeDecoration(pb.DecorationType.values[userPreferences.lastDecoration]);
+                        } else {
+                          widget.pen.changingDecoration = false;
+                          widget.pen.changeDecoration(null);
+                        }
+                      })
+                  : null,
+              material.Icons.text_format,
+              CupertinoColors.systemBlue,
+              heightFactor: buttonHeightFactor),
+        ]);
       }(),
       c.buildButton(isNotEmpty ? () => setState(() => widget.pen.delete()) : null, material.Icons.delete_forever, CupertinoColors.systemRed,
           heightFactor: 0.2),

@@ -27,6 +27,7 @@ class UserPreferences {
   static const _keyMatteScale = "mS";
   static const _keySelectPenWidth = "sPW";
   static const _keySelectPenHeight = "sPH";
+  static const _keyLastDecoration = "lD";
 
   UserPreferences._() {
     readyFuture = SharedPreferences.getInstance().then((value) {
@@ -132,6 +133,9 @@ class UserPreferences {
     _sharedPreferences!.setDouble(_keySelectPenWidth, value.width);
     _sharedPreferences!.setDouble(_keySelectPenHeight, value.height);
   }
+
+  int get lastDecoration => _sharedPreferences!.getInt(_keyLastDecoration) ?? 0;
+  set (int value) => _sharedPreferences!.setInt(_keyLastDecoration, value);
 
   void _setInt(String key, int? value) {
     if (value == _sharedPreferences!.getInt(key)) {

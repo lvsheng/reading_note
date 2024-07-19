@@ -38,6 +38,37 @@ const ImageType$json = {
 final $typed_data.Uint8List imageTypeDescriptor = $convert.base64Decode(
     'CglJbWFnZVR5cGUSFAoQSVRfMkJJVF8xQ0hBTk5FTBAA');
 
+@$core.Deprecated('Use decorationTypeDescriptor instead')
+const DecorationType$json = {
+  '1': 'DecorationType',
+  '2': [
+    {'1': 'DT_BG_RED', '2': 0},
+    {'1': 'DT_BG_PURPLE', '2': 1},
+    {'1': 'DT_BG_BLUE', '2': 2},
+    {'1': 'DT_BG_GREEN', '2': 3},
+    {'1': 'DT_BG_YELLOW', '2': 4},
+    {'1': 'DT_UNDERLINE_RED', '2': 10},
+    {'1': 'DT_UNDERLINE_PURPLE', '2': 11},
+    {'1': 'DT_UNDERLINE_BLUE', '2': 12},
+    {'1': 'DT_UNDERLINE_GREEN', '2': 13},
+    {'1': 'DT_UNDERLINE_YELLOW', '2': 14},
+    {'1': 'DT_TILDE_RED', '2': 20},
+    {'1': 'DT_TILDE_PURPLE', '2': 21},
+    {'1': 'DT_TILDE_BLUE', '2': 22},
+    {'1': 'DT_TILDE_GREEN', '2': 23},
+    {'1': 'DT_TILDE_YELLOW', '2': 24},
+  ],
+};
+
+/// Descriptor for `DecorationType`. Decode as a `google.protobuf.EnumDescriptorProto`.
+final $typed_data.Uint8List decorationTypeDescriptor = $convert.base64Decode(
+    'Cg5EZWNvcmF0aW9uVHlwZRINCglEVF9CR19SRUQQABIQCgxEVF9CR19QVVJQTEUQARIOCgpEVF'
+    '9CR19CTFVFEAISDwoLRFRfQkdfR1JFRU4QAxIQCgxEVF9CR19ZRUxMT1cQBBIUChBEVF9VTkRF'
+    'UkxJTkVfUkVEEAoSFwoTRFRfVU5ERVJMSU5FX1BVUlBMRRALEhUKEURUX1VOREVSTElORV9CTF'
+    'VFEAwSFgoSRFRfVU5ERVJMSU5FX0dSRUVOEA0SFwoTRFRfVU5ERVJMSU5FX1lFTExPVxAOEhAK'
+    'DERUX1RJTERFX1JFRBAUEhMKD0RUX1RJTERFX1BVUlBMRRAVEhEKDURUX1RJTERFX0JMVUUQFh'
+    'ISCg5EVF9USUxERV9HUkVFThAXEhMKD0RUX1RJTERFX1lFTExPVxAY');
+
 @$core.Deprecated('Use noteBookMetaDescriptor instead')
 const NoteBookMeta$json = {
   '1': 'NoteBookMeta',
@@ -254,10 +285,12 @@ const Matte$json = {
     {'1': 'imageHeight', '3': 5, '4': 1, '5': 13, '10': 'imageHeight'},
     {'1': 'imageData', '3': 6, '4': 1, '5': 12, '10': 'imageData'},
     {'1': 'bookPath', '3': 7, '4': 1, '5': 9, '9': 1, '10': 'bookPath', '17': true},
+    {'1': 'decoration', '3': 8, '4': 1, '5': 14, '6': '.DecorationType', '9': 2, '10': 'decoration', '17': true},
   ],
   '8': [
     {'1': '_imageType'},
     {'1': '_bookPath'},
+    {'1': '_decoration'},
   ],
 };
 
@@ -267,8 +300,9 @@ final $typed_data.Uint8List matteDescriptor = $convert.base64Decode(
     'BhZ2VNYXR0aW5nTWFya0lkGAIgASgNUhVib29rUGFnZU1hdHRpbmdNYXJrSWQSLQoJaW1hZ2VU'
     'eXBlGAMgASgOMgouSW1hZ2VUeXBlSABSCWltYWdlVHlwZYgBARIeCgppbWFnZVdpZHRoGAQgAS'
     'gNUgppbWFnZVdpZHRoEiAKC2ltYWdlSGVpZ2h0GAUgASgNUgtpbWFnZUhlaWdodBIcCglpbWFn'
-    'ZURhdGEYBiABKAxSCWltYWdlRGF0YRIfCghib29rUGF0aBgHIAEoCUgBUghib29rUGF0aIgBAU'
-    'IMCgpfaW1hZ2VUeXBlQgsKCV9ib29rUGF0aA==');
+    'ZURhdGEYBiABKAxSCWltYWdlRGF0YRIfCghib29rUGF0aBgHIAEoCUgBUghib29rUGF0aIgBAR'
+    'I0CgpkZWNvcmF0aW9uGAggASgOMg8uRGVjb3JhdGlvblR5cGVIAlIKZGVjb3JhdGlvbogBAUIM'
+    'CgpfaW1hZ2VUeXBlQgsKCV9ib29rUGF0aEINCgtfZGVjb3JhdGlvbg==');
 
 @$core.Deprecated('Use mattingMarkDescriptor instead')
 const MattingMark$json = {

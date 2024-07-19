@@ -412,7 +412,7 @@ class MarkNotePageData extends $pb.GeneratedMessage {
 
 enum NotePageItem_Content {
   path, 
-  mattingMarkId,
+  mattingMarkId, 
   matteId, 
   notSet
 }
@@ -761,6 +761,7 @@ class Matte extends $pb.GeneratedMessage {
     $core.int? imageHeight,
     $core.List<$core.int>? imageData,
     $core.String? bookPath,
+    DecorationType? decoration,
   }) {
     final $result = create();
     if (bookPageNumber != null) {
@@ -784,6 +785,9 @@ class Matte extends $pb.GeneratedMessage {
     if (bookPath != null) {
       $result.bookPath = bookPath;
     }
+    if (decoration != null) {
+      $result.decoration = decoration;
+    }
     return $result;
   }
   Matte._() : super();
@@ -798,6 +802,7 @@ class Matte extends $pb.GeneratedMessage {
     ..a<$core.int>(5, _omitFieldNames ? '' : 'imageHeight', $pb.PbFieldType.OU3, protoName: 'imageHeight')
     ..a<$core.List<$core.int>>(6, _omitFieldNames ? '' : 'imageData', $pb.PbFieldType.OY, protoName: 'imageData')
     ..aOS(7, _omitFieldNames ? '' : 'bookPath', protoName: 'bookPath')
+    ..e<DecorationType>(8, _omitFieldNames ? '' : 'decoration', $pb.PbFieldType.OE, defaultOrMaker: DecorationType.DT_BG_RED, valueOf: DecorationType.valueOf, enumValues: DecorationType.values)
     ..hasRequiredFields = false
   ;
 
@@ -884,6 +889,15 @@ class Matte extends $pb.GeneratedMessage {
   $core.bool hasBookPath() => $_has(6);
   @$pb.TagNumber(7)
   void clearBookPath() => clearField(7);
+
+  @$pb.TagNumber(8)
+  DecorationType get decoration => $_getN(7);
+  @$pb.TagNumber(8)
+  set decoration(DecorationType v) { setField(8, v); }
+  @$pb.TagNumber(8)
+  $core.bool hasDecoration() => $_has(7);
+  @$pb.TagNumber(8)
+  void clearDecoration() => clearField(8);
 }
 
 enum MattingMark_Content {
