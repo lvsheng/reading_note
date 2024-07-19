@@ -347,7 +347,7 @@ class SelectPen extends Pen with ChangeNotifier {
     _refreshGlobalModal();
   }
 
-  static const _defaultSize = Size(50.0, 50.0);
+  static const _defaultSize = Size(20.0, 20.0);
 
   void resetSize() {
     _heightAdjustingStart = size.height;

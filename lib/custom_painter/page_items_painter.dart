@@ -125,7 +125,7 @@ class PageItemsPainter extends CustomPainter {
     final ongoingTracker = drawingPen?.ongoingTracker;
     bool editing =
         index == length - 1 && ongoingTracker is MattingMarkGenerator && statusManager.drawingPage == page && !ongoingTracker.frozen;
-    if (!editing) return 0;
+    // if (!editing) return 0;
 
     assert(isSelected == false, "matting could not be selected");
     final mattingMark = (page as MarkNotePage).mattingMarkOfId(item.mattingMarkId);
@@ -149,7 +149,7 @@ class PageItemsPainter extends CustomPainter {
     canvas.drawRect(
         _coordinateConverter.pageRectToCanvas(rect),
         Paint()
-          ..color = CupertinoColors.systemYellow.withAlpha(125)
+          ..color = CupertinoColors.systemYellow.withAlpha(25)
           ..style = PaintingStyle.fill);
 
     // draw border

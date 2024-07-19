@@ -82,7 +82,7 @@ void _paintImage(
   final paint = Paint();
   if (opacity != null) paint.color = Color.fromRGBO(0, 0, 0, opacity);
   if (isSelected) {
-    paint.colorFilter = const ColorFilter.mode(material.Colors.grey, BlendMode.srcATop);
+    paint.colorFilter = const ColorFilter.mode(material.Colors.blue, BlendMode.srcATop);
   }
 
   if (scale == 1.0) {

@@ -29,18 +29,19 @@ class MattingMarkGenerator extends PenStrokeTracker {
 
   @override
   bool stop() {
-    mattingManager.startOne(_mark, _markId, page);
-
     assert(page.data.items.last == _drawingItem);
     page.data.items.removeLast();
 
+    final markId = _markId;
+    final mark = _mark;
     final item = _drawingItem;
     final capturedPage = page;
     statusManager.historyStack.doo(() {
+      mattingManager.startOne(mark, markId, page);
       capturedPage.data.items.add(item);
       capturedPage.triggerRepaint();
     }, () {
-      // todo: remove from mattingManager?
+      mattingManager.removeMark(mark);
       capturedPage.removeItem(item); // matte will reorder in placing, so maybe is not last one.
       capturedPage.triggerRepaint();
     });

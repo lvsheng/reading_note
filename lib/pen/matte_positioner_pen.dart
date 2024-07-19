@@ -5,6 +5,7 @@ import 'package:flutter/material.dart' as material;
 import 'package:flutter/widgets.dart';
 import 'package:quiver/iterables.dart' as iterables;
 import 'package:reading_note/custom_painter/paint_matte.dart';
+import 'package:reading_note/pdf_matting_performer.dart';
 import 'package:reading_note/pen/selector_pen/indexable_area.dart';
 import 'package:reading_note/status_manager/matting_manager.dart';
 import 'package:reading_note/status_manager/status_manager.dart';
@@ -145,13 +146,12 @@ class MattePositionerPen extends Pen with ChangeNotifier {
   void onUserConfirm() {
     final handlingList = _oneByOne ? [_handling!] : _mattes;
     final positions = _calculatePositions(handlingList);
-    final List<pb.NotePageItem> confirmedItems = [];
+    final List<(pb.Matte, Offset)> confirmedList = [];
     switch (_status) {
       case _PenStatus.recommending:
         assert(_adjustingPageItems == null);
         for (final (index, matte) in handlingList.indexed) {
-          final item = _createPageItem(matte, _currentPage!, positions[index]);
-          confirmedItems.add(item);
+          confirmedList.add((matte, positions[index]));
         }
         mattingManager.removeAll(handlingList);
         assert(_mattes.isEmpty || _mattes[_handlingIndex] == _handling); // updated by onMattingManagerChange from removeAll
@@ -160,10 +160,11 @@ class MattePositionerPen extends Pen with ChangeNotifier {
       case _PenStatus.adjusting:
         assert(_adjustingPageItems != null);
         for (final item in _adjustingPageItems!) {
-          // re-order as [latestItem] used in [_position] calculation
-          _currentPage!.data.items.remove(item);
-          _currentPage!.data.items.add(item);
-          confirmedItems.add(item);
+          // target1: re-order as [latestItem] used in [_position] calculation
+          // target2: delay add to page into historyStack.doo
+          final matte = _removePageItem(item, _currentPage!.data);
+
+          confirmedList.add((matte, Offset(item.x, item.y)));
         }
         _changeStatus(_PenStatus.recommending);
         mattingManager.removeAll(handlingList);
@@ -181,22 +182,22 @@ class MattePositionerPen extends Pen with ChangeNotifier {
     }
     _latestPosition = null; // trigger [_position] calculation
     triggerRepaint();
-    _currentPage!.triggerRepaint();
 
-    bool isFirst = true;
     final capturedPage = _currentPage!;
+    final List<pb.NotePageItem> confirmedItems = confirmedList
+        .expand((matteAndPosition) =>
+            cutIntoWords(matteAndPosition.$1).map((word) => _createPageItem(word.$1, capturedPage, matteAndPosition.$2 + word.$2 * _scale)))
+        .toList(growable: false);
     statusManager.historyStack.doo(() {
-      if (isFirst) {
-        isFirst = false;
-        return;
-      }
-      // redo:
+      // do & redo:
       for (final item in confirmedItems) {
         capturedPage.data.items.add(item);
       }
       capturedPage.triggerRepaint();
     }, () {
       // undo:
+      // todo: clean not used matte? or clean when idle? (undo maybe redo)
+      // fixme: remove page area index
       for (final item in confirmedItems) {
         capturedPage.removeItem(item);
       }
@@ -494,7 +495,7 @@ class MattePositionerPen extends Pen with ChangeNotifier {
     return result;
   }
 
-  void _removePageItem(pb.NotePageItem item, pb.NotePage pbPage) {
+  pb.Matte _removePageItem(pb.NotePageItem item, pb.NotePage pbPage) {
     assert(item.whichContent() == pb.NotePageItem_Content.matteId);
     int id = item.matteId;
     IndexableArea.itemRemoved(item, _currentPage!); //  must before mattePool.remove, otherwise cannot construct boundingBoxOfItem
@@ -502,6 +503,7 @@ class MattePositionerPen extends Pen with ChangeNotifier {
     assert(removed != null);
     final removeIdSuccess = pbPage.items.remove(item);
     assert(removeIdSuccess);
+    return removed!;
   }
 
   pb.Matte _matteOfPageItem(pb.NotePageItem item, pb.NotePage pbPage) => pbPage.independentNoteData.mattePool[item.matteId]!;

@@ -37,6 +37,10 @@ class MattingManager extends ChangeNotifier {
     notifyListeners();
   }
 
+  void removeMark(pb.MattingMark mark) {
+    _caching.remove(mark);
+  }
+
   List<pb.Matte> getMattes() {
     final result = _caching.values.where((each) => each.item1 != null).map((each) => each.item1);
     return result.toList(growable: false).cast();

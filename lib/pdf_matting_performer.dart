@@ -66,6 +66,154 @@ Future<pb.Matte> performMatting(File book, PdfPage page, pb.MattingMark mark, in
   return result;
 }
 
+const _bgColor = 3; // white
+
+List<(pb.Matte, ui.Offset)> cutIntoWords(pb.Matte input) {
+  final image = img.Image.fromBytes(
+    bytes: Uint8List.fromList(const ZLibDecoder().decodeBytes(input.imageData)).buffer,
+    width: input.imageWidth,
+    height: input.imageHeight,
+    format: img.Format.uint2,
+    numChannels: 1,
+  );
+
+  int l = 0, t = 0, r = input.imageWidth, b = input.imageHeight;
+
+  // trim:left
+  l = _leftOfContent(image, l, t, r, b);
+  if (l < 0) return const [];
+  // trim:right
+  r = _rightOfContent(image, l, t, r, b);
+  if (r < 0) return const [];
+
+  assert(r > l);
+
+  final lines = <(int/*t*/, int/*b*/)>[];
+  while (true) {
+    t = _topOfContent(image, l, t, r, b);
+    if (t < 0) break;
+
+    int bContent = _topOfWhiteLine(image, l, t, r, b);
+    if (bContent < 0) bContent = b;
+    lines.add((t, bContent));
+    t = bContent;
+
+    assert(t <= b);
+    if (t >= b) break;
+  }
+
+  return lines.expand((line) {
+    final t = line.$1;
+    final b = line.$2;
+    final h = b - t;
+    final words = _wordsOfLine(image, l, t, r, b);
+
+    return words.map((word) {
+      final l = word.$1;
+      final r = word.$2;
+      final w = r - l;
+      final cropResult = img.copyCrop(image, x: l, y: t, width: w, height: h);
+      final matte = pb.Matte.create()
+        ..bookPageNumber = input.bookPageNumber
+        ..bookPageMattingMarkId = input.bookPageMattingMarkId
+        ..imageWidth = w
+        ..imageHeight = h
+        ..imageData = const ZLibEncoder().encode(cropResult.buffer.asUint8List());
+      return (matte, ui.Offset(l.toDouble(), t.toDouble()));
+    });
+  }).toList(growable: false);
+}
+
+Iterable<(int/*l*/, int/*r*/)> _wordsOfLine(img.Image image, int l, int t, int r, int b) {
+  List<(int/*l*/, int/*r*/)> words = [];
+  while (true) {
+    l = _leftOfContent(image, l, t, r, b);
+    if (l < 0) break;
+
+    int rContent = _leftOfWhiteColumn(image, l, t, r, b);
+    if (rContent < 0) rContent = r;
+    words.add((l, rContent));
+    l = rContent;
+
+    assert(l <= r);
+    if (l >= r) {
+      break;
+    }
+  }
+  return words;
+}
+
+int _leftOfContent(img.Image image, int l, int t, int r, int b) {
+  for (var x = l; x < r; ++x) {
+    for (var y = t; y < b; ++y) {
+      final pixel = image.getPixel(x, y);
+      if (pixel.r != _bgColor) {
+        return x;
+      }
+    }
+  }
+  return -1;
+}
+
+int _leftOfWhiteColumn(img.Image image, int l, int t, int r, int b) {
+  for (var x = l; x < r; ++x) {
+    bool isWhiteColumn = true;
+    for (var y = t; y < b; ++y) {
+      final pixel = image.getPixel(x, y);
+      if (pixel.r != _bgColor) {
+        isWhiteColumn = false;
+        break;
+      }
+    }
+    if (isWhiteColumn) {
+      return x;
+    }
+  }
+  return -1;
+}
+
+/// @return: not accessible, `result - 1` is accessible
+int _rightOfContent(img.Image image, int l, int t, int r, int b) {
+  for (var x = r - 1; x >= l; --x) {
+    for (var y = t; y < b; ++y) {
+      final pixel = image.getPixel(x, y);
+      if (pixel.r != _bgColor) {
+        return x + 1;
+      }
+    }
+  }
+  return -1;
+}
+
+int _topOfContent(img.Image image, int l, int t, int r, int b) {
+  for (var y = t; y < b; ++y) {
+    for (var x = l; x < r; ++x) {
+      final pixel = image.getPixel(x, y);
+      if (pixel.r != _bgColor) {
+        return y;
+      }
+    }
+  }
+  return -1;
+}
+
+int _topOfWhiteLine(img.Image image, int l, int t, int r, int b) {
+  for (var y = t; y < b; ++y) {
+    bool isWhiteLine = true;
+    for (var x = l; x < r; ++x) {
+      final pixel = image.getPixel(x, y);
+      if (pixel.r != _bgColor) {
+        isWhiteLine = false;
+        break;
+      }
+    }
+    if (isWhiteLine) {
+      return y;
+    }
+  }
+  return -1;
+}
+
 /// @return: tuple.item1或item2至少一个非null
 Tuple2<ui.Image?, Future<ui.Image?>?> imageOfMatte(pb.Matte matte, [img.Image? image]) {
   final tuple = _matteDecodeImageMap[matte];
@@ -172,7 +320,7 @@ img.Image _encodeTextMatte(img.Image src) {
   );
   assert(src.frames.length == 1);
 
-  const thresholds = [0.4 /*more black for showing text clearly*/, 0.6, 0.8, 1.0];
+  const thresholds = [0.5 /*more black for showing text clearly*/, 0.7, 0.9, 1.0];
   for (final pixel in src.frames.first) {
     final luminance = 0.3 * pixel.rNormalized + 0.59 * pixel.gNormalized + 0.11 * pixel.bNormalized; // from [img.luminanceThreshold]
     int level = thresholds.length;
