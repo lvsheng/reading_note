@@ -158,7 +158,7 @@ class _NotePageState extends State<NotePageWidget> {
                     "${widget.index + 1}",
                     style: const TextStyle(fontSize: 10, color: CupertinoColors.systemGrey),
                   )),
-              if (widget.title != null)
+              if (widget.title != null && !statusManager.screenshotMode)
                 Positioned(
                     left: 0,
                     right: 0,

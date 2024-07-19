@@ -56,6 +56,15 @@ class StatusManager extends ChangeNotifier {
     }
   }
 
+  bool _screenshotMode = false;
+
+  set screenshotMode(bool value) {
+    _screenshotMode = value;
+    notifyListeners();
+  }
+
+  bool get screenshotMode => _screenshotMode;
+
   IndependentNotePage? getOrLoadIndependentNotePage(int index, Size recommendedSize) {
     final noteTuple = _pageIndependentNoteMap![index];
 

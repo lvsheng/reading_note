@@ -127,6 +127,7 @@ class _ControlPanelBuilderState extends State<ControlPanelBuilder> {
                     if (!showingMenu)
                       GestureDetector(
                         onTap: () => setState(() => showingMenu = true),
+                        onLongPress: () => statusManager.screenshotMode = !statusManager.screenshotMode,
                         child: const Icon(material.Icons.more_horiz),
                       ),
                     const SizedBox(width: 30),
@@ -134,7 +135,7 @@ class _ControlPanelBuilderState extends State<ControlPanelBuilder> {
                 ))
               ],
             ),
-            const PenSelector(),
+            if (!statusManager.screenshotMode) const PenSelector(),
           ]),
           Expanded(child: Container()),
           if (bottom != null) bottom

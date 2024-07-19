@@ -212,9 +212,9 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
           if (_reading != null)
             Positioned.fill(
               child: IgnorePointer(
-                ignoring: statusManager.interacting != NoteType.note,
+                ignoring: statusManager.interacting != NoteType.note && !statusManager.screenshotMode,
                 child: Opacity(
-                  opacity: statusManager.interacting == NoteType.note ? 0.85 : 0,
+                  opacity: statusManager.screenshotMode ? 1.0 : (statusManager.interacting == NoteType.note ? 0.85 : 0),
                   // fixme: 是否能既用visibility代替，又完全保留状态如滚动位置等
                   child: DecoratedBox(
                     decoration: const BoxDecoration(color: CupertinoColors.white),
