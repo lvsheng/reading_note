@@ -232,7 +232,7 @@ Tuple2<ui.Image?, Future<ui.Image?>?> imageOfMatte(pb.Matte matte, [img.Image? i
   }
 
   logDebug("[image.convert] 1. imageOfMatte");
-  const paletteStep = 255 / 4.0;
+  const paletteStep = 255 ~/ 3.0;
   image = img.Image.fromBytes(
     bytes: image?.buffer ??
         Uint8List.fromList(() {
@@ -250,8 +250,8 @@ Tuple2<ui.Image?, Future<ui.Image?>?> imageOfMatte(pb.Matte matte, [img.Image? i
     withPalette: true,
     palette: img.PaletteUint8(4, 4)
       ..setRgba(0, 0, 0, 0, 255)
-      ..setRgba(1, paletteStep, paletteStep, paletteStep, 255)
-      ..setRgba(2, paletteStep * 2, paletteStep * 2, paletteStep * 2, 255)
+      ..setRgba(1, 0, 0, 0, 255 - paletteStep)
+      ..setRgba(2, 0, 0, 0, 255 - paletteStep * 2)
       ..setRgba(3, 0, 0, 0, 0), // 白色以透明代替
   );
   debug.saveImage(image, "9.image.fromBytes");

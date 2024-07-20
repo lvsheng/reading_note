@@ -34,6 +34,16 @@ void paintMatte(
 
   switch (item.status) {
     case MatteStatus.done:
+      void paint() {
+        _paintImage(
+            canvas: canvas,
+            matte: item.matte,
+            position: position,
+            triggerRepaint: triggerRepaint,
+            scale: item.scale,
+            isSelected: isSelected);
+      }
+
       if (item.matte.hasDecoration()) {
         switch (item.matte.decoration.value ~/ 10) {
           case 0:
@@ -44,8 +54,10 @@ void paintMatte(
                     Rect.fromLTWH(position.dx, position.dy, item.matte.imageWidth.toDouble(), item.matte.imageHeight.toDouble())),
                 scale: item.scale,
                 color: decorationColor(item.matte.decoration));
+            paint();
             break;
           case 1:
+            paint();
             _paintUnderline(
                 canvas: canvas,
                 coordConverter: coordinateConverter,
@@ -59,9 +71,9 @@ void paintMatte(
           default:
             throw "invalid decoration: ${item.matte.decoration.value}";
         }
+      } else {
+        paint();
       }
-      _paintImage(
-          canvas: canvas, matte: item.matte, position: position, triggerRepaint: triggerRepaint, scale: item.scale, isSelected: isSelected);
       break;
     case MatteStatus.adjusting:
       if (!forPenPainter) {
@@ -134,7 +146,7 @@ void _paintUnderline(
       Paint()
         ..color = color
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 3);
+        ..strokeWidth = 3.5);
 }
 
 void _paintImage(

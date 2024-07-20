@@ -22,7 +22,7 @@ Color decorationColor(pb.DecorationType type) {
     case pb.DecorationType.DT_BG_BLUE:
     case pb.DecorationType.DT_TILDE_BLUE:
     case pb.DecorationType.DT_UNDERLINE_BLUE:
-      return material.Colors.blue.withOpacity(opacity);
+      return material.Colors.blueAccent.withOpacity(0.3);
       break;
 
     case pb.DecorationType.DT_BG_GREEN:
