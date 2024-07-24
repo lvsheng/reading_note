@@ -240,7 +240,7 @@ class _SelectingPanelState extends State<SelectingPanel> {
       ),
       Row(
         children: [
-          c.buildButton(isNotEmpty ? () => setState(() => widget.pen.refresh()) : null, material.Icons.refresh, CupertinoColors.activeBlue,
+          c.buildButton((isNotEmpty || widget.pen.magnet != null) ? () => setState(() => widget.pen.refresh()) : null, material.Icons.refresh, CupertinoColors.activeBlue,
               widthFactor: 0.248, heightFactor: 0.5, padding: const EdgeInsets.only(left: leftPadding)),
           c.buildConfirmButton(() => setState(() => widget.pen.finish()), widthFactor: 0.7, heightFactor: 0.5),
         ],

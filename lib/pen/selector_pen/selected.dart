@@ -7,7 +7,11 @@ class Selected {
 
   void addAll(Iterable<Object> iterable) => _list.addAll(iterable);
 
-  int _iterateId =
+  void addAnother(Selected another) {
+    _list.addAll(another._list);
+  }
+
+  static int _iterateId =
       0; // As the selection area expands, a child IndexableArea might be selected before its parent. To avoid yielding duplicates within a single iteration, use iterateId.
   Iterable<pb.NotePageItem> iterateAllItems() sync* {
     ++_iterateId;

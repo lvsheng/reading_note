@@ -157,9 +157,10 @@ class IndexableArea extends Rect {
   bool _doNotSplitSubAreas = false;
   _HitCacheStack? _hitCacheStack;
   bool allSelected = false;
+  final bool _isForPage;
 
   @visibleForTesting
-  IndexableArea.forPage(this._page) : super.fromLTRB(0, 0, _page.data.width, _page.data.height) {
+  IndexableArea.forPage(this._page) : _isForPage = true, super.fromLTRB(0, 0, _page.data.width, _page.data.height) {
     final ts = DateTime.timestamp();
     _items.addAll(_page.data.items
         .where((item) => item.whichContent() != pb.NotePageItem_Content.mattingMarkId)
@@ -168,7 +169,7 @@ class IndexableArea extends Rect {
     _splitSubAreasIfNeed();
   }
 
-  IndexableArea(this._page, super.left, super.top, super.right, super.bottom) : super.fromLTRB();
+  IndexableArea(this._page, super.left, super.top, super.right, super.bottom) : _isForPage = false, super.fromLTRB();
 
   void _addItem(ItemWrapper item, [bool movedFromParentItems = false]) {
     assert(item._belongedArea == this);
@@ -304,7 +305,7 @@ class IndexableArea extends Rect {
 
   Iterable<IndexableArea> _getIntersectedSubAreas(Rect target) sync* {
     assert(_subAreas != null);
-    assert(target.intersect(this).width >= 0 && target.intersect(this).height >= 0);
+    assert((target.intersect(this).width >= 0 && target.intersect(this).height >= 0) || _isForPage/*some item may out of page area*/);
     if (_logging) logDebug("_getIntersectedSubAreas fro $target in $this");
 
     final insideRect = Rect.fromLTWH(target.left - left, target.top - top, target.width, target.height);

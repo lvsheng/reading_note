@@ -27,19 +27,32 @@ class SelectPenPainter extends CustomPainter {
       _paintPaint(canvas);
     }
 
-    if (_pen.selected.isEmpty) {
-      return;
-    }
+    if (_pen.selected.isNotEmpty) {
+      if (_pen.paintSelectedStatus) {
+        for (final item in _pen.selected.iterateAllItems()) {
+          _pageItemsPainter.paintSelectedItem(canvas, item);
+        }
+      }
 
-    if (_pen.paintSelectedStatus) {
-      for (final item in _pen.selected.iterateAllItems()) {
-        _pageItemsPainter.paintSelectedItem(canvas, item);
+      if (_pen.paintOutline) {
+        _paintOutline(canvas, _coordinateConverter.pageRectToCanvas(_pen.selectedBoundingBox!));
       }
     }
 
-    if (_pen.paintOutline) {
-      _paintOutline(canvas, _coordinateConverter.pageRectToCanvas(_pen.selectedBoundingBox!));
+    if (_pen.magnet != null) {
+      final (pos, selected, rect) = _pen.magnet!;
+
+      if (_pen.paintSelectedStatus) {
+        for (final item in selected.iterateAllItems()) {
+          _pageItemsPainter.paintSelectedItem(canvas, item);
+        }
+      }
+
+      if (_pen.paintOutline) {
+        _paintOutline(canvas, _coordinateConverter.pageRectToCanvas(rect), material.Colors.black);
+      }
     }
+
     if (_logging) logInfo("paintSelected end. cost:${DateTime.now().millisecondsSinceEpoch - ts}ms");
   }
 
@@ -53,8 +66,8 @@ class SelectPenPainter extends CustomPainter {
         top: borderSide, bottom: borderSide, left: borderSide, right: borderSide);
   }
 
-  void _paintOutline(Canvas canvas, Rect outline) {
-    const borderSide = BorderSide(width: 0, color: material.Colors.grey);
+  void _paintOutline(Canvas canvas, Rect outline, [Color color = material.Colors.grey]) {
+    final borderSide = BorderSide(width: 0, color: color);
     paintBorder(canvas, outline, top: borderSide, bottom: borderSide, left: borderSide, right: borderSide);
 
     if (_pen.moving) {

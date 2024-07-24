@@ -29,11 +29,24 @@ class _ItemPosition {
         scale = item.hasScale() ? item.scale : null;
 }
 
+enum MagnetPosition {
+  topLeft,
+  topCenter,
+  topRight,
+  centerLeft,
+  centerRight,
+  bottomLeft,
+  bottomCenter,
+  bottomRight,
+}
+
 /// not visible to [PenManager], added automatically by [StatusManager] if needed
 class SelectPen extends Pen with ChangeNotifier {
   NotePage? page;
   Offset? touchingOn;
-  final selected = Selected();
+  var selected = Selected();
+  Rect? selectedBoundingBox;
+  (MagnetPosition, Selected, Rect)? magnet;
   IndexableArea? _indexableArea;
   bool _moving = false;
   bool _changingPen = false;
@@ -56,7 +69,6 @@ class SelectPen extends Pen with ChangeNotifier {
   bool get changingDecoration => _changingDecoration;
 
   set moving(bool value) {
-    assert(selected.isNotEmpty);
     _moving = value;
     _triggerRepaint();
   }
@@ -285,8 +297,6 @@ class SelectPen extends Pen with ChangeNotifier {
     return null;
   }
 
-  Rect? selectedBoundingBox;
-
   void _select() {
     assert(touchingOn != null);
     int ts = DateTime.now().millisecondsSinceEpoch;
@@ -413,6 +423,8 @@ class SelectPen extends Pen with ChangeNotifier {
 
   void refresh() {
     selected.clear();
+    magnet?.$2.clear();
+    magnet = null;
     _moving = false;
     _changingPen = false;
     paintSelectedStatus = true;
@@ -503,6 +515,108 @@ class SelectPen extends Pen with ChangeNotifier {
       page!.triggerRepaint();
       paintSelectedStatus = false;
       _triggerRepaint();
+    });
+  }
+
+  void magnetFromSelected(MagnetPosition pos) {
+    assert(selectedBoundingBox != null);
+    magnet = (pos, selected, selectedBoundingBox!);
+    selected = Selected();
+    selectedBoundingBox = null;
+    _triggerRepaint();
+  }
+
+  void magnetToSelected(MagnetPosition pos) {
+    logInfo("magnetToSelected $pos");
+    assert(magnet!=null);
+    assert(selectedBoundingBox != null);
+    _magnetUpdatePosition(magnet!.$2, magnet!.$1, magnet!.$3, selectedBoundingBox!, pos);
+    selected.addAnother(magnet!.$2);
+    magnet = null;
+    _updateSelectedBoundingBoxIfNeeded();
+    _triggerRepaint();
+  }
+
+  void _magnetUpdatePosition(Selected selected, MagnetPosition magnetPosition, Rect rect, Rect targetRect, MagnetPosition targetMagnetPosition) {
+    late final Offset targetOffset;
+    switch (targetMagnetPosition) {
+      case MagnetPosition.topLeft:
+        targetOffset = targetRect.topLeft;
+        break;
+      case MagnetPosition.topCenter:
+        targetOffset = targetRect.topCenter;
+        break;
+      case MagnetPosition.topRight:
+        targetOffset = targetRect.topRight;
+        break;
+      case MagnetPosition.centerLeft:
+        targetOffset = targetRect.centerLeft;
+        break;
+      case MagnetPosition.centerRight:
+        targetOffset = targetRect.centerRight;
+        break;
+      case MagnetPosition.bottomLeft:
+        targetOffset = targetRect.bottomLeft;
+        break;
+      case MagnetPosition.bottomCenter:
+        targetOffset = targetRect.bottomCenter;
+        break;
+      case MagnetPosition.bottomRight:
+        targetOffset = targetRect.bottomRight;
+        break;
+    }
+
+    late final Offset newTopLeft;
+    switch (magnetPosition) {
+      case MagnetPosition.topLeft:
+        newTopLeft = targetOffset;
+        break;
+      case MagnetPosition.topCenter:
+        newTopLeft = Offset(targetOffset.dx - rect.width / 2, targetOffset.dy);
+        break;
+      case MagnetPosition.topRight:
+        newTopLeft = Offset(targetOffset.dx - rect.width, targetOffset.dy);
+        break;
+      case MagnetPosition.centerLeft:
+        newTopLeft = Offset(targetOffset.dx, targetOffset.dy - rect.height / 2);
+        break;
+      case MagnetPosition.centerRight:
+        newTopLeft = Offset(targetOffset.dx - rect.width, targetOffset.dy - rect.height / 2);
+        break;
+      case MagnetPosition.bottomLeft:
+        newTopLeft = Offset(targetOffset.dx, targetOffset.dy - rect.height);
+        break;
+      case MagnetPosition.bottomCenter:
+        newTopLeft = Offset(targetOffset.dx - rect.width / 2, targetOffset.dy - rect.height);
+        break;
+      case MagnetPosition.bottomRight:
+        newTopLeft = Offset(targetOffset.dx - rect.width, targetOffset.dy - rect.height);
+        break;
+    }
+
+    final Offset offset = newTopLeft - rect.topLeft;
+    final capturedItems = selected.iterateAllItems().toList(growable: false);
+    final capturedPage = page!;
+    statusManager.historyStack.doo(() {
+      for (final item in capturedItems) {
+        IndexableArea.itemBeforeUpdate(item, capturedPage);
+        item.x += offset.dx;
+        item.y += offset.dy;
+        IndexableArea.itemAfterUpdated(item, capturedPage);
+      }
+      _updateSelectedBoundingBoxIfNeeded(); // for redo (selected do not change, but position changed)
+      _triggerRepaint();
+      page!.triggerRepaint();
+    }, (){
+      for (final item in capturedItems) {
+        IndexableArea.itemBeforeUpdate(item, capturedPage);
+        item.x -= offset.dx;
+        item.y -= offset.dy;
+        IndexableArea.itemAfterUpdated(item, capturedPage);
+      }
+      _updateSelectedBoundingBoxIfNeeded();
+      _triggerRepaint();
+      page!.triggerRepaint();
     });
   }
 }

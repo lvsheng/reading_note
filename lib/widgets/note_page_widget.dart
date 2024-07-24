@@ -18,6 +18,7 @@ import '../pen/matte_positioner_pen.dart';
 import '../status_manager/global_modal_manager.dart';
 import '../status_manager/status_manager.dart';
 import '../util/log.dart';
+import 'selector_magnent.dart';
 import 'stylus_gesture_detector.dart';
 
 class NotePageWidget extends StatefulWidget {
@@ -92,6 +93,7 @@ class _NotePageState extends State<NotePageWidget> {
     }
 
     final coordConverter = NoteCoordConverter(note);
+    final interactingWithSelectPen = statusManager.interacting == NoteType.note && statusManager.usingPen is SelectPen;
 
     return InteractiveViewer(
       // fixme: should InteractiveViewer expose AnimationController to stop the scrolling animation when user touch?
@@ -103,6 +105,7 @@ class _NotePageState extends State<NotePageWidget> {
       transformationController: _controller,
       child: GestureDetector(
         key: _childKey,
+        supportedDevices: const {PointerDeviceKind.touch}, // avoid pencil tap SelectorMagnent wait "is this double tap?"
         onDoubleTapDown: (detail) {
           _doubleTapOffset = Tuple2(detail.globalPosition, detail.localPosition);
           logDebug("onDoubleTapDown: $_doubleTapOffset");
@@ -177,7 +180,7 @@ class _NotePageState extends State<NotePageWidget> {
                             child: CustomPaint(
                                 painter: MattePositionerPenPainter(
                                     statusManager.usingPen as MattePositionerPen, widget.index, coordConverter))))),
-              if (statusManager.interacting == NoteType.note && statusManager.usingPen is SelectPen)
+              if (interactingWithSelectPen)
                 ConstrainedBox(
                     constraints: const BoxConstraints.expand(),
                     child: IgnorePointer(
@@ -193,6 +196,11 @@ class _NotePageState extends State<NotePageWidget> {
                 },
                 onCancel: (details) => note.penUp(note.canvasPositionToPage(details.localPosition, 1.0)),
               ),
+              if (interactingWithSelectPen)
+                ConstrainedBox(
+                  constraints: const BoxConstraints.expand(),
+                  child: SelectorMagnet(pen: statusManager.usingPen as SelectPen),
+                ),
               Positioned(
                 right: 0,
                 top: 0,
@@ -221,7 +229,6 @@ class _NotePageState extends State<NotePageWidget> {
                   ),
                 ),
               ),
-              if (globalModalManager.isNotEmpty) globalModalManager.build(),
             ],
           ),
         ),
