@@ -292,6 +292,10 @@ class IndexableArea extends Rect {
     for (final targetArea in intersectedSubAreas) {
       targetArea._addItem(item.._belongedArea = targetArea, fromItems);
     }
+    if (intersectedSubAreas.isEmpty && _isForPage) {
+      // todo:
+      logWarn("TODO: add a page.outerArea");
+    }
   }
 
   void _removeItemFromSubArea(ItemWrapper item) {

@@ -528,7 +528,7 @@ class SelectPen extends Pen with ChangeNotifier {
 
   void magnetToSelected(MagnetPosition pos) {
     logInfo("magnetToSelected $pos");
-    assert(magnet!=null);
+    assert(magnet != null);
     assert(selectedBoundingBox != null);
     _magnetUpdatePosition(magnet!.$2, magnet!.$1, magnet!.$3, selectedBoundingBox!, pos);
     selected.addAnother(magnet!.$2);
@@ -537,7 +537,8 @@ class SelectPen extends Pen with ChangeNotifier {
     _triggerRepaint();
   }
 
-  void _magnetUpdatePosition(Selected selected, MagnetPosition magnetPosition, Rect rect, Rect targetRect, MagnetPosition targetMagnetPosition) {
+  void _magnetUpdatePosition(
+      Selected selected, MagnetPosition magnetPosition, Rect rect, Rect targetRect, MagnetPosition targetMagnetPosition) {
     late final Offset targetOffset;
     switch (targetMagnetPosition) {
       case MagnetPosition.topLeft:
@@ -566,7 +567,7 @@ class SelectPen extends Pen with ChangeNotifier {
         break;
     }
 
-    late final Offset newTopLeft;
+    late Offset newTopLeft;
     switch (magnetPosition) {
       case MagnetPosition.topLeft:
         newTopLeft = targetOffset;
@@ -594,6 +595,15 @@ class SelectPen extends Pen with ChangeNotifier {
         break;
     }
 
+    bool isBottom(MagnetPosition pos) => [MagnetPosition.bottomLeft, MagnetPosition.bottomCenter, MagnetPosition.bottomRight].contains(pos);
+    bool isTop(MagnetPosition pos) => [MagnetPosition.topLeft, MagnetPosition.topCenter, MagnetPosition.topRight].contains(pos);
+    const yPaddingFactor = 0.2;
+    if (isBottom(magnetPosition) && isTop(targetMagnetPosition)) {
+      newTopLeft = newTopLeft.translate(0, -targetRect.height * yPaddingFactor);
+    } else if (isTop(magnetPosition) && isBottom(targetMagnetPosition)) {
+      newTopLeft = newTopLeft.translate(0, targetRect.height * yPaddingFactor);
+    }
+
     final Offset offset = newTopLeft - rect.topLeft;
     final capturedItems = selected.iterateAllItems().toList(growable: false);
     final capturedPage = page!;
@@ -607,7 +617,7 @@ class SelectPen extends Pen with ChangeNotifier {
       _updateSelectedBoundingBoxIfNeeded(); // for redo (selected do not change, but position changed)
       _triggerRepaint();
       page!.triggerRepaint();
-    }, (){
+    }, () {
       for (final item in capturedItems) {
         IndexableArea.itemBeforeUpdate(item, capturedPage);
         item.x -= offset.dx;
