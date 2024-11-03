@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:ui';
 import 'package:path/path.dart' as p;
+import 'package:quiver/iterables.dart';
 import 'package:reading_note/protobuf/note.pb.dart' as pb;
 import 'package:protobuf/protobuf.dart';
 import 'package:reading_note/util/log.dart';
@@ -62,6 +63,8 @@ class NoteBook {
   int? noteIdOf(int pageNumber) {
     return _data!.pages[pageNumber]?.pageId;
   }
+
+  int? get maxPageIndex => max(_data?.pages.keys ?? const []);
 
   Future<File> addNotePage(int pageNumber) {
     int pageId = ++_data!.lastPageId;

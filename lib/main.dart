@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:app_links/app_links.dart';
+import 'package:flutter/material.dart';
 import 'package:reading_note/custom_painter/page_items_painter.dart';
 import 'package:reading_note/file_system_proxy.dart';
 import 'package:reading_note/deep_link.dart';
@@ -49,6 +50,8 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
   PdfViewerController? _controller;
   Matrix4? _transformation;
   PageController? _pageViewController;
+  NoteBook? _noteBook;
+  int _notePageCount = 1;
 
   String? _errorTip;
   late Timer _timerSaveFile;
@@ -119,7 +122,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     });
   }
 
-  open(File file) {
+  void open(File file) {
     _saveIfNeeded();
     userPreferences.setReadingBook(file);
     setState(() {
@@ -138,6 +141,17 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
         });
       _transformation = null;
       _pageViewController = PageController(initialPage: _initialNotePageIndex);
+      _noteBook = NoteBook.getOrCreate(_reading!, NoteType.note)
+        ..ready.then((_) {
+          if (!mounted) return;
+          _updateNotePageCount();
+        });
+    });
+  }
+
+  void _updateNotePageCount() {
+    setState(() {
+      _notePageCount = (_noteBook?.maxPageIndex ?? -1) + 2; // keep one additional last empty page
     });
   }
 
@@ -149,99 +163,91 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
         children: [
           if (_reading != null)
             Positioned.fill(
-                child: PdfViewer.file(
-              _reading!.path,
-              key: Key(_reading!.path),
-              controller: _controller,
-              initialPageNumber: _initialPageNumber,
-              params: PdfViewerParams(
-                  pageDropShadow: null,
-                  onDocumentChanged: (document) {
-                    if (!mounted) return;
-                    setState(() => _document = document);
-                  },
-                  onPageChanged: (int? pageNumber) {
-                    if (!mounted || pageNumber == null) return;
-                    setState(() => _pageNumber = pageNumber);
-                    statusManager.bookPageNumber = pageNumber;
-                  },
+                child: PdfViewer.file(_reading!.path,
+                    key: Key(_reading!.path),
+                    controller: _controller,
+                    initialPageNumber: _initialPageNumber,
+                    params: PdfViewerParams(
+                        pageDropShadow: null,
+                        viewerOverlayBuilder: (context, size) => [
+                              PdfViewerScrollThumb(
+                                  controller: _controller!, orientation: ScrollbarOrientation.right, thumbSize: const Size(45, 30))
+                            ],
+                        onDocumentChanged: (document) {
+                          if (!mounted) return;
+                          setState(() => _document = document);
+                        },
+                        onPageChanged: (int? pageNumber) {
+                          if (!mounted || pageNumber == null) return;
+                          setState(() => _pageNumber = pageNumber);
+                          statusManager.bookPageNumber = pageNumber;
+                        },
+                        pageOverlaysBuilder: (context, pageRect, page) {
+                          final note = statusManager.getOrLoadMarkNotePage(
+                              page.pageNumber, () => NotePage.open(NoteType.book, _reading!, page.pageNumber, page.size, page));
+                          if (note == null) return const [];
 
-                  // page mark note
-                  pageOverlaysBuilder: (context, pageRect, page) {
-                    final note = statusManager.getOrLoadMarkNotePage(
-                        page.pageNumber, () => NotePage.open(NoteType.book, _reading!, page.pageNumber, page.size, page));
-                    if (note == null) {
-                      return const [];
-                    }
+                          final coordConverter = BookCoordConverter(pageRect, note);
 
-                    final coordConverter = BookCoordConverter(pageRect, note);
-
-                    return [
-                      ConstrainedBox(
-                          constraints: const BoxConstraints.expand(),
-                          child: IgnorePointer(
-                              child: RepaintBoundary(
-                                  child: CustomPaint(painter: PageItemsPainter(note, coordConverter))))),
-                      if (statusManager.interacting == NoteType.book && statusManager.bookPageNumber == page.pageNumber && statusManager.usingPen is SelectPen)
-                        ConstrainedBox(
-                            constraints: const BoxConstraints.expand(),
-                            child: IgnorePointer(
-                                child: RepaintBoundary(
-                                    child: CustomPaint(
-                                        painter:
-                                            SelectPenPainter(statusManager.usingPen as SelectPen, coordConverter, note))))),
-                      PencilGestureDetector(
-                        onDown: (details) {
-                          note.penDown(note.canvasPositionToPagePosition(details.localPosition, pageRect));
-                        },
-                        onMove: (localPosition) {
-                          note.penMove(note.canvasPositionToPagePosition(localPosition, pageRect));
-                        },
-                        onUp: (details) {
-                          final position = note.canvasPositionToPagePosition(details.localPosition, pageRect);
-                          note.penMove(position);
-                          note.penUp(position);
-                        },
-                        onCancel: (details) {
-                          note.penUp(note.canvasPositionToPagePosition(details.localPosition, pageRect));
-                        },
-                      ),
-                    ];
-                  }),
-            )),
+                          return [
+                            ConstrainedBox(
+                                constraints: const BoxConstraints.expand(),
+                                child: IgnorePointer(
+                                    child: RepaintBoundary(child: CustomPaint(painter: PageItemsPainter(note, coordConverter))))),
+                            if (statusManager.interacting == NoteType.book &&
+                                statusManager.bookPageNumber == page.pageNumber &&
+                                statusManager.usingPen is SelectPen)
+                              ConstrainedBox(
+                                  constraints: const BoxConstraints.expand(),
+                                  child: IgnorePointer(
+                                      child: RepaintBoundary(
+                                          child: CustomPaint(
+                                              painter: SelectPenPainter(statusManager.usingPen as SelectPen, coordConverter, note))))),
+                            PencilGestureDetector(
+                                onDown: (details) => note.penDown(note.canvasPositionToPagePosition(details.localPosition, pageRect)),
+                                onMove: (localPosition) => note.penMove(note.canvasPositionToPagePosition(localPosition, pageRect)),
+                                onUp: (details) {
+                                  final position = note.canvasPositionToPagePosition(details.localPosition, pageRect);
+                                  note.penMove(position);
+                                  note.penUp(position);
+                                },
+                                onCancel: (details) => note.penUp(note.canvasPositionToPagePosition(details.localPosition, pageRect)))
+                          ];
+                        }))),
           if (_reading != null)
             Positioned.fill(
-              child: IgnorePointer(
-                ignoring: statusManager.interacting != NoteType.note && !statusManager.screenshotMode,
-                child: Opacity(
-                  opacity: statusManager.screenshotMode ? 1.0 : (statusManager.interacting == NoteType.note ? 0.85 : 0),
-                  // fixme: 是否能既用visibility代替，又完全保留状态如滚动位置等
-                  child: DecoratedBox(
-                    decoration: const BoxDecoration(color: CupertinoColors.white),
-                    child: PageView.builder(
-                      key: Key(_reading!.path),
-                      controller: _pageViewController,
-                      physics: _enablePageViewPager ? null : const NeverScrollableScrollPhysics(),
-                      onPageChanged: (index) => statusManager.notePageIndex = index,
-                      itemBuilder: (context, index) {
-                        return NotePageWidget(
-                          index: index,
-                          onZoomUpdate: (cannotShrinkAnymore) {
-                            if (cannotShrinkAnymore) {
-                              if (!_enablePageViewPager) setState(() => _enablePageViewPager = true);
-                            } else {
-                              if (_enablePageViewPager) setState(() => _enablePageViewPager = false);
-                            }
-                          },
-                          title: NoteBook.getOrCreate(_reading!, NoteType.note).getTitleOf(index),
-                        );
-                      },
-                    ),
-                    // child: noteItemBuilder(context, 0),
-                  ),
-                ),
-              ),
-            ),
+                child: IgnorePointer(
+                    ignoring: statusManager.interacting != NoteType.note && !statusManager.screenshotMode,
+                    child: Opacity(
+                        opacity: statusManager.screenshotMode ? 1.0 : (statusManager.interacting == NoteType.note ? 0.85 : 0),
+                        // fixme: 是否能既用visibility代替，又完全保留状态如滚动位置等
+                        child: DecoratedBox(
+                            decoration: const BoxDecoration(color: CupertinoColors.white),
+                            child: Scrollbar(
+                                controller: _pageViewController,
+                                scrollbarOrientation: ScrollbarOrientation.top,
+                                child: PageView.builder(
+                                    key: Key(_reading!.path),
+                                    controller: _pageViewController,
+                                    physics: _enablePageViewPager ? null : const NeverScrollableScrollPhysics(),
+                                    onPageChanged: (index) {
+                                      statusManager.notePageIndex = index;
+                                      _updateNotePageCount();
+                                    },
+                                    itemCount: _notePageCount,
+                                    itemBuilder: (context, index) {
+                                      return NotePageWidget(
+                                        index: index,
+                                        onZoomUpdate: (cannotShrinkAnymore) {
+                                          if (cannotShrinkAnymore) {
+                                            if (!_enablePageViewPager) setState(() => _enablePageViewPager = true);
+                                          } else {
+                                            if (_enablePageViewPager) setState(() => _enablePageViewPager = false);
+                                          }
+                                        },
+                                        title: NoteBook.getOrCreate(_reading!, NoteType.note).getTitleOf(index),
+                                      );
+                                    })))))),
           if (statusManager.ready) const ControlPanelBuilder(),
           if (globalModalManager.isNotEmpty) globalModalManager.build(),
           if (_errorTip != null)
