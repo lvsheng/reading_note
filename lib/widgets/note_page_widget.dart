@@ -56,14 +56,14 @@ class _NotePageState extends State<NotePageWidget> {
   final _childKey = GlobalKey();
 
   void _onControllerChange() {
-    if (widget.onZoomUpdate != null) {
-      final scale = _controller.value.zoom;
-      final parentSize = (_parentKey.currentContext!.findRenderObject() as RenderBox).size;
-      final childSize = (_childKey.currentContext!.findRenderObject() as RenderBox).size;
-      final scaledChildSize = childSize * scale;
-      bool cannotShrinkAnymore = scaledChildSize.width <= parentSize.width || scaledChildSize.height <= parentSize.height;
-      widget.onZoomUpdate!(cannotShrinkAnymore);
-    }
+    if (widget.onZoomUpdate == null) return;
+    if (_parentKey.currentContext == null) return;
+    final scale = _controller.value.zoom;
+    final parentSize = (_parentKey.currentContext!.findRenderObject() as RenderBox).size;
+    final childSize = (_childKey.currentContext!.findRenderObject() as RenderBox).size;
+    final scaledChildSize = childSize * scale;
+    bool cannotShrinkAnymore = scaledChildSize.width <= parentSize.width || scaledChildSize.height <= parentSize.height;
+    widget.onZoomUpdate!(cannotShrinkAnymore);
   }
 
   late double _oldScale;
@@ -105,7 +105,8 @@ class _NotePageState extends State<NotePageWidget> {
       transformationController: _controller,
       child: GestureDetector(
         key: _childKey,
-        supportedDevices: const {PointerDeviceKind.touch}, // avoid pencil tap SelectorMagnent wait "is this double tap?"
+        supportedDevices: const {PointerDeviceKind.touch},
+        // avoid pencil tap SelectorMagnent wait "is this double tap?"
         onDoubleTapDown: (detail) {
           _doubleTapOffset = Tuple2(detail.globalPosition, detail.localPosition);
           logDebug("onDoubleTapDown: $_doubleTapOffset");

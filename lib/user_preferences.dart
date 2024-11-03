@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:math';
 import 'dart:ui';
 import 'package:reading_note/file_system_proxy.dart';
 import 'package:reading_note/pen/pen.dart';
@@ -75,7 +74,10 @@ class UserPreferences {
   }
 
   int? notePageOf(File book) {
-    if (!_allReady) return null;
+    if (!_allReady) {
+      logWarn("!_allReady when notePageOf");
+      return null;
+    }
     return _sharedPreferences!.getInt(_keyOfBook(book, _keyPrefixLastNotePage));
   }
 

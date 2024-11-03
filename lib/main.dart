@@ -219,6 +219,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                   child: DecoratedBox(
                     decoration: const BoxDecoration(color: CupertinoColors.white),
                     child: PageView.builder(
+                      key: Key(_reading!.path),
                       controller: _pageViewController,
                       physics: _enablePageViewPager ? null : const NeverScrollableScrollPhysics(),
                       onPageChanged: (index) => statusManager.notePageIndex = index,
