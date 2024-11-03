@@ -23,12 +23,11 @@ import 'stylus_gesture_detector.dart';
 
 class NotePageWidget extends StatefulWidget {
   final int index;
-  final File? reading;
   final void Function(bool)? onZoomUpdate;
   final String? title;
   final ModalCreator? modalCreator;
 
-  const NotePageWidget({super.key, required this.index, this.reading, this.onZoomUpdate, this.title, this.modalCreator});
+  const NotePageWidget({super.key, required this.index, this.onZoomUpdate, this.title, this.modalCreator});
 
   @override
   State<StatefulWidget> createState() => _NotePageState();
@@ -79,7 +78,6 @@ class _NotePageState extends State<NotePageWidget> {
     if (note == null) {
       return SizedBox(width: contextSize.width, height: contextSize.height, child: const Center(child: Text("loading")));
     }
-    // IndexableArea.forPage(note); // fixme: remove, for test
 
     if (_needRefreshMinimumScale) {
       _minimumScale =

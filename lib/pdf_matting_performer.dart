@@ -266,10 +266,10 @@ Tuple2<ui.Image?, Future<ui.Image?>?> imageOfMatte(pb.Matte matte, [img.Image? i
   return _matteDecodeImageMap[matte] = Tuple2(null, future);
 }
 
-String _genKey(File book, int pageNumber) => "${fileSystemProxy.localPath(book)}:$pageNumber";
+String _genCacheKey(File book, int pageNumber) => "${fileSystemProxy.localPath(book)}:$pageNumber";
 
 Future<img.Image?> _capture(File book, PdfPage page) async {
-  final key = _genKey(book, page.pageNumber);
+  final key = _genCacheKey(book, page.pageNumber);
   final tuple = _pageScreenshotMap[key];
   if (tuple != null) {
     img.Image? result = tuple.item1;

@@ -175,7 +175,10 @@ class UserPreferences {
     return true;
   }
 
-  String _keyOfBook(File book, String keyPrefix) => "$keyPrefix${fileSystemProxy.localPath(book)}";
+  String _keyOfBook(File book, String keyPrefix) {
+    // 以书名而非完整路径作为key，以方便移动路径时仍保留进度
+    return "$keyPrefix${book.uri.pathSegments.last}";
+  }
 
   _removeIfNeeded(String key) {
     if (_sharedPreferences!.containsKey(key)) {

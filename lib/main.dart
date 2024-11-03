@@ -226,7 +226,6 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                       itemBuilder: (context, index) {
                         return NotePageWidget(
                           index: index,
-                          reading: _reading,
                           onZoomUpdate: (cannotShrinkAnymore) {
                             if (cannotShrinkAnymore) {
                               if (!_enablePageViewPager) setState(() => _enablePageViewPager = true);

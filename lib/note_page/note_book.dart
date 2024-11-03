@@ -20,11 +20,15 @@ class NoteBook {
 
   String getNotePageFilePath(int pageId) => "${_getNoteDirectory(book, _noteType)}$pageId.pb";
 
+  static bool isNoteDirectory(String path) => path.endsWith(_notePostfix);
+
   static String _getNoteDirectory(File book, NoteType noteType) => "${_getBaseDirectory(book)}${_getMiddleDirectory(noteType)}";
 
   static String _getMetaFilePath(File book, NoteType noteType) => "${_getBaseDirectory(book)}${_getMiddleDirectory(noteType)}meta.pb";
 
-  static String _getBaseDirectory(File book) => "${p.dirname(book.path)}/${p.basename(book.path)}.note/";
+  static const _notePostfix = ".note";
+
+  static String _getBaseDirectory(File book) => "${p.dirname(book.path)}/${p.basename(book.path)}$_notePostfix/";
 
   static String _getMiddleDirectory(NoteType noteType) => noteType == NoteType.book ? "book_mark/" : "";
 
